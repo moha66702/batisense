@@ -516,8 +516,5 @@ def health():
 # ============================================================
 if __name__ == "__main__":
     init_db()
-    print("=" * 52)
-    print("  BatiSense Pro — with Authentication")
-    print("  http://0.0.0.0:5000")
-    print("=" * 52)
-    app.run(host="0.0.0.0", port=5000, threaded=True, debug=False)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port, threaded=True, debug=False)
