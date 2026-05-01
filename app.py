@@ -42,7 +42,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = "login_page"
 login_manager.login_message = None
 
-DB_PATH = "batisense.db"
+DB_PATH = "/app/data/batisense.db"
 
 # ============================================================
 #  User Model & loader
