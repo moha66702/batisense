@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiSense Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* ────── YOUR EXACT ORIGINAL STYLES ────── */
+:root{
+  --bg0:#050810;--bg1:#090e1a;--bg2:#0d1424;--bg3:#121c30;--bg4:#182338;
+  --b0:rgba(255,255,255,.04);--b1:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);
+  --green:#00f5a0;--teal:#00d4e0;--blue:#4d8dff;--amber:#ffc233;--red:#ff4d6b;--violet:#a06bff;
+  --t0:#dce8ff;--t1:#7d95bc;--t2:#3d5070;
+  --r:12px;--rsm:7px;
+  --fui:'Syne',sans-serif;--fmono:'DM Mono',monospace;
+  --glow-g:0 0 22px rgba(0,245,160,.14);
+  --glow-r:0 0 22px rgba(255,77,107,.14);
+}
+[data-theme=light]{
+  --bg0:#edf1fb;--bg1:#f4f7ff;--bg2:#ffffff;--bg3:#f0f4fe;--bg4:#e4ebfa;
+  --b0:rgba(0,0,0,.05);--b1:rgba(0,0,0,.09);--b2:rgba(0,0,0,.15);
+  --t0:#0c1732;--t1:#3a4f72;--t2:#8898bb;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-font-smoothing:antialiased}
+body{font-family:var(--fui);background:var(--bg0);color:var(--t0);min-height:100vh}
+button{cursor:pointer;font-family:var(--fui)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg0)}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--b0);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.s-logo{padding:20px 16px 16px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:10px}
+.s-logo-mark{width:34px;height:34px;border-radius:8px;flex-shrink:0;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#000}
+.s-logo-name{font-size:14.5px;font-weight:700;letter-spacing:-.3px}
+.s-logo-sub{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px}
+.s-nav{padding:8px 6px;flex:1}
+.s-nav-sec{font-size:9.5px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;font-weight:600;padding:10px 10px 4px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rsm);border:none;background:none;color:var(--t1);font-size:13px;font-weight:500;width:100%;text-align:left;margin-bottom:1px;transition:all .15s}
+.nav-btn i{width:16px;font-size:12.5px;opacity:.7;flex-shrink:0}
+.nav-btn:hover{background:var(--bg3);color:var(--t0)}
+.nav-btn.active{background:rgba(0,245,160,.09);color:var(--green)}
+.nav-btn.active i{opacity:1}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:9px;min-width:16px;text-align:center}
+.s-footer{padding:10px 8px;border-top:1px solid var(--b0)}
+.conn{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:var(--rsm);background:var(--bg2);font-size:11px;color:var(--t1);margin-bottom:4px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--t2);flex-shrink:0}
+.dot.ok{background:var(--green);box-shadow:0 0 7px var(--green);animation:blink 2.5s infinite}
+.dot.err{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{padding:12px 24px;border-bottom:1px solid var(--b0);background:var(--bg1);display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:40}
+.topbar-l h1{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.topbar-l p{font-size:10.5px;color:var(--t2);margin-top:1px;font-family:var(--fmono);display:flex;align-items:center;gap:6px}
+.topbar-r{display:flex;gap:7px;align-items:center}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--t2);flex-shrink:0;transition:background .15s,box-shadow .15s}
+.live-dot.flash{background:var(--green);box-shadow:0 0 10px var(--green)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--bg2);color:var(--t0);font-size:12px;font-weight:500;transition:all .15s}
+.btn:hover{background:var(--bg3);border-color:var(--green)}
+.btn.sm{padding:4px 9px;font-size:11px}
+.content{padding:20px 24px;flex:1}
+.sec{display:none}
+.sec.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.gauto{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sh h2{font-size:15px;font-weight:700}
+.kcard{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.kcard::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--r) var(--r) 0 0}
+.kcard.g::after{background:var(--green)}.kcard.t::after{background:var(--teal)}.kcard.b::after{background:var(--blue)}.kcard.a::after{background:var(--amber)}.kcard.r::after{background:var(--red)}.kcard.v::after{background:var(--violet)}
+.kcard:hover{border-color:rgba(0,245,160,.3);box-shadow:var(--glow-g)}
+.kcard.updated{animation:cardFlash .6s ease}
+@keyframes cardFlash{0%{border-color:var(--green)}50%{border-color:var(--green);box-shadow:var(--glow-g)}100%{border-color:var(--b1);box-shadow:none}}
+.kcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.kcard-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.kcard-icon{font-size:14px}
+.kcard-icon.g{color:var(--green)}.kcard-icon.t{color:var(--teal)}.kcard-icon.b{color:var(--blue)}.kcard-icon.a{color:var(--amber)}.kcard-icon.r{color:var(--red)}.kcard-icon.v{color:var(--violet)}
+.kcard-val{font-size:26px;font-weight:700;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:5px}
+.kcard-val sup{font-size:12px;font-weight:500;letter-spacing:0;margin-left:2px}
+.kcard-sub{font-size:11px;color:var(--t1)}
+.panel{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.pt{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+.pt i{color:var(--green);opacity:.85}
+.cbox{position:relative}
+.cbox.h180{height:180px}.cbox.h220{height:220px}.cbox.h260{height:260px}
+.door-badge{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:var(--r);font-size:14px;font-weight:700;letter-spacing:.3px;border:2px solid;transition:all .3s}
+.door-badge.open{background:rgba(255,77,107,.1);border-color:var(--red);color:var(--red);box-shadow:var(--glow-r)}
+.door-badge.closed{background:rgba(0,245,160,.08);border-color:var(--green);color:var(--green);box-shadow:var(--glow-g)}
+.avg-row{display:flex;gap:14px;margin-bottom:14px}
+.avg-card{flex:1;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:16px 20px;display:flex;align-items:center;gap:14px;transition:border-color .2s}
+.avg-card.updated{animation:cardFlash .6s ease}
+.avg-icon{width:44px;height:44px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px}
+.avg-icon.temp{background:rgba(0,212,224,.1);color:var(--teal)}
+.avg-icon.hum{background:rgba(77,141,255,.1);color:var(--blue)}
+.avg-lbl{font-size:10.5px;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:4px}
+.avg-val{font-size:28px;font-weight:800;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.avg-unit{font-size:13px;font-weight:500;margin-left:3px}
+.avg-detail{font-size:10.5px;color:var(--t1);margin-top:4px}
+.cons-card{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:18px 20px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s}
+.cons-card.updated{animation:cardFlash .6s ease}
+.cons-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px}
+.cons-card.water::before{background:var(--teal)}.cons-card.elec::before{background:var(--violet)}.cons-card.gas::before{background:var(--amber)}
+.cons-ico{font-size:28px;margin-bottom:7px}
+.cons-card.water .cons-ico{color:var(--teal)}.cons-card.elec .cons-ico{color:var(--violet)}.cons-card.gas .cons-ico{color:var(--amber)}
+.cons-num{font-size:30px;font-weight:800;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.cons-unit{font-size:11px;color:var(--t2);margin-top:3px}
+.ncard{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:14px 16px;transition:border-color .2s}
+.ncard.updated{animation:cardFlash .6s ease}
+.nc-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--b0)}
+.nc-name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:7px}
+.nc-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.nc-status.online{background:rgba(0,245,160,.1);color:var(--green)}
+.nc-status.offline{background:rgba(255,77,107,.1);color:var(--red)}
+.nc-sensors{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.ns{background:var(--bg3);border-radius:var(--rsm);padding:9px 10px;display:flex;align-items:center;gap:9px}
+.ns-icon{font-size:14px;flex-shrink:0;width:18px;text-align:center}
+.ns-body{min-width:0}
+.ns-val{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ns-lbl{font-size:10px;color:var(--t2);margin-top:1px}
+.nc-ts{margin-top:8px;text-align:right;font-size:10px;color:var(--t2);font-family:var(--fmono)}
+.alert-list{display:flex;flex-direction:column;gap:8px}
+.al{display:flex;align-items:flex-start;gap:11px;background:var(--bg2);border:1px solid var(--b1);border-left:3px solid var(--b1);border-radius:var(--r);padding:11px 13px;transition:opacity .3s}
+.al.danger{border-left-color:var(--red)}.al.warning{border-left-color:var(--amber)}.al.info{border-left-color:var(--blue)}
+.al-icon{font-size:15px;margin-top:1px;flex-shrink:0}
+.al.danger .al-icon{color:var(--red)}.al.warning .al-icon{color:var(--amber)}.al.info .al-icon{color:var(--blue)}
+.al-body{flex:1;min-width:0}
+.al-title{font-weight:700;font-size:12.5px;margin-bottom:2px}
+.al-msg{font-size:11.5px;color:var(--t1)}
+.al-ts{font-size:10px;color:var(--t2);margin-top:2px;font-family:var(--fmono)}
+.btn-ack{flex-shrink:0;padding:3px 10px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--bg3);color:var(--t1);font-size:11px;transition:all .15s}
+.btn-ack:hover{background:rgba(0,245,160,.1);color:var(--green);border-color:var(--green)}
+.empty{text-align:center;padding:44px 20px;color:var(--t2)}
+.empty i{font-size:36px;margin-bottom:10px;display:block;opacity:.25}
+@media(max-width:900px){
+  .sidebar{width:52px}
+  .s-logo-name,.s-logo-sub,.nav-btn span,.conn span,.nav-badge,.s-nav-sec{display:none}
+  .s-logo{justify-content:center;padding:16px 0}
+  .nav-btn{justify-content:center}
+  .topbar,.content{padding-left:14px;padding-right:14px}
+  .g2,.g3,.g4,.gauto{grid-template-columns:1fr}
+  .avg-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="s-logo">
+    <div class="s-logo-mark">B</div>
+    <div><div class="s-logo-name">BatiSense</div><div class="s-logo-sub">Pro</div></div>
+  </div>
+  <nav class="s-nav">
+    <div class="s-nav-sec">Tableau de bord</div>
+    <button class="nav-btn active" data-sec="overview"><i class="fas fa-home"></i><span>Vue d'ensemble</span></button>
+    <button class="nav-btn" data-sec="nodes"><i class="fas fa-microchip"></i><span>Nœuds</span></button>
+    <div class="s-nav-sec">Consommation</div>
+    <button class="nav-btn" data-sec="consumption"><i class="fas fa-chart-area"></i><span>Consommation</span></button>
+    <div class="s-nav-sec">Système</div>
+    <button class="nav-btn" data-sec="alerts"><i class="fas fa-bell"></i><span>Alertes</span>
+      <span class="nav-badge" id="alert-badge" style="display:none">0</span>
+    </button>
+  </nav>
+  <div class="s-footer">
+    <div class="conn"><span class="dot" id="dot-sse"></span><span id="lbl-sse">Connexion…</span></div>
+    <div class="conn"><span class="dot" id="dot-api"></span><span id="lbl-api">API…</span></div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-l">
+      <h1 id="page-title">Vue d'ensemble</h1>
+      <p>
+        <span class="live-dot" id="live-dot"></span>
+        Dernière donnée: <span id="last-update">—</span>
+        · <span id="last-node">—</span>
+      </p>
+    </div>
+    <div class="topbar-r">
+      <button class="btn" onclick="exportCSV()"><i class="fas fa-download"></i> CSV</button>
+      <button class="btn" id="theme-btn" onclick="toggleTheme()"><i class="fas fa-sun"></i></button>
+
+      <!-- User badge & logout -->
+      <div id="user-badge" style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rsm);padding:5px 11px;font-size:12px;">
+        <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#000;flex-shrink:0;" id="user-avatar">?</div>
+        <span id="user-name" style="color:var(--t1);font-weight:600">…</span>
+      </div>
+      <button class="btn" onclick="doLogout()" title="Se déconnecter" style="color:var(--red);border-color:rgba(255,77,107,.2)">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+    <!-- OVERVIEW -->
+    <section id="overview" class="sec active">
+      <div class="sh"><h2>Maison — Moyennes</h2></div>
+      <div class="avg-row">
+        <div class="avg-card" id="avg-temp-card">
+          <div class="avg-icon temp"><i class="fas fa-thermometer-half"></i></div>
+          <div>
+            <div class="avg-lbl">Température moyenne</div>
+            <div class="avg-val"><span id="avg-temp">—</span><span class="avg-unit">°C</span></div>
+            <div class="avg-detail" id="avg-temp-detail">Cuisine + Salon</div>
+          </div>
+        </div>
+        <div class="avg-card" id="avg-hum-card">
+          <div class="avg-icon hum"><i class="fas fa-tint"></i></div>
+          <div>
+            <div class="avg-lbl">Humidité moyenne</div>
+            <div class="avg-val"><span id="avg-hum">—</span><span class="avg-unit">%</span></div>
+            <div class="avg-detail" id="avg-hum-detail">Cuisine + Salon</div>
+          </div>
+        </div>
+      </div>
+      <div class="g4" style="margin-bottom:14px">
+        <div class="kcard g" id="kpi-kitchen">
+          <div class="kcard-top"><span class="kcard-lbl">Cuisine</span><i class="fas fa-utensils kcard-icon g"></i></div>
+          <div class="kcard-val"><span id="k-kitchen-temp">—</span><sup>°C</sup></div>
+          <div class="kcard-sub" id="k-kitchen-hum">Humidité: —%</div>
+        </div>
+        <div class="kcard t" id="kpi-salon">
+          <div class="kcard-top"><span class="kcard-lbl">Salon</span><i class="fas fa-couch kcard-icon t"></i></div>
+          <div class="kcard-val"><span id="k-salon-temp">—</span><sup>°C</sup></div>
+          <div class="kcard-sub" id="k-salon-hum">Humidité: —%</div>
+        </div>
+        <div class="kcard a" id="kpi-port">
+          <div class="kcard-top"><span class="kcard-lbl">Porte</span><i class="fas fa-door-open kcard-icon a"></i></div>
+          <div class="kcard-val" style="font-size:16px;margin-top:6px" id="k-door">—</div>
+          <div class="kcard-sub" id="k-door-pres">Présence: —</div>
+        </div>
+        <div class="kcard b" id="kpi-room">
+          <div class="kcard-top"><span class="kcard-lbl">Chambre</span><i class="fas fa-bed kcard-icon b"></i></div>
+          <div class="kcard-val" style="font-size:16px;margin-top:6px" id="k-room-pres">—</div>
+          <div class="kcard-sub" id="k-room-lum">Luminosité: — lux</div>
+        </div>
+      </div>
+      <div class="g2" style="margin-bottom:14px">
+        <div class="panel">
+          <div class="ph"><div class="pt"><i class="fas fa-door-open"></i> État de la porte</div></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="door-badge closed" id="door-badge"><i class="fas fa-door-closed"></i> FERMÉE</div>
+            <span style="font-size:11px;color:var(--t1)" id="door-pres-label">Présence port: —</span>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="pt"><i class="fas fa-wind"></i> Détection Gaz</div></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="door-badge closed" id="gas-kitchen"><i class="fas fa-utensils"></i> Cuisine: OK</div>
+            <div class="door-badge closed" id="gas-salon"><i class="fas fa-couch"></i> Salon: OK</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph">
+          <div class="pt"><i class="fas fa-chart-line"></i> Températures – 24h</div>
+          <div style="display:flex;gap:5px" id="temp-tabs">
+            <button class="btn sm active" data-node="all">Tous</button>
+            <button class="btn sm" data-node="kitchen">Cuisine</button>
+            <button class="btn sm" data-node="salon">Salon</button>
+          </div>
+        </div>
+        <div class="cbox h220"><canvas id="chartTemp"></canvas></div>
+      </div>
+      <div class="g2">
+        <div class="panel">
+          <div class="ph"><div class="pt"><i class="fas fa-tint"></i> Humidité – 24h</div></div>
+          <div class="cbox h180"><canvas id="chartHum"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="pt"><i class="fas fa-walking"></i> Présence – 24h (Cuisine)</div></div>
+          <div class="cbox h180"><canvas id="chartPresence"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NODES -->
+    <section id="nodes" class="sec">
+      <div class="sh"><h2>État des nœuds</h2></div>
+      <div class="gauto" id="nodes-container">
+        <div class="empty"><i class="fas fa-spinner fa-spin"></i></div>
+      </div>
+    </section>
+
+    <!-- CONSUMPTION -->
+    <section id="consumption" class="sec">
+      <div class="sh"><h2>Consommation journalière</h2></div>
+      <div class="g3" style="margin-bottom:14px">
+        <div class="cons-card water" id="cons-water-card">
+          <div class="cons-ico"><i class="fas fa-faucet"></i></div>
+          <div class="cons-num" id="cons-water">—</div>
+          <div class="cons-unit">Litres aujourd'hui</div>
+        </div>
+        <div class="cons-card elec" id="cons-elec-card">
+          <div class="cons-ico"><i class="fas fa-plug"></i></div>
+          <div class="cons-num" id="cons-elec">—</div>
+          <div class="cons-unit">kWh aujourd'hui</div>
+        </div>
+        <div class="cons-card gas" id="cons-gas-card">
+          <div class="cons-ico"><i class="fas fa-fire"></i></div>
+          <div class="cons-num" id="cons-gas">—</div>
+          <div class="cons-unit">m³ aujourd'hui</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="pt"><i class="fas fa-chart-area"></i> Eau – historique (litres)</div></div>
+        <div class="cbox h220"><canvas id="chartWater"></canvas></div>
+      </div>
+      <div class="g2">
+        <div class="panel">
+          <div class="ph"><div class="pt"><i class="fas fa-plug"></i> Électricité – historique (kWh)</div></div>
+          <div class="cbox h180"><canvas id="chartElec"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="pt"><i class="fas fa-fire"></i> Gaz – historique (m³)</div></div>
+          <div class="cbox h180"><canvas id="chartGas"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALERTS -->
+    <section id="alerts" class="sec">
+      <div class="sh"><h2>Alertes</h2></div>
+      <div class="alert-list" id="alert-list">
+        <div class="empty"><i class="fas fa-spinner fa-spin"></i></div>
+      </div>
+    </section>
+  </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<script>
+"use strict";
+
+const API_BASE = "http://10.203.84.58:5000";   // change to your server IP
+const HISTORY_HOURS = 24;
+
+const NODES = {
+  kitchen:     { label:"Cuisine",     icon:"fa-utensils",  color:"var(--green)",  sensors:["temperature","humidity","gas_detected","presence"] },
+  salon:       { label:"Salon",       icon:"fa-couch",     color:"var(--teal)",   sensors:["temperature","humidity","gas_detected","presence"] },
+  port:        { label:"Porte",       icon:"fa-door-open", color:"var(--amber)",  sensors:["door_open","presence","structure_alert"] },
+  room:        { label:"Chambre",     icon:"fa-bed",       color:"var(--blue)",   sensors:["presence","luminosity","structure_alert"] },
+  water:       { label:"Eau",         icon:"fa-faucet",    color:"var(--teal)",   sensors:["daily_consumption"] },
+  electricity: { label:"Électricité", icon:"fa-plug",      color:"var(--violet)", sensors:["daily_consumption"] },
+  gas_node:    { label:"Gaz",         icon:"fa-fire",      color:"var(--amber)",  sensors:["daily_consumption"] },
+};
+
+const SENSOR_META = {
+  temperature:       { icon:"fa-thermometer-half", color:"var(--teal)",  label:"Temp.",    fmt:v=>`${v.toFixed(1)}°C` },
+  humidity:          { icon:"fa-tint",             color:"var(--blue)",  label:"Humidité", fmt:v=>`${Math.round(v)}%` },
+  gas_detected:      { icon:"fa-wind",             color:"var(--red)",   label:"Gaz",      fmt:v=>(v===1?"⚠ DÉTECTÉ":"Normal") },
+  presence:          { icon:"fa-walking",          color:"var(--amber)", label:"Présence", fmt:v=>(v===1?"Oui":"Non") },
+  door_open:         { icon:"fa-door-open",        color:"var(--amber)", label:"Porte",    fmt:v=>(v===1?"Ouverte":"Fermée") },
+  structure_alert:   { icon:"fa-exclamation-triangle",color:"var(--red)",label:"Structure",fmt:v=>(v===1?"⚠ ALERTE":"Normal") },
+  luminosity:        { icon:"fa-sun",              color:"var(--amber)", label:"Lumino.",  fmt:v=>`${Math.round(v)} lux` },
+  daily_consumption: { icon:"fa-tachometer-alt",   color:"var(--green)", label:"Consomm.", fmt:v=>v.toFixed(2) },
+};
+
+// ── STATE ─────────────────────────────────────────
+const state = { latest: {}, nodeSeen: {}, alertCount: 0, averages: { avg_temperature: null, avg_humidity: null, sources: {} } };
+
+// ── CHART SETUP (same as original) ───────────────
+let CH = {};
+Chart.defaults.color       = "#7d95bc";
+Chart.defaults.borderColor = "rgba(255,255,255,0.05)";
+Chart.defaults.font.family = "'Syne',sans-serif";
+const GRID    = { color:"rgba(255,255,255,0.04)" };
+const TOOLTIP = { backgroundColor:"#0d1424", borderColor:"rgba(255,255,255,.08)", borderWidth:1, padding:10 };
+
+function lineOpts(yLabel) {
+  return {
+    responsive:true, maintainAspectRatio:false, animation:{ duration:350 },
+    interaction:{ mode:"index", intersect:false },
+    plugins:{ legend:{ position:"top", labels:{ boxWidth:10, padding:14, usePointStyle:true } }, tooltip:TOOLTIP },
+    scales:{
+      x:{ type:"time", time:{ displayFormats:{ minute:"HH:mm", hour:"HH:mm", day:"dd/MM" } }, ticks:{ maxTicksLimit:8, maxRotation:0 }, grid:GRID },
+      y:{ title:{ display:!!yLabel, text:yLabel, color:"#7d95bc" }, grid:GRID, ticks:{ maxTicksLimit:6 } }
+    }
+  };
+}
+function initCharts() {
+  CH.temp     = new Chart(document.getElementById("chartTemp"),    { type:"line", data:{ datasets:[] }, options:lineOpts("°C") });
+  CH.hum      = new Chart(document.getElementById("chartHum"),     { type:"line", data:{ datasets:[] }, options:lineOpts("%") });
+  CH.presence = new Chart(document.getElementById("chartPresence"),{
+    type:"line", data:{ datasets:[] },
+    options:{ ...lineOpts(""), scales:{
+      x:{ type:"time", time:{ displayFormats:{ minute:"HH:mm", hour:"HH:mm" } }, grid:GRID, ticks:{ maxTicksLimit:8 } },
+      y:{ ticks:{ callback:v=>v===1?"Présent":"Absent", stepSize:1 }, min:0, max:1, grid:GRID }
+    }}
+  });
+  CH.water = new Chart(document.getElementById("chartWater"), {
+    type:"bar", data:{ datasets:[] },
+    options:{ responsive:true, maintainAspectRatio:false, animation:{ duration:350 },
+      plugins:{ legend:{ display:false }, tooltip:TOOLTIP },
+      scales:{ x:{ type:"time", time:{ displayFormats:{ minute:"HH:mm",hour:"HH:mm",day:"dd/MM" } }, grid:GRID, ticks:{ maxTicksLimit:10, maxRotation:0 } },
+               y:{ title:{ display:true, text:"Litres", color:"#7d95bc" }, grid:GRID, beginAtZero:true, ticks:{ maxTicksLimit:6 } } }
+    }
+  });
+  CH.elec = new Chart(document.getElementById("chartElec"), { type:"line", data:{ datasets:[] }, options:lineOpts("kWh") });
+  CH.gas  = new Chart(document.getElementById("chartGas"),  { type:"line", data:{ datasets:[] }, options:lineOpts("m³") });
+}
+function mkDS(label, color, data, stepped=false) {
+  return { label, data, borderColor:color, backgroundColor:color+"18", borderWidth:2, tension:stepped?0:.45, fill:true, pointRadius:0, pointHoverRadius:4, stepped };
+}
+function mkBarDS(label, color, data) {
+  return { label, data, backgroundColor:color+"99", borderRadius:5, borderSkipped:false };
+}
+function toXY(rows) { return rows ? rows.map(r=>({ x:new Date(r.t).getTime(), y:r.v })) : []; }
+
+// ── API HELPERS with credentials ──────────────────
+async function apiFetch(path) {
+  try {
+    const r = await fetch(API_BASE + path, { credentials: "include", signal:AbortSignal.timeout(6000) });
+    if (!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch { return null; }
+}
+function setApiDot(ok) {
+  document.getElementById("dot-api").className   = "dot " + (ok?"ok":"err");
+  document.getElementById("lbl-api").textContent = ok ? "API connectée" : "API hors ligne";
+}
+
+// ── AUTH & USER ──────────────────────────────────
+async function loadUser() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
+    if (res.status === 401) {
+      window.location.href = "/login";
+      return false;
+    }
+    const data = await res.json();
+    const u = data.user;
+    document.getElementById("user-name").textContent = u.first_name + " " + u.last_name;
+    document.getElementById("user-avatar").textContent = (u.first_name[0] + u.last_name[0]).toUpperCase();
+    return true;
+  } catch {
+    window.location.href = "/login";
+    return false;
+  }
+}
+async function doLogout() {
+  await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
+  window.location.href = "/login";
+}
+
+// ── DATA LOADING (filtered by user) ───────────────
+async function loadInitial() {
+  const data = await apiFetch("/api/latest");
+  if (!data) { setApiDot(false); return; }
+  setApiDot(true);
+  for (const [nid, sensors] of Object.entries(data)) {
+    if (!state.latest[nid]) state.latest[nid] = {};
+    for (const [sensor, info] of Object.entries(sensors)) {
+      state.latest[nid][sensor] = info.value;
+      if (!state.nodeSeen[nid] || info.timestamp > state.nodeSeen[nid])
+        state.nodeSeen[nid] = info.timestamp;
+    }
+  }
+}
+async function loadAverages() {
+  const data = await apiFetch("/api/averages");
+  if (!data) return;
+  state.averages = data;
+  renderAverages();
+}
+async function loadHistory() {
+  const [kt, st, kh, sh, kp, w, e, g] = await Promise.all([
+    apiFetch(`/api/history?node_id=kitchen&sensor_type=temperature&hours=${HISTORY_HOURS}`),
+    apiFetch(`/api/history?node_id=salon&sensor_type=temperature&hours=${HISTORY_HOURS}`),
+    apiFetch(`/api/history?node_id=kitchen&sensor_type=humidity&hours=${HISTORY_HOURS}`),
+    apiFetch(`/api/history?node_id=salon&sensor_type=humidity&hours=${HISTORY_HOURS}`),
+    apiFetch(`/api/history?node_id=kitchen&sensor_type=presence&hours=${HISTORY_HOURS}`),
+    apiFetch(`/api/history?node_id=water&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
+    apiFetch(`/api/history?node_id=electricity&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
+    apiFetch(`/api/history?node_id=gas_node&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
+  ]);
+  updateTempChart(kt, st);
+  if (CH.hum) { CH.hum.data.datasets = [mkDS("Cuisine","var(--green)",toXY(kh)), mkDS("Salon","var(--teal)",toXY(sh))]; CH.hum.update("none"); }
+  if (CH.presence) { CH.presence.data.datasets = [mkDS("Cuisine","var(--amber)",toXY(kp),true)]; CH.presence.update("none"); }
+  if (CH.water) { CH.water.data.datasets = [mkBarDS("Eau","var(--teal)",toXY(w))]; CH.water.update("none"); }
+  if (CH.elec)  { CH.elec.data.datasets  = [mkDS("Élec.","var(--violet)",toXY(e))]; CH.elec.update("none"); }
+  if (CH.gas)   { CH.gas.data.datasets   = [mkDS("Gaz","var(--amber)",toXY(g))]; CH.gas.update("none"); }
+}
+let _tempFilter = "all";
+function updateTempChart(kRows, sRows) {
+  if (!CH.temp) return;
+  const ds = [];
+  if (_tempFilter==="all"||_tempFilter==="kitchen") ds.push(mkDS("Cuisine","var(--green)",toXY(kRows)));
+  if (_tempFilter==="all"||_tempFilter==="salon")   ds.push(mkDS("Salon","var(--teal)",toXY(sRows)));
+  CH.temp.data.datasets = ds;
+  CH.temp.update("none");
+}
+function appendChartPoint(chartKey, label, color, point) {
+  const chart = CH[chartKey];
+  if (!chart) return;
+  let ds = chart.data.datasets.find(d => d.label === label);
+  if (!ds) { ds = mkDS(label, color, []); chart.data.datasets.push(ds); }
+  ds.data.push(point);
+  if (ds.data.length > 500) ds.data.shift();
+  chart.update("none");
+}
+
+// ── SSE with credentials (cookies are sent automatically) ──
+let _sse = null;
+let _sseRetryTimer = null;
+function connectSSE() {
+  if (_sse) { _sse.close(); _sse = null; }
+  setSseDot("connecting");
+  _sse = new EventSource(API_BASE + "/api/stream", { withCredentials: true });
+  _sse.onopen = () => { setSseDot("ok"); clearTimeout(_sseRetryTimer); };
+  _sse.addEventListener("sensor", e => onSensorEvent(JSON.parse(e.data)));
+  _sse.addEventListener("alert", e => onAlertEvent(JSON.parse(e.data)));
+  _sse.onerror = () => { setSseDot("err"); _sse.close(); _sse=null; _sseRetryTimer = setTimeout(connectSSE, 5000); };
+}
+function setSseDot(state) {
+  const dot   = document.getElementById("dot-sse"), label = document.getElementById("lbl-sse");
+  if (state === "ok")      { dot.className = "dot ok"; label.textContent = "Temps réel"; }
+  else if (state === "err"){ dot.className = "dot err"; label.textContent = "SSE déconnecté"; }
+  else                     { dot.className = "dot"; label.textContent = "Connexion…"; }
+}
+
+// ── Real‑time event handlers ──────────────────────
+function onSensorEvent(d) {
+  const { node_id: nid, sensor_type, value, timestamp } = d;
+  if (!state.latest[nid]) state.latest[nid] = {};
+  state.latest[nid][sensor_type] = value;
+  state.nodeSeen[nid] = timestamp;
+  flashLiveDot(nid, timestamp);
+  updateCardForNode(nid, sensor_type, value);
+  updateNodeCard(nid);
+  const pt = { x: new Date(timestamp).getTime(), y: value };
+  if (nid === "kitchen" && sensor_type === "temperature" && (_tempFilter === "all" || _tempFilter === "kitchen")) appendChartPoint("temp", "Cuisine", "var(--green)", pt);
+  if (nid === "salon" && sensor_type === "temperature" && (_tempFilter === "all" || _tempFilter === "salon")) appendChartPoint("temp", "Salon", "var(--teal)", pt);
+  if ((nid === "kitchen" || nid === "salon") && sensor_type === "humidity") {
+    const label = nid === "kitchen" ? "Cuisine" : "Salon", color = nid === "kitchen" ? "var(--green)" : "var(--teal)";
+    appendChartPoint("hum", label, color, pt);
+  }
+  if (nid === "kitchen" && sensor_type === "presence") appendChartPoint("presence", "Cuisine", "var(--amber)", pt);
+  if (nid === "water" && sensor_type === "daily_consumption") {
+    appendChartPoint("water", "Eau", "var(--teal)", pt); flashEl("cons-water-card");
+    document.getElementById("cons-water").textContent = Math.round(value);
+  }
+  if (nid === "electricity" && sensor_type === "daily_consumption") {
+    appendChartPoint("elec", "Élec.", "var(--violet)", pt); flashEl("cons-elec-card");
+    document.getElementById("cons-elec").textContent = value.toFixed(2);
+  }
+  if (nid === "gas_node" && sensor_type === "daily_consumption") {
+    appendChartPoint("gas", "Gaz", "var(--amber)", pt); flashEl("cons-gas-card");
+    document.getElementById("cons-gas").textContent = value.toFixed(3);
+  }
+  if ((nid === "kitchen" || nid === "salon") && (sensor_type === "temperature" || sensor_type === "humidity")) recalcAverages();
+}
+function onAlertEvent(d) {
+  state.alertCount++; updateAlertBadge();
+  const list = document.getElementById("alert-list");
+  const el = document.createElement("div");
+  el.className = `al ${d.level}`;
+  el.id = `al-push-${Date.now()}`;
+  el.innerHTML = `<i class="fas ${d.level==='danger'?'fa-exclamation-circle':d.level==='warning'?'fa-exclamation-triangle':'fa-info-circle'} al-icon"></i>
+    <div class="al-body"><div class="al-title">${escapeHtml(d.node_id)} — ${escapeHtml(d.sensor_type)}</div>
+    <div class="al-msg">${escapeHtml(d.message)}</div><div class="al-ts">${d.timestamp}</div></div>
+    <button class="btn-ack" onclick="this.closest('.al').remove()">Acquitter</button>`;
+  const empty = list.querySelector(".empty");
+  if (empty) empty.remove();
+  list.prepend(el);
+}
+function recalcAverages() {
+  const kt = state.latest.kitchen?.temperature, st = state.latest.salon?.temperature;
+  const kh = state.latest.kitchen?.humidity, sh = state.latest.salon?.humidity;
+  function avg(a,b){ const vs=[a,b].filter(v=>v!=null); return vs.length?Math.round((vs.reduce((x,y)=>x+y,0)/vs.length)*10)/10:null; }
+  state.averages = { avg_temperature: avg(kt,st), avg_humidity: avg(kh,sh), sources: { kitchen_temperature:kt, salon_temperature:st, kitchen_humidity:kh, salon_humidity:sh } };
+  renderAverages();
+}
+function renderAverages() {
+  const a = state.averages;
+  setText("avg-temp", a.avg_temperature!==null?a.avg_temperature.toFixed(1):"—");
+  setText("avg-hum",  a.avg_humidity!==null?Math.round(a.avg_humidity):"—");
+  const td=[], hd=[];
+  if(a.sources.kitchen_temperature!=null) td.push(`Cuisine ${a.sources.kitchen_temperature.toFixed(1)}°C`);
+  if(a.sources.salon_temperature!=null)   td.push(`Salon ${a.sources.salon_temperature.toFixed(1)}°C`);
+  if(td.length) setText("avg-temp-detail", td.join(" · "));
+  if(a.sources.kitchen_humidity!=null) hd.push(`Cuisine ${Math.round(a.sources.kitchen_humidity)}%`);
+  if(a.sources.salon_humidity!=null)   hd.push(`Salon ${Math.round(a.sources.salon_humidity)}%`);
+  if(hd.length) setText("avg-hum-detail", hd.join(" · "));
+  if(a.avg_temperature!==null) flashEl("avg-temp-card");
+  if(a.avg_humidity!==null) flashEl("avg-hum-card");
+}
+function updateCardForNode(nid, sensor, value) {
+  if (nid === "kitchen") {
+    if (sensor === "temperature") { setText("k-kitchen-temp", value.toFixed(1)); flashEl("kpi-kitchen"); }
+    if (sensor === "humidity")    { setText("k-kitchen-hum",  `Humidité: ${Math.round(value)}%`); }
+    if (sensor === "gas_detected") updateGasBadge("gas-kitchen", "Cuisine", "fa-utensils", value);
+  }
+  if (nid === "salon") {
+    if (sensor === "temperature") { setText("k-salon-temp", value.toFixed(1)); flashEl("kpi-salon"); }
+    if (sensor === "humidity")    { setText("k-salon-hum",  `Humidité: ${Math.round(value)}%`); }
+    if (sensor === "gas_detected") updateGasBadge("gas-salon", "Salon", "fa-couch", value);
+  }
+  if (nid === "port") {
+    flashEl("kpi-port");
+    if (sensor === "door_open") {
+      const open = value === 1;
+      const badge = document.getElementById("door-badge");
+      badge.className = "door-badge " + (open ? "open" : "closed");
+      badge.innerHTML = `<i class="fas fa-door-${open?"open":"closed"}"></i> ${open?"OUVERTE":"FERMÉE"}`;
+      setText("k-door", open ? "OUVERTE" : "FERMÉE");
+      document.getElementById("k-door").style.color = open ? "var(--red)" : "var(--green)";
+    }
+    if (sensor === "presence") { setText("k-door-pres", `Présence: ${value===1?"Oui":"Non"}`); setText("door-pres-label", `Présence port: ${value===1?"Oui":"Non"}`); }
+  }
+  if (nid === "room") {
+    flashEl("kpi-room");
+    if (sensor === "presence")  setText("k-room-pres", value===1?"Présent":"Absent");
+    if (sensor === "luminosity") setText("k-room-lum", `Luminosité: ${Math.round(value)} lux`);
+  }
+}
+function updateGasBadge(id, label, iconCls, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const alert = value === 1;
+  el.className = "door-badge " + (alert ? "open" : "closed");
+  el.innerHTML = `<i class="fas ${iconCls}"></i> ${label}: ${alert ? "<strong>GAZ!</strong>" : "OK"}`;
+}
+function flashLiveDot(nid, ts) {
+  const dot = document.getElementById("live-dot");
+  dot.classList.remove("flash");
+  void dot.offsetWidth;
+  dot.classList.add("flash");
+  setTimeout(() => dot.classList.remove("flash"), 600);
+  document.getElementById("last-update").textContent = new Date(ts).toLocaleTimeString("fr-FR");
+  document.getElementById("last-node").textContent   = NODES[nid]?.label || nid;
+}
+function flashEl(id) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove("updated"); void el.offsetWidth; el.classList.add("updated"); }
+}
+function setText(id, val) { const e = document.getElementById(id); if(e) e.textContent = val; }
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute("data-theme") !== "light";
+  document.documentElement.setAttribute("data-theme", isDark?"light":"dark");
+  document.getElementById("theme-btn").innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+  localStorage.setItem("bs_theme", isDark?"light":"dark");
+}
+function loadTheme() {
+  const t = localStorage.getItem("bs_theme")||"dark";
+  document.documentElement.setAttribute("data-theme", t);
+  document.getElementById("theme-btn").innerHTML = t==="dark"?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+}
+function exportCSV() { window.open(API_BASE+"/api/export/csv","_blank"); }
+function escapeHtml(s) { return String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+// ── NODE CARDS ─────────────────────────────────────
+function renderNodeCards() {
+  const c = document.getElementById("nodes-container");
+  c.innerHTML = Object.entries(NODES).map(([nid, meta]) => {
+    const d = state.latest[nid] || {};
+    const lastSeen = state.nodeSeen[nid];
+    const online = lastSeen ? (Date.now() - new Date(lastSeen).getTime()) < 15000 : false;
+    const ts = lastSeen ? new Date(lastSeen).toLocaleTimeString("fr-FR") : "jamais";
+    const sensorsHtml = meta.sensors.map(s => {
+      const m = SENSOR_META[s] || { icon:"fa-question", color:"var(--t1)", label:s, fmt:v=>v };
+      const raw = d[s];
+      const txt = raw != null ? m.fmt(raw) : "—";
+      const isAlert = (s==="gas_detected"||s==="structure_alert") && raw===1;
+      return `<div class="ns" data-sensor="${s}">
+        <i class="fas ${m.icon} ns-icon" style="color:${isAlert?"var(--red)":m.color}"></i>
+        <div class="ns-body"><div class="ns-val" style="${isAlert?"color:var(--red)":""}">${txt}</div><div class="ns-lbl">${m.label}</div></div>
+      </div>`;
+    }).join("");
+    return `<div class="ncard" id="nc-${nid}"><div class="nc-head"><div class="nc-name" style="color:${meta.color}"><i class="fas ${meta.icon}"></i>${meta.label}</div><span class="nc-status ${online?"online":"offline"}">${online?"En ligne":"Hors ligne"}</span></div><div class="nc-sensors">${sensorsHtml}</div><div class="nc-ts">🕐 ${ts}</div></div>`;
+  }).join("");
+}
+function updateNodeCard(nid) {
+  const cardEl = document.getElementById(`nc-${nid}`);
+  if (!cardEl) return;
+  const meta = NODES[nid], d = state.latest[nid] || {}, lastSeen = state.nodeSeen[nid], online = lastSeen ? (Date.now() - new Date(lastSeen).getTime()) < 15000 : false;
+  const pill = cardEl.querySelector(".nc-status");
+  if (pill) { pill.className = "nc-status " + (online?"online":"offline"); pill.textContent = online?"En ligne":"Hors ligne"; }
+  meta.sensors.forEach(s => {
+    const cell = cardEl.querySelector(`[data-sensor="${s}"]`);
+    if (!cell) return;
+    const m = SENSOR_META[s], raw = d[s], txt = raw != null ? m.fmt(raw) : "—", isAlert = (s==="gas_detected"||s==="structure_alert") && raw===1;
+    const valEl = cell.querySelector(".ns-val");
+    if (valEl) { valEl.textContent = txt; valEl.style.color = isAlert ? "var(--red)" : ""; }
+    const iconEl = cell.querySelector(".ns-icon");
+    if (iconEl) iconEl.style.color = isAlert ? "var(--red)" : m.color;
+  });
+  const tsEl = cardEl.querySelector(".nc-ts");
+  if (tsEl && lastSeen) tsEl.textContent = `🕐 ${new Date(lastSeen).toLocaleTimeString("fr-FR")}`;
+  flashEl(`nc-${nid}`);
+}
+
+// ── ALERTS ────────────────────────────────────────
+async function loadAlerts() {
+  const data = await apiFetch("/api/alerts");
+  const list = document.getElementById("alert-list");
+  if (!data) { list.innerHTML = `<div class="empty"><i class="fas fa-times-circle"></i></div>`; return; }
+  state.alertCount = data.length;
+  updateAlertBadge();
+  if (data.length === 0) { list.innerHTML = `<div class="empty"><i class="fas fa-check-circle"></i><p>Aucune alerte active</p></div>`; return; }
+  list.innerHTML = data.map(a => `
+    <div class="al ${a.level}" id="al-${a.id}">
+      <i class="fas ${a.level==='danger'?'fa-exclamation-circle':a.level==='warning'?'fa-exclamation-triangle':'fa-info-circle'} al-icon"></i>
+      <div class="al-body"><div class="al-title">${escapeHtml(a.node_id)} — ${escapeHtml(a.sensor_type)}</div><div class="al-msg">${escapeHtml(a.message)}</div><div class="al-ts">${a.timestamp}</div></div>
+      <button class="btn-ack" onclick="ackAlert(${a.id})">Acquitter</button>
+    </div>`).join("");
+}
+async function ackAlert(id) {
+  await fetch(`${API_BASE}/api/alerts/${id}/ack`, { method:"POST", credentials:"include" });
+  const el = document.getElementById(`al-${id}`);
+  if (el) { el.style.opacity="0"; setTimeout(()=>el.remove(),350); }
+  state.alertCount = Math.max(0, state.alertCount-1);
+  updateAlertBadge();
+}
+function updateAlertBadge() {
+  const b = document.getElementById("alert-badge");
+  b.style.display = state.alertCount > 0 ? "inline" : "none";
+  b.textContent = state.alertCount;
+}
+
+// ── NAVIGATION ────────────────────────────────────
+const SEC_TITLES = { overview:"Vue d'ensemble", nodes:"Nœuds capteurs", consumption:"Consommation", alerts:"Alertes" };
+document.querySelectorAll(".nav-btn[data-sec]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const id = btn.dataset.sec;
+    document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active"));
+    document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    btn.classList.add("active");
+    document.getElementById("page-title").textContent = SEC_TITLES[id]||id;
+    setTimeout(()=>Object.values(CH).forEach(c=>c?.resize?.()), 60);
+  });
+});
+document.getElementById("temp-tabs").addEventListener("click", async e => {
+  const b = e.target.closest(".btn");
+  if (!b||!b.dataset.node) return;
+  _tempFilter = b.dataset.node;
+  document.querySelectorAll("#temp-tabs .btn").forEach(x=>x.classList.toggle("active",x===b));
+  const [kt, st] = await Promise.all([
+    apiFetch(`/api/history?node_id=kitchen&sensor_type=temperature&hours=${HISTORY_HOURS}`),
+    apiFetch(`/api/history?node_id=salon&sensor_type=temperature&hours=${HISTORY_HOURS}`),
+  ]);
+  updateTempChart(kt, st);
+});
+
+// ── BOOT ──────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", async () => {
+  loadTheme();
+  initCharts();
+  const loggedIn = await loadUser();
+  if (!loggedIn) return;
+  await loadInitial();
+  await loadAverages();
+  await loadHistory();
+  renderNodeCards();
+  await loadAlerts();
+  connectSSE();
+});
+</script>
+</body>
+</html>
