@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
+/* ────── YOUR EXACT ORIGINAL STYLES ────── */
 :root{
   --bg0:#050810;--bg1:#090e1a;--bg2:#0d1424;--bg3:#121c30;--bg4:#182338;
   --b0:rgba(255,255,255,.04);--b1:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);
@@ -186,6 +187,8 @@ button{cursor:pointer;font-family:var(--fui)}
     <div class="topbar-r">
       <button class="btn" onclick="exportCSV()"><i class="fas fa-download"></i> CSV</button>
       <button class="btn" id="theme-btn" onclick="toggleTheme()"><i class="fas fa-sun"></i></button>
+
+      <!-- User badge & logout -->
       <div id="user-badge" style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rsm);padding:5px 11px;font-size:12px;">
         <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#000;flex-shrink:0;" id="user-avatar">?</div>
         <span id="user-name" style="color:var(--t1);font-weight:600">…</span>
@@ -290,6 +293,25 @@ button{cursor:pointer;font-family:var(--fui)}
     <!-- CONSUMPTION -->
     <section id="consumption" class="sec">
       <div class="sh"><h2>Consommation journalière</h2></div>
+      <!-- Water Meter Index Card -->
+      <div class="panel" style="margin-bottom:14px">
+        <div class="ph">
+          <div class="pt"><i class="fas fa-tachometer-alt"></i> Compteur d'eau — Index ESP32-CAM</div>
+          <span class="nc-status online" id="wm-status" style="display:none">En ligne</span>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Index actuel</div>
+            <div style="font-size:42px;font-weight:800;letter-spacing:-2px;color:var(--teal);font-variant-numeric:tabular-nums" id="wm-value">—</div>
+            <div style="font-size:12px;color:var(--t2);margin-top:2px">m³ · node: water_meter</div>
+          </div>
+          <div style="flex:1;min-width:140px">
+            <div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Dernière mise à jour</div>
+            <div style="font-size:13px;color:var(--t1);font-family:var(--fmono)" id="wm-ts">—</div>
+            <div style="font-size:10px;color:var(--t2);margin-top:6px">Source: ESP32-CAM → Raspberry Pi → Railway</div>
+          </div>
+        </div>
+      </div>
       <div class="g3" style="margin-bottom:14px">
         <div class="cons-card water" id="cons-water-card">
           <div class="cons-ico"><i class="fas fa-faucet"></i></div>
@@ -340,33 +362,36 @@ button{cursor:pointer;font-family:var(--fui)}
 <script>
 "use strict";
 
-const API_BASE = "http://10.203.84.58:5000";
+const API_BASE = "http://10.203.84.58:5000";   // change to your server IP
 const HISTORY_HOURS = 24;
 
 const NODES = {
-  kitchen:     { label:"Cuisine",     icon:"fa-utensils",  color:"var(--green)",  sensors:["temperature","humidity","gas_detected","presence"] },
-  salon:       { label:"Salon",       icon:"fa-couch",     color:"var(--teal)",   sensors:["temperature","humidity","gas_detected","presence"] },
-  port:        { label:"Porte",       icon:"fa-door-open", color:"var(--amber)",  sensors:["door_open","presence","structure_alert"] },
-  room:        { label:"Chambre",     icon:"fa-bed",       color:"var(--blue)",   sensors:["presence","luminosity","structure_alert"] },
-  water:       { label:"Eau",         icon:"fa-faucet",    color:"var(--teal)",   sensors:["daily_consumption"] },
-  electricity: { label:"Électricité", icon:"fa-plug",      color:"var(--violet)", sensors:["daily_consumption"] },
-  gas_node:    { label:"Gaz",         icon:"fa-fire",      color:"var(--amber)",  sensors:["daily_consumption"] },
+  kitchen:      { label:"Cuisine",       icon:"fa-utensils",  color:"var(--green)",  sensors:["temperature","humidity","gas_detected","presence"] },
+  salon:        { label:"Salon",         icon:"fa-couch",     color:"var(--teal)",   sensors:["temperature","humidity","gas_detected","presence"] },
+  port:         { label:"Porte",         icon:"fa-door-open", color:"var(--amber)",  sensors:["door_open","presence","structure_alert"] },
+  room:         { label:"Chambre",       icon:"fa-bed",       color:"var(--blue)",   sensors:["presence","luminosity","structure_alert"] },
+  water:        { label:"Eau",           icon:"fa-faucet",    color:"var(--teal)",   sensors:["daily_consumption"] },
+  electricity:  { label:"Électricité",   icon:"fa-plug",      color:"var(--violet)", sensors:["daily_consumption"] },
+  gas_node:     { label:"Gaz",           icon:"fa-fire",      color:"var(--amber)",  sensors:["daily_consumption"] },
+  water_meter:  { label:"Compteur Eau",  icon:"fa-tachometer-alt", color:"var(--teal)", sensors:["water_meter"] },
 };
 
 const SENSOR_META = {
-  temperature:       { icon:"fa-thermometer-half", color:"var(--teal)",  label:"Temp.",    fmt:v=>`${v.toFixed(1)}°C` },
-  humidity:          { icon:"fa-tint",             color:"var(--blue)",  label:"Humidité", fmt:v=>`${Math.round(v)}%` },
-  gas_detected:      { icon:"fa-wind",             color:"var(--red)",   label:"Gaz",      fmt:v=>(v===1?"⚠ DÉTECTÉ":"Normal") },
-  presence:          { icon:"fa-walking",          color:"var(--amber)", label:"Présence", fmt:v=>(v===1?"Oui":"Non") },
-  door_open:         { icon:"fa-door-open",        color:"var(--amber)", label:"Porte",    fmt:v=>(v===1?"Ouverte":"Fermée") },
-  structure_alert:   { icon:"fa-exclamation-triangle",color:"var(--red)",label:"Structure",fmt:v=>(v===1?"⚠ ALERTE":"Normal") },
-  luminosity:        { icon:"fa-sun",              color:"var(--amber)", label:"Lumino.",  fmt:v=>`${Math.round(v)} lux` },
-  daily_consumption: { icon:"fa-tachometer-alt",   color:"var(--green)", label:"Consomm.", fmt:v=>v.toFixed(2) },
+  temperature:       { icon:"fa-thermometer-half",     color:"var(--teal)",   label:"Temp.",     fmt:v=>`${v.toFixed(1)}°C` },
+  humidity:          { icon:"fa-tint",                 color:"var(--blue)",   label:"Humidité",  fmt:v=>`${Math.round(v)}%` },
+  gas_detected:      { icon:"fa-wind",                 color:"var(--red)",    label:"Gaz",       fmt:v=>(v===1?"⚠ DÉTECTÉ":"Normal") },
+  presence:          { icon:"fa-walking",              color:"var(--amber)",  label:"Présence",  fmt:v=>(v===1?"Oui":"Non") },
+  door_open:         { icon:"fa-door-open",            color:"var(--amber)",  label:"Porte",     fmt:v=>(v===1?"Ouverte":"Fermée") },
+  structure_alert:   { icon:"fa-exclamation-triangle", color:"var(--red)",    label:"Structure", fmt:v=>(v===1?"⚠ ALERTE":"Normal") },
+  luminosity:        { icon:"fa-sun",                  color:"var(--amber)",  label:"Lumino.",   fmt:v=>`${Math.round(v)} lux` },
+  daily_consumption: { icon:"fa-tachometer-alt",       color:"var(--green)",  label:"Consomm.",  fmt:v=>v.toFixed(2) },
+  water_meter:       { icon:"fa-faucet",               color:"var(--teal)",   label:"Index",     fmt:v=>`${parseFloat(v).toFixed(4)} m³` },
 };
 
+// ── STATE ─────────────────────────────────────────
 const state = { latest: {}, nodeSeen: {}, alertCount: 0, averages: { avg_temperature: null, avg_humidity: null, sources: {} } };
 
-// ── CHART SETUP ───────────────────────────────────
+// ── CHART SETUP (same as original) ───────────────
 let CH = {};
 Chart.defaults.color       = "#7d95bc";
 Chart.defaults.borderColor = "rgba(255,255,255,0.05)";
@@ -414,7 +439,7 @@ function mkBarDS(label, color, data) {
 }
 function toXY(rows) { return rows ? rows.map(r=>({ x:new Date(r.t).getTime(), y:r.v })) : []; }
 
-// ── API HELPERS ───────────────────────────────────
+// ── API HELPERS with credentials ──────────────────
 async function apiFetch(path) {
   try {
     const r = await fetch(API_BASE + path, { credentials: "include", signal:AbortSignal.timeout(6000) });
@@ -427,30 +452,13 @@ function setApiDot(ok) {
   document.getElementById("lbl-api").textContent = ok ? "API connectée" : "API hors ligne";
 }
 
-// ── AUTH & USER ───────────────────────────────────
-// FIX: No longer redirects automatically on failure.
-// A dedicated flag prevents redirect loops.
-// Only redirects on explicit 401; network errors are shown as a warning.
-let _authRedirectPending = false;
+// ── AUTH & USER ──────────────────────────────────
 async function loadUser() {
-  if (_authRedirectPending) return false;
   try {
-    const res = await fetch(`${API_BASE}/auth/me`, {
-      credentials: "include",
-      signal: AbortSignal.timeout(6000)
-    });
+    const res = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
     if (res.status === 401) {
-      // Only redirect once, not on network error
-      if (!_authRedirectPending) {
-        _authRedirectPending = true;
-        window.location.href = "/login";
-      }
+      window.location.href = "/login";
       return false;
-    }
-    if (!res.ok) {
-      // Server error — stay on page, show degraded state
-      document.getElementById("user-name").textContent = "Hors ligne";
-      return true; // Continue loading dashboard without redirect
     }
     const data = await res.json();
     const u = data.user;
@@ -458,20 +466,16 @@ async function loadUser() {
     document.getElementById("user-avatar").textContent = (u.first_name[0] + u.last_name[0]).toUpperCase();
     return true;
   } catch {
-    // Network error — stay on page, do NOT redirect
-    document.getElementById("user-name").textContent = "Hors ligne";
-    return true; // Continue loading dashboard
+    window.location.href = "/login";
+    return false;
   }
 }
-
 async function doLogout() {
-  try {
-    await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
-  } catch { /* ignore */ }
+  await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
   window.location.href = "/login";
 }
 
-// ── DATA LOADING ──────────────────────────────────
+// ── DATA LOADING (filtered by user) ───────────────
 async function loadInitial() {
   const data = await apiFetch("/api/latest");
   if (!data) { setApiDot(false); return; }
@@ -528,52 +532,26 @@ function appendChartPoint(chartKey, label, color, point) {
   chart.update("none");
 }
 
-// ── SSE ───────────────────────────────────────────
-// FIX: Exponential backoff prevents hammering the server.
-// Max 5 retries then gives up (shows error state instead of looping forever).
+// ── SSE with credentials (cookies are sent automatically) ──
 let _sse = null;
 let _sseRetryTimer = null;
-let _sseRetryCount = 0;
-const SSE_MAX_RETRIES = 10;
-const SSE_BACKOFF_MS  = [1000, 2000, 4000, 8000, 15000]; // capped at 15s
-
 function connectSSE() {
   if (_sse) { _sse.close(); _sse = null; }
-  if (_sseRetryCount >= SSE_MAX_RETRIES) {
-    setSseDot("err");
-    document.getElementById("lbl-sse").textContent = "SSE indisponible";
-    return; // Stop retrying — no more page-hammering
-  }
   setSseDot("connecting");
   _sse = new EventSource(API_BASE + "/api/stream", { withCredentials: true });
-
-  _sse.onopen = () => {
-    setSseDot("ok");
-    _sseRetryCount = 0; // Reset on successful connection
-    clearTimeout(_sseRetryTimer);
-  };
-
+  _sse.onopen = () => { setSseDot("ok"); clearTimeout(_sseRetryTimer); };
   _sse.addEventListener("sensor", e => onSensorEvent(JSON.parse(e.data)));
-  _sse.addEventListener("alert",  e => onAlertEvent(JSON.parse(e.data)));
-
-  _sse.onerror = () => {
-    _sse.close();
-    _sse = null;
-    setSseDot("err");
-    const delay = SSE_BACKOFF_MS[Math.min(_sseRetryCount, SSE_BACKOFF_MS.length - 1)];
-    _sseRetryCount++;
-    _sseRetryTimer = setTimeout(connectSSE, delay);
-  };
+  _sse.addEventListener("alert", e => onAlertEvent(JSON.parse(e.data)));
+  _sse.onerror = () => { setSseDot("err"); _sse.close(); _sse=null; _sseRetryTimer = setTimeout(connectSSE, 5000); };
+}
+function setSseDot(state) {
+  const dot   = document.getElementById("dot-sse"), label = document.getElementById("lbl-sse");
+  if (state === "ok")      { dot.className = "dot ok"; label.textContent = "Temps réel"; }
+  else if (state === "err"){ dot.className = "dot err"; label.textContent = "SSE déconnecté"; }
+  else                     { dot.className = "dot"; label.textContent = "Connexion…"; }
 }
 
-function setSseDot(s) {
-  const dot = document.getElementById("dot-sse"), lbl = document.getElementById("lbl-sse");
-  if (s === "ok")          { dot.className = "dot ok";  lbl.textContent = "Temps réel"; }
-  else if (s === "err")    { dot.className = "dot err"; lbl.textContent = "SSE déconnecté"; }
-  else                     { dot.className = "dot";     lbl.textContent = "Connexion…"; }
-}
-
-// ── Real-time event handlers ──────────────────────
+// ── Real‑time event handlers ──────────────────────
 function onSensorEvent(d) {
   const { node_id: nid, sensor_type, value, timestamp } = d;
   if (!state.latest[nid]) state.latest[nid] = {};
@@ -601,6 +579,15 @@ function onSensorEvent(d) {
   if (nid === "gas_node" && sensor_type === "daily_consumption") {
     appendChartPoint("gas", "Gaz", "var(--amber)", pt); flashEl("cons-gas-card");
     document.getElementById("cons-gas").textContent = value.toFixed(3);
+  }
+  // ── Water meter index (ESP32-CAM) ──
+  if (nid === "water_meter" && sensor_type === "water_meter") {
+    const el = document.getElementById("wm-value");
+    if (el) el.textContent = parseFloat(value).toFixed(4);
+    const ts = document.getElementById("wm-ts");
+    if (ts) ts.textContent = new Date(timestamp).toLocaleString("fr-FR");
+    const st = document.getElementById("wm-status");
+    if (st) { st.style.display = "inline"; st.className = "nc-status online"; st.textContent = "En ligne"; }
   }
   if ((nid === "kitchen" || nid === "salon") && (sensor_type === "temperature" || sensor_type === "humidity")) recalcAverages();
 }
