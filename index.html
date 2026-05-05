@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-/* ────── YOUR EXACT ORIGINAL STYLES ────── */
 :root{
   --bg0:#050810;--bg1:#090e1a;--bg2:#0d1424;--bg3:#121c30;--bg4:#182338;
   --b0:rgba(255,255,255,.04);--b1:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);
@@ -187,8 +186,6 @@ button{cursor:pointer;font-family:var(--fui)}
     <div class="topbar-r">
       <button class="btn" onclick="exportCSV()"><i class="fas fa-download"></i> CSV</button>
       <button class="btn" id="theme-btn" onclick="toggleTheme()"><i class="fas fa-sun"></i></button>
-
-      <!-- User badge & logout -->
       <div id="user-badge" style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rsm);padding:5px 11px;font-size:12px;">
         <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#000;flex-shrink:0;" id="user-avatar">?</div>
         <span id="user-name" style="color:var(--t1);font-weight:600">…</span>
@@ -343,7 +340,7 @@ button{cursor:pointer;font-family:var(--fui)}
 <script>
 "use strict";
 
-const API_BASE = "http://10.203.84.58:5000";   // change to your server IP
+const API_BASE = "http://10.203.84.58:5000";
 const HISTORY_HOURS = 24;
 
 const NODES = {
@@ -367,10 +364,9 @@ const SENSOR_META = {
   daily_consumption: { icon:"fa-tachometer-alt",   color:"var(--green)", label:"Consomm.", fmt:v=>v.toFixed(2) },
 };
 
-// ── STATE ─────────────────────────────────────────
 const state = { latest: {}, nodeSeen: {}, alertCount: 0, averages: { avg_temperature: null, avg_humidity: null, sources: {} } };
 
-// ── CHART SETUP (same as original) ───────────────
+// ── CHART SETUP ───────────────────────────────────
 let CH = {};
 Chart.defaults.color       = "#7d95bc";
 Chart.defaults.borderColor = "rgba(255,255,255,0.05)";
@@ -418,7 +414,7 @@ function mkBarDS(label, color, data) {
 }
 function toXY(rows) { return rows ? rows.map(r=>({ x:new Date(r.t).getTime(), y:r.v })) : []; }
 
-// ── API HELPERS with credentials ──────────────────
+// ── API HELPERS ───────────────────────────────────
 async function apiFetch(path) {
   try {
     const r = await fetch(API_BASE + path, { credentials: "include", signal:AbortSignal.timeout(6000) });
@@ -431,13 +427,30 @@ function setApiDot(ok) {
   document.getElementById("lbl-api").textContent = ok ? "API connectée" : "API hors ligne";
 }
 
-// ── AUTH & USER ──────────────────────────────────
+// ── AUTH & USER ───────────────────────────────────
+// FIX: No longer redirects automatically on failure.
+// A dedicated flag prevents redirect loops.
+// Only redirects on explicit 401; network errors are shown as a warning.
+let _authRedirectPending = false;
 async function loadUser() {
+  if (_authRedirectPending) return false;
   try {
-    const res = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      credentials: "include",
+      signal: AbortSignal.timeout(6000)
+    });
     if (res.status === 401) {
-      window.location.href = "/login";
+      // Only redirect once, not on network error
+      if (!_authRedirectPending) {
+        _authRedirectPending = true;
+        window.location.href = "/login";
+      }
       return false;
+    }
+    if (!res.ok) {
+      // Server error — stay on page, show degraded state
+      document.getElementById("user-name").textContent = "Hors ligne";
+      return true; // Continue loading dashboard without redirect
     }
     const data = await res.json();
     const u = data.user;
@@ -445,16 +458,20 @@ async function loadUser() {
     document.getElementById("user-avatar").textContent = (u.first_name[0] + u.last_name[0]).toUpperCase();
     return true;
   } catch {
-    window.location.href = "/login";
-    return false;
+    // Network error — stay on page, do NOT redirect
+    document.getElementById("user-name").textContent = "Hors ligne";
+    return true; // Continue loading dashboard
   }
 }
+
 async function doLogout() {
-  await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
+  try {
+    await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
+  } catch { /* ignore */ }
   window.location.href = "/login";
 }
 
-// ── DATA LOADING (filtered by user) ───────────────
+// ── DATA LOADING ──────────────────────────────────
 async function loadInitial() {
   const data = await apiFetch("/api/latest");
   if (!data) { setApiDot(false); return; }
@@ -511,26 +528,52 @@ function appendChartPoint(chartKey, label, color, point) {
   chart.update("none");
 }
 
-// ── SSE with credentials (cookies are sent automatically) ──
+// ── SSE ───────────────────────────────────────────
+// FIX: Exponential backoff prevents hammering the server.
+// Max 5 retries then gives up (shows error state instead of looping forever).
 let _sse = null;
 let _sseRetryTimer = null;
+let _sseRetryCount = 0;
+const SSE_MAX_RETRIES = 10;
+const SSE_BACKOFF_MS  = [1000, 2000, 4000, 8000, 15000]; // capped at 15s
+
 function connectSSE() {
   if (_sse) { _sse.close(); _sse = null; }
+  if (_sseRetryCount >= SSE_MAX_RETRIES) {
+    setSseDot("err");
+    document.getElementById("lbl-sse").textContent = "SSE indisponible";
+    return; // Stop retrying — no more page-hammering
+  }
   setSseDot("connecting");
   _sse = new EventSource(API_BASE + "/api/stream", { withCredentials: true });
-  _sse.onopen = () => { setSseDot("ok"); clearTimeout(_sseRetryTimer); };
+
+  _sse.onopen = () => {
+    setSseDot("ok");
+    _sseRetryCount = 0; // Reset on successful connection
+    clearTimeout(_sseRetryTimer);
+  };
+
   _sse.addEventListener("sensor", e => onSensorEvent(JSON.parse(e.data)));
-  _sse.addEventListener("alert", e => onAlertEvent(JSON.parse(e.data)));
-  _sse.onerror = () => { setSseDot("err"); _sse.close(); _sse=null; _sseRetryTimer = setTimeout(connectSSE, 5000); };
-}
-function setSseDot(state) {
-  const dot   = document.getElementById("dot-sse"), label = document.getElementById("lbl-sse");
-  if (state === "ok")      { dot.className = "dot ok"; label.textContent = "Temps réel"; }
-  else if (state === "err"){ dot.className = "dot err"; label.textContent = "SSE déconnecté"; }
-  else                     { dot.className = "dot"; label.textContent = "Connexion…"; }
+  _sse.addEventListener("alert",  e => onAlertEvent(JSON.parse(e.data)));
+
+  _sse.onerror = () => {
+    _sse.close();
+    _sse = null;
+    setSseDot("err");
+    const delay = SSE_BACKOFF_MS[Math.min(_sseRetryCount, SSE_BACKOFF_MS.length - 1)];
+    _sseRetryCount++;
+    _sseRetryTimer = setTimeout(connectSSE, delay);
+  };
 }
 
-// ── Real‑time event handlers ──────────────────────
+function setSseDot(s) {
+  const dot = document.getElementById("dot-sse"), lbl = document.getElementById("lbl-sse");
+  if (s === "ok")          { dot.className = "dot ok";  lbl.textContent = "Temps réel"; }
+  else if (s === "err")    { dot.className = "dot err"; lbl.textContent = "SSE déconnecté"; }
+  else                     { dot.className = "dot";     lbl.textContent = "Connexion…"; }
+}
+
+// ── Real-time event handlers ──────────────────────
 function onSensorEvent(d) {
   const { node_id: nid, sensor_type, value, timestamp } = d;
   if (!state.latest[nid]) state.latest[nid] = {};
