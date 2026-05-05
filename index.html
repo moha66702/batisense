@@ -293,25 +293,6 @@ button{cursor:pointer;font-family:var(--fui)}
     <!-- CONSUMPTION -->
     <section id="consumption" class="sec">
       <div class="sh"><h2>Consommation journalière</h2></div>
-      <!-- Water Meter Index Card -->
-      <div class="panel" style="margin-bottom:14px">
-        <div class="ph">
-          <div class="pt"><i class="fas fa-tachometer-alt"></i> Compteur d'eau — Index ESP32-CAM</div>
-          <span class="nc-status online" id="wm-status" style="display:none">En ligne</span>
-        </div>
-        <div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap">
-          <div>
-            <div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Index actuel</div>
-            <div style="font-size:42px;font-weight:800;letter-spacing:-2px;color:var(--teal);font-variant-numeric:tabular-nums" id="wm-value">—</div>
-            <div style="font-size:12px;color:var(--t2);margin-top:2px">m³ · node: water_meter</div>
-          </div>
-          <div style="flex:1;min-width:140px">
-            <div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Dernière mise à jour</div>
-            <div style="font-size:13px;color:var(--t1);font-family:var(--fmono)" id="wm-ts">—</div>
-            <div style="font-size:10px;color:var(--t2);margin-top:6px">Source: ESP32-CAM → Raspberry Pi → Railway</div>
-          </div>
-        </div>
-      </div>
       <div class="g3" style="margin-bottom:14px">
         <div class="cons-card water" id="cons-water-card">
           <div class="cons-ico"><i class="fas fa-faucet"></i></div>
@@ -362,30 +343,28 @@ button{cursor:pointer;font-family:var(--fui)}
 <script>
 "use strict";
 
-const API_BASE = "http://10.203.84.58:5000";   // change to your server IP
+const API_BASE = "https://batisense-production.up.railway.app";   // change to your server IP
 const HISTORY_HOURS = 24;
 
 const NODES = {
-  kitchen:      { label:"Cuisine",       icon:"fa-utensils",  color:"var(--green)",  sensors:["temperature","humidity","gas_detected","presence"] },
-  salon:        { label:"Salon",         icon:"fa-couch",     color:"var(--teal)",   sensors:["temperature","humidity","gas_detected","presence"] },
-  port:         { label:"Porte",         icon:"fa-door-open", color:"var(--amber)",  sensors:["door_open","presence","structure_alert"] },
-  room:         { label:"Chambre",       icon:"fa-bed",       color:"var(--blue)",   sensors:["presence","luminosity","structure_alert"] },
-  water:        { label:"Eau",           icon:"fa-faucet",    color:"var(--teal)",   sensors:["daily_consumption"] },
-  electricity:  { label:"Électricité",   icon:"fa-plug",      color:"var(--violet)", sensors:["daily_consumption"] },
-  gas_node:     { label:"Gaz",           icon:"fa-fire",      color:"var(--amber)",  sensors:["daily_consumption"] },
-  water_meter:  { label:"Compteur Eau",  icon:"fa-tachometer-alt", color:"var(--teal)", sensors:["water_meter"] },
+  kitchen:     { label:"Cuisine",     icon:"fa-utensils",  color:"var(--green)",  sensors:["temperature","humidity","gas_detected","presence"] },
+  salon:       { label:"Salon",       icon:"fa-couch",     color:"var(--teal)",   sensors:["temperature","humidity","gas_detected","presence"] },
+  port:        { label:"Porte",       icon:"fa-door-open", color:"var(--amber)",  sensors:["door_open","presence","structure_alert"] },
+  room:        { label:"Chambre",     icon:"fa-bed",       color:"var(--blue)",   sensors:["presence","luminosity","structure_alert"] },
+  water:       { label:"Eau",         icon:"fa-faucet",    color:"var(--teal)",   sensors:["daily_consumption"] },
+  electricity: { label:"Électricité", icon:"fa-plug",      color:"var(--violet)", sensors:["daily_consumption"] },
+  gas_node:    { label:"Gaz",         icon:"fa-fire",      color:"var(--amber)",  sensors:["daily_consumption"] },
 };
 
 const SENSOR_META = {
-  temperature:       { icon:"fa-thermometer-half",     color:"var(--teal)",   label:"Temp.",     fmt:v=>`${v.toFixed(1)}°C` },
-  humidity:          { icon:"fa-tint",                 color:"var(--blue)",   label:"Humidité",  fmt:v=>`${Math.round(v)}%` },
-  gas_detected:      { icon:"fa-wind",                 color:"var(--red)",    label:"Gaz",       fmt:v=>(v===1?"⚠ DÉTECTÉ":"Normal") },
-  presence:          { icon:"fa-walking",              color:"var(--amber)",  label:"Présence",  fmt:v=>(v===1?"Oui":"Non") },
-  door_open:         { icon:"fa-door-open",            color:"var(--amber)",  label:"Porte",     fmt:v=>(v===1?"Ouverte":"Fermée") },
-  structure_alert:   { icon:"fa-exclamation-triangle", color:"var(--red)",    label:"Structure", fmt:v=>(v===1?"⚠ ALERTE":"Normal") },
-  luminosity:        { icon:"fa-sun",                  color:"var(--amber)",  label:"Lumino.",   fmt:v=>`${Math.round(v)} lux` },
-  daily_consumption: { icon:"fa-tachometer-alt",       color:"var(--green)",  label:"Consomm.",  fmt:v=>v.toFixed(2) },
-  water_meter:       { icon:"fa-faucet",               color:"var(--teal)",   label:"Index",     fmt:v=>`${parseFloat(v).toFixed(4)} m³` },
+  temperature:       { icon:"fa-thermometer-half", color:"var(--teal)",  label:"Temp.",    fmt:v=>`${v.toFixed(1)}°C` },
+  humidity:          { icon:"fa-tint",             color:"var(--blue)",  label:"Humidité", fmt:v=>`${Math.round(v)}%` },
+  gas_detected:      { icon:"fa-wind",             color:"var(--red)",   label:"Gaz",      fmt:v=>(v===1?"⚠ DÉTECTÉ":"Normal") },
+  presence:          { icon:"fa-walking",          color:"var(--amber)", label:"Présence", fmt:v=>(v===1?"Oui":"Non") },
+  door_open:         { icon:"fa-door-open",        color:"var(--amber)", label:"Porte",    fmt:v=>(v===1?"Ouverte":"Fermée") },
+  structure_alert:   { icon:"fa-exclamation-triangle",color:"var(--red)",label:"Structure",fmt:v=>(v===1?"⚠ ALERTE":"Normal") },
+  luminosity:        { icon:"fa-sun",              color:"var(--amber)", label:"Lumino.",  fmt:v=>`${Math.round(v)} lux` },
+  daily_consumption: { icon:"fa-tachometer-alt",   color:"var(--green)", label:"Consomm.", fmt:v=>v.toFixed(2) },
 };
 
 // ── STATE ─────────────────────────────────────────
@@ -579,15 +558,6 @@ function onSensorEvent(d) {
   if (nid === "gas_node" && sensor_type === "daily_consumption") {
     appendChartPoint("gas", "Gaz", "var(--amber)", pt); flashEl("cons-gas-card");
     document.getElementById("cons-gas").textContent = value.toFixed(3);
-  }
-  // ── Water meter index (ESP32-CAM) ──
-  if (nid === "water_meter" && sensor_type === "water_meter") {
-    const el = document.getElementById("wm-value");
-    if (el) el.textContent = parseFloat(value).toFixed(4);
-    const ts = document.getElementById("wm-ts");
-    if (ts) ts.textContent = new Date(timestamp).toLocaleString("fr-FR");
-    const st = document.getElementById("wm-status");
-    if (st) { st.style.display = "inline"; st.className = "nc-status online"; st.textContent = "En ligne"; }
   }
   if ((nid === "kitchen" || nid === "salon") && (sensor_type === "temperature" || sensor_type === "humidity")) recalcAverages();
 }
