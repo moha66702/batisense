@@ -172,11 +172,12 @@ def require_token(f):
 #  Alert thresholds
 # ============================================================
 THRESHOLDS = {
-    "temperature":     {"min": 10, "max": 35, "level": "warning"},
-    "humidity":        {"min": 20, "max": 80, "level": "warning"},
-    "gas_detected":    {"eq": 1,              "level": "danger"},
-    "structure_alert": {"eq": 1,              "level": "danger"},
-    "door_open":       {"eq": 1,              "level": "info"},
+    "temperature":     {"min": 10, "max": 35,   "level": "warning"},
+    "humidity":        {"min": 20, "max": 80,   "level": "warning"},
+    "gas_detected":    {"eq": 1,                "level": "danger"},
+    "structure_alert": {"eq": 1,                "level": "danger"},
+    "door_open":       {"eq": 1,                "level": "info"},
+    "water_meter":     {"min": 0, "max": 99999, "level": "info"},   # accepts any positive reading
 }
 
 
@@ -559,6 +560,31 @@ def sse_stream():
 @app.route("/api/health")
 def health():
     return jsonify({"status": "ok", "subscribers": sum(len(v) for v in _subscribers.values())})
+
+
+# ============================================================
+#  WATER METER — dedicated read endpoint (public for quick check)
+# ============================================================
+@app.route("/api/water_meter/latest")
+@login_required
+def water_meter_latest():
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+    row = db.execute(
+        "SELECT value, timestamp FROM readings "
+        "WHERE user_id=? AND node_id='water_meter' AND sensor_type='water_meter' "
+        "ORDER BY timestamp DESC LIMIT 1",
+        (current_user.id,)
+    ).fetchone()
+    db.close()
+    if not row:
+        return jsonify({"node": "water_meter", "value": None, "unit": "m³", "timestamp": None})
+    return jsonify({
+        "node":      "water_meter",
+        "value":     row["value"],
+        "unit":      "m³",
+        "timestamp": row["timestamp"]
+    })
 
 
 # ============================================================
