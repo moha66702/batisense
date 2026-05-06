@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- Inlined SVG favicon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='gMark' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300f5a0'/%3E%3Cstop offset='60%25' stop-color='%2300d4e0'/%3E%3Cstop offset='100%25' stop-color='%234d8dff'/%3E%3C/linearGradient%3E%3ClinearGradient id='gDark' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%230d1424'/%3E%3Cstop offset='100%25' stop-color='%23090e1a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='120' height='120' rx='22' fill='url(%23gDark)'/%3E%3Cpolygon points='60,16 98,48 98,96 22,96 22,48' fill='none' stroke='url(%23gMark)' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='60' cy='16' r='4' fill='url(%23gMark)'/%3E%3Crect x='46' y='68' width='28' height='28' rx='14' fill='none' stroke='url(%23gMark)' stroke-width='2.5'/%3E%3Ccircle cx='60' cy='53' r='5' fill='url(%23gMark)'/%3E%3Cpath d='M 47,43 Q 60,30 73,43' fill='none' stroke='url(%23gMark)' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root {
   --bg0:#050810;--bg1:#090e1a;--bg2:#0d1424;--bg3:#121c30;--bg4:#182338;
@@ -31,8 +33,6 @@ body{
   position:relative;
   overflow:hidden;
 }
-
-/* ── Animated background ── */
 body::before {
   content:'';
   position:fixed;inset:0;
@@ -47,8 +47,6 @@ body::before {
   from { opacity:.6; }
   to   { opacity:1; }
 }
-
-/* ── Grid lines ── */
 body::after {
   content:'';
   position:fixed;inset:0;
@@ -58,7 +56,6 @@ body::after {
   background-size:40px 40px;
   pointer-events:none;
 }
-
 .page-wrap {
   position:relative;
   z-index:10;
@@ -67,26 +64,22 @@ body::after {
   padding:16px;
 }
 
-/* ── Logo top ── */
+/* ── Logo / Brand ── */
 .brand {
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:0;
   justify-content:center;
   margin-bottom:28px;
   animation: fadeDown .5s ease both;
 }
-.brand-mark {
-  width:44px;height:44px;
-  border-radius:11px;
-  background:linear-gradient(135deg,var(--green),var(--teal));
-  display:flex;align-items:center;justify-content:center;
-  font-size:20px;font-weight:800;color:#000;
-  box-shadow:var(--glow-g);
+/* Show the full horizontal logo SVG on the login page */
+.brand-logo-full {
+  display:block;
+  /* constrain to a comfortable width */
+  width: 260px;
+  height: auto;
 }
-.brand-text { text-align:left; }
-.brand-name { font-size:20px;font-weight:800;letter-spacing:-.5px; }
-.brand-sub  { font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;font-weight:600; }
 
 /* ── Card ── */
 .card {
@@ -182,7 +175,6 @@ input:focus {
 }
 input.err { border-color:rgba(255,77,107,.5); }
 
-/* ── Section divider ── */
 .form-divider {
   font-size:10px;
   color:var(--t2);
@@ -196,7 +188,6 @@ input.err { border-color:rgba(255,77,107,.5); }
   content:'';flex:1;height:1px;background:var(--b1);
 }
 
-/* ── Submit button ── */
 .btn-submit {
   width:100%;
   padding:11px;
@@ -223,7 +214,6 @@ input.err { border-color:rgba(255,77,107,.5); }
   opacity:.5;cursor:not-allowed;transform:none;
 }
 
-/* ── Error/success messages ── */
 .msg {
   padding:9px 13px;
   border-radius:var(--rsm);
@@ -238,7 +228,6 @@ input.err { border-color:rgba(255,77,107,.5); }
 .msg.error   { background:rgba(255,77,107,.1);  border:1px solid rgba(255,77,107,.25);  color:var(--red); }
 .msg.success { background:rgba(0,245,160,.08);  border:1px solid rgba(0,245,160,.2);    color:var(--green); }
 
-/* ── Spinner ── */
 .spinner {
   width:14px;height:14px;
   border:2px solid rgba(0,0,0,.3);
@@ -251,11 +240,9 @@ input.err { border-color:rgba(255,77,107,.5); }
 .btn-submit.loading .btn-label { display:none; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
-/* ── Animations ── */
 @keyframes fadeUp   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 @keyframes fadeDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
 
-/* ── Footer note ── */
 .auth-footer {
   text-align:center;
   font-size:10.5px;
@@ -269,13 +256,83 @@ input.err { border-color:rgba(255,77,107,.5); }
 <body>
 
 <div class="page-wrap">
-  <!-- Brand logo -->
+  <!-- Full horizontal BatiSense logo -->
   <div class="brand">
-    <div class="brand-mark">B</div>
-    <div class="brand-text">
-      <div class="brand-name">BatiSense</div>
-      <div class="brand-sub">Pro · Smart Building</div>
-    </div>
+    <svg class="brand-logo-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 180">
+      <defs>
+        <linearGradient id="gGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#00f5a0"/>
+          <stop offset="100%" stop-color="#00d4e0"/>
+        </linearGradient>
+        <linearGradient id="gDark" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0d1424"/>
+          <stop offset="100%" stop-color="#090e1a"/>
+        </linearGradient>
+        <linearGradient id="gMark" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#00f5a0"/>
+          <stop offset="60%" stop-color="#00d4e0"/>
+          <stop offset="100%" stop-color="#4d8dff"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="softglow">
+          <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Background -->
+      <rect width="480" height="180" rx="16" fill="url(#gDark)"/>
+      <!-- Subtle grid texture -->
+      <line x1="0" y1="60" x2="480" y2="60" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      <line x1="0" y1="120" x2="480" y2="120" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      <line x1="160" y1="0" x2="160" y2="180" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      <line x1="320" y1="0" x2="320" y2="180" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      <!-- Glow blob behind mark -->
+      <ellipse cx="75" cy="90" rx="55" ry="50" fill="rgba(0,245,160,0.06)" filter="url(#softglow)"/>
+      <!-- House shape -->
+      <polygon points="75,28 110,62 110,118 40,118 40,62" fill="none" stroke="url(#gMark)" stroke-width="2.5" stroke-linejoin="round" filter="url(#glow)"/>
+      <!-- Roof peak cap -->
+      <circle cx="75" cy="28" r="3.5" fill="url(#gMark)" filter="url(#glow)"/>
+      <!-- Door -->
+      <rect x="62" y="90" width="26" height="28" rx="13" fill="none" stroke="url(#gMark)" stroke-width="2" opacity="0.9"/>
+      <!-- Inner dot / sensor -->
+      <circle cx="75" cy="73" r="4" fill="url(#gMark)" filter="url(#glow)"/>
+      <!-- Signal arcs -->
+      <path d="M 63,64 Q 75,52 87,64" fill="none" stroke="url(#gMark)" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+      <path d="M 56,57 Q 75,40 94,57" fill="none" stroke="url(#gMark)" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+      <!-- Corner accent lines -->
+      <line x1="32" y1="118" x2="20" y2="118" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+      <line x1="20" y1="118" x2="20" y2="106" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+      <line x1="118" y1="118" x2="130" y2="118" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+      <line x1="130" y1="118" x2="130" y2="106" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+      <!-- Divider -->
+      <line x1="148" y1="40" x2="148" y2="140" stroke="rgba(0,245,160,0.15)" stroke-width="1"/>
+      <!-- WORDMARK: BATI -->
+      <text x="168" y="100"
+        font-family="'Arial Black', 'Impact', sans-serif"
+        font-size="58" font-weight="900" letter-spacing="-2"
+        fill="url(#gMark)" filter="url(#glow)">BATI</text>
+      <!-- SENSE -->
+      <text x="168" y="100"
+        font-family="'Arial Black', 'Impact', sans-serif"
+        font-size="58" font-weight="900" letter-spacing="-2"
+        fill="rgba(220,232,255,0.92)" dx="132">SENSE</text>
+      <!-- Tagline -->
+      <text x="170" y="128"
+        font-family="'Courier New', monospace"
+        font-size="11" letter-spacing="4"
+        fill="rgba(0,245,160,0.55)" font-weight="400">SMART HOME MONITORING</text>
+      <!-- PRO badge -->
+      <rect x="420" y="18" width="44" height="18" rx="5" fill="rgba(0,245,160,0.1)" stroke="rgba(0,245,160,0.25)" stroke-width="1"/>
+      <text x="442" y="31" text-anchor="middle"
+        font-family="'Courier New', monospace"
+        font-size="9.5" fill="rgba(0,245,160,0.7)" letter-spacing="1">PRO</text>
+      <!-- Bottom accent bar -->
+      <rect x="168" y="140" width="280" height="2" rx="1" fill="url(#gGreen)" opacity="0.3"/>
+      <rect x="168" y="140" width="80" height="2" rx="1" fill="url(#gGreen)" opacity="0.8"/>
+    </svg>
   </div>
 
   <!-- Card -->
@@ -369,9 +426,8 @@ input.err { border-color:rgba(255,77,107,.5); }
 
 <script>
 "use strict";
-const API_BASE = "https://batisense-production.up.railway.app";  // ← change to your server IP if needed
+const API_BASE = "https://batisense-production.up.railway.app";
 
-// ── Tab switch ──────────────────────────────────────────
 function switchTab(tab) {
   document.getElementById("section-login").classList.toggle("active", tab === "login");
   document.getElementById("section-register").classList.toggle("active", tab === "register");
@@ -400,7 +456,6 @@ function setLoading(btnId, loading) {
   btn.disabled = loading;
 }
 
-// ── LOGIN ───────────────────────────────────────────────
 async function doLogin() {
   const email    = document.getElementById("login-email").value.trim();
   const password = document.getElementById("login-password").value;
@@ -435,7 +490,6 @@ async function doLogin() {
   }
 }
 
-// ── REGISTER ────────────────────────────────────────────
 async function doRegister() {
   const payload = {
     first_name: document.getElementById("reg-firstname").value.trim(),
@@ -447,7 +501,6 @@ async function doRegister() {
     zip_code:   document.getElementById("reg-zip").value.trim(),
   };
 
-  // Basic front-end validation
   for (const [k, v] of Object.entries(payload)) {
     if (!v) {
       showMsg("register-msg", "Veuillez remplir tous les champs.", "error");
@@ -484,7 +537,6 @@ async function doRegister() {
   }
 }
 
-// ── Enter key support ───────────────────────────────────
 document.addEventListener("keydown", e => {
   if (e.key !== "Enter") return;
   const loginActive = document.getElementById("section-login").classList.contains("active");
