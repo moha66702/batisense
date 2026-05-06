@@ -16,6 +16,7 @@ from flask import Flask, request, jsonify, Response, send_file, stream_with_cont
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
 from flask_bcrypt import Bcrypt
+from flask import send_from_directory
 
 # ============================================================
 #  App & extensions
@@ -282,6 +283,15 @@ def logout():
 @login_required
 def me():
     return jsonify({"user": current_user.to_dict()})
+
+
+@app.route('/batisense-logo.svg')
+def serve_logo():
+    return send_from_directory('.', 'batisense-logo.svg')
+
+@app.route('/batisense-icon.svg')
+def serve_icon():
+    return send_from_directory('.', 'batisense-icon.svg')
 
 
 # ============================================================
