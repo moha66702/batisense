@@ -7,420 +7,496 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<!-- Inlined SVG favicon -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='gMark' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300f5a0'/%3E%3Cstop offset='60%25' stop-color='%2300d4e0'/%3E%3Cstop offset='100%25' stop-color='%234d8dff'/%3E%3C/linearGradient%3E%3ClinearGradient id='gDark' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%230d1424'/%3E%3Cstop offset='100%25' stop-color='%23090e1a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='120' height='120' rx='22' fill='url(%23gDark)'/%3E%3Cpolygon points='60,16 98,48 98,96 22,96 22,48' fill='none' stroke='url(%23gMark)' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='60' cy='16' r='4' fill='url(%23gMark)'/%3E%3Crect x='46' y='68' width='28' height='28' rx='14' fill='none' stroke='url(%23gMark)' stroke-width='2.5'/%3E%3Ccircle cx='60' cy='53' r='5' fill='url(%23gMark)'/%3E%3Cpath d='M 47,43 Q 60,30 73,43' fill='none' stroke='url(%23gMark)' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root {
-  --bg0:#050810;--bg1:#090e1a;--bg2:#0d1424;--bg3:#121c30;--bg4:#182338;
-  --b0:rgba(255,255,255,.04);--b1:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);
-  --green:#00f5a0;--teal:#00d4e0;--blue:#4d8dff;--amber:#ffc233;--red:#ff4d6b;--violet:#a06bff;
+  --bg0:#050810;--bg1:#090e1a;--bg2:#0d1424;--bg3:#121c30;
+  --b0:rgba(255,255,255,.04);--b1:rgba(255,255,255,.08);
+  --green:#00f5a0;--teal:#00d4e0;--blue:#4d8dff;--amber:#ffc233;--red:#ff4d6b;
   --t0:#dce8ff;--t1:#7d95bc;--t2:#3d5070;
   --r:12px;--rsm:7px;
   --fui:'Syne',sans-serif;--fmono:'DM Mono',monospace;
-  --glow-g:0 0 32px rgba(0,245,160,.15);
-  --glow-t:0 0 32px rgba(0,212,224,.12);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px;-webkit-font-smoothing:antialiased}
-body{
-  font-family:var(--fui);
+body{font-family:var(--fui);background:var(--bg0);color:var(--t0);min-height:100vh;overflow:hidden}
+
+/* ═══════════════════════════════════════
+   INTRO SPLASH SCREEN
+═══════════════════════════════════════ */
+#splash {
+  position:fixed;inset:0;z-index:1000;
   background:var(--bg0);
-  color:var(--t0);
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-  overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;
 }
-body::before {
-  content:'';
-  position:fixed;inset:0;
-  background:
-    radial-gradient(ellipse 60% 50% at 20% 30%, rgba(0,245,160,.06) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 60% at 80% 70%, rgba(0,212,224,.05) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(77,141,255,.04) 0%, transparent 70%);
+#splash.exit {
+  animation: splashExit 0.8s cubic-bezier(.76,0,.24,1) forwards;
+}
+@keyframes splashExit {
+  0%   { opacity:1; transform:scale(1); }
+  40%  { opacity:1; transform:scale(1.04); }
+  100% { opacity:0; transform:scale(0.92); pointer-events:none; }
+}
+
+/* Particle canvas behind splash */
+#splash-canvas {
+  position:absolute;inset:0;
   pointer-events:none;
+}
+
+/* ─── 3D House ─── */
+.splash-house-wrap {
+  position:relative;
+  width:200px;height:200px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:24px;
+  perspective:600px;
+}
+.house-3d {
+  position:relative;
+  width:120px;height:120px;
+  transform-style:preserve-3d;
+  animation: houseFloat 4s ease-in-out infinite, houseReveal 1s ease both;
+}
+@keyframes houseReveal {
+  from { opacity:0; transform:rotateY(-40deg) rotateX(15deg) scale(.6); }
+  to   { opacity:1; transform:rotateY(0deg) rotateX(0deg) scale(1); }
+}
+@keyframes houseFloat {
+  0%,100% { transform:rotateY(-5deg) rotateX(3deg) translateY(0px); }
+  50%     { transform:rotateY(5deg) rotateX(-3deg) translateY(-12px); }
+}
+
+/* Glow ring */
+.splash-glow {
+  position:absolute;
+  width:180px;height:60px;
+  bottom:0;left:50%;transform:translateX(-50%);
+  background:radial-gradient(ellipse, rgba(0,245,160,.25) 0%, transparent 70%);
+  border-radius:50%;
+  animation: glowPulse 2s ease-in-out infinite;
+  animation-delay:.5s;
+}
+@keyframes glowPulse {
+  0%,100%{opacity:.5;transform:translateX(-50%) scaleX(.8)}
+  50%{opacity:1;transform:translateX(-50%) scaleX(1.1)}
+}
+
+/* ─── Splash Text ─── */
+.splash-brand {
+  display:flex;flex-direction:column;align-items:center;
+  gap:6px;
+  animation:splashTextIn 1s ease both;
+  animation-delay:.6s;
+}
+@keyframes splashTextIn {
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.splash-logo-text {
+  font-size:46px;font-weight:800;letter-spacing:-2px;
+  background:linear-gradient(90deg,var(--green),var(--teal),var(--blue));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  position:relative;
+}
+.splash-logo-text::after {
+  content:'PRO';
+  position:absolute;top:-8px;right:-42px;
+  font-size:11px;font-weight:700;letter-spacing:2px;
+  background:rgba(0,245,160,.15);border:1px solid rgba(0,245,160,.3);
+  color:var(--green);border-radius:4px;padding:2px 6px;
+  -webkit-text-fill-color:var(--green);
+}
+.splash-tagline {
+  font-family:var(--fmono);
+  font-size:11px;letter-spacing:4px;
+  color:rgba(0,245,160,.5);
+  text-transform:uppercase;
+}
+
+/* ─── Loading bar ─── */
+.splash-loader {
+  margin-top:40px;
+  width:200px;
+  animation:splashTextIn 1s ease both;
+  animation-delay:.9s;
+}
+.splash-loader-bar {
+  height:2px;background:var(--bg3);border-radius:2px;overflow:hidden;
+}
+.splash-loader-fill {
+  height:100%;width:0;
+  background:linear-gradient(90deg,var(--green),var(--teal),var(--blue));
+  border-radius:2px;
+  animation: loadFill 2.2s cubic-bezier(.4,0,.2,1) forwards;
+  animation-delay:.8s;
+}
+@keyframes loadFill { to { width:100%; } }
+.splash-loader-text {
+  text-align:center;
+  font-family:var(--fmono);
+  font-size:10px;color:var(--t2);
+  margin-top:8px;
+  letter-spacing:2px;
+}
+
+/* Signal rings animation on house */
+.signal-ring {
+  position:absolute;
+  border:1.5px solid rgba(0,245,160,0);
+  border-radius:50%;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  animation:ringExpand 2.4s ease-out infinite;
+}
+.signal-ring:nth-child(2){ animation-delay:.8s; }
+.signal-ring:nth-child(3){ animation-delay:1.6s; }
+@keyframes ringExpand {
+  0%   { width:60px;height:60px;border-color:rgba(0,245,160,.6); }
+  100% { width:200px;height:200px;border-color:rgba(0,245,160,0); }
+}
+
+/* ═══════════════════════════════════════
+   MAIN LOGIN PAGE
+═══════════════════════════════════════ */
+#login-page {
+  position:fixed;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  overflow-y:auto;
+  padding:24px 16px;
+}
+#login-page.visible {
+  opacity:1;pointer-events:auto;
+  animation:pageIn .6s ease both;
+}
+@keyframes pageIn {
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Background */
+.bg-gradient {
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 30%, rgba(0,245,160,.07) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 60% at 80% 70%, rgba(0,212,224,.06) 0%,transparent 70%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(77,141,255,.04) 0%,transparent 70%);
   animation:bgPulse 8s ease-in-out infinite alternate;
 }
-@keyframes bgPulse {
-  from { opacity:.6; }
-  to   { opacity:1; }
-}
-body::after {
-  content:'';
-  position:fixed;inset:0;
+@keyframes bgPulse{from{opacity:.6}to{opacity:1}}
+.bg-grid {
+  position:fixed;inset:0;pointer-events:none;z-index:0;
   background-image:
-    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
-  background-size:40px 40px;
-  pointer-events:none;
+    linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);
+  background-size:50px 50px;
 }
+
 .page-wrap {
-  position:relative;
-  z-index:10;
-  width:100%;
-  max-width:440px;
-  padding:16px;
+  position:relative;z-index:10;
+  width:100%;max-width:440px;
 }
 
-/* ── Logo / Brand ── */
+/* ─── Brand minimal ─── */
 .brand {
-  display:flex;
-  align-items:center;
-  gap:0;
-  justify-content:center;
+  display:flex;align-items:center;justify-content:center;gap:12px;
   margin-bottom:28px;
-  animation: fadeDown .5s ease both;
+  animation:fadeDown .5s ease both;
 }
-/* Show the full horizontal logo SVG on the login page */
-.brand-logo-full {
-  display:block;
-  /* constrain to a comfortable width */
-  width: 260px;
-  height: auto;
+.brand-icon {
+  width:40px;height:40px;
+  background:linear-gradient(135deg,rgba(0,245,160,.15),rgba(0,212,224,.1));
+  border:1px solid rgba(0,245,160,.25);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:var(--green);
+}
+.brand-text { font-size:22px;font-weight:800;letter-spacing:-1px; }
+.brand-text span {
+  background:linear-gradient(90deg,var(--green),var(--teal));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.brand-pro {
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  color:var(--green);
+  background:rgba(0,245,160,.1);
+  border:1px solid rgba(0,245,160,.2);
+  border-radius:4px;padding:2px 6px;
+  align-self:flex-start;margin-top:4px;
 }
 
-/* ── Card ── */
+/* ─── Card ─── */
 .card {
-  background:var(--bg1);
-  border:1px solid var(--b1);
-  border-radius:16px;
+  background:rgba(9,14,26,.85);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:20px;
   padding:28px 30px;
-  box-shadow: 0 24px 64px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.03);
-  animation: fadeUp .4s ease both .1s;
-  position:relative;
-  overflow:hidden;
+  box-shadow:
+    0 32px 80px rgba(0,0,0,.6),
+    0 0 0 1px rgba(255,255,255,.03),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  animation:fadeUp .4s ease both .1s;
+  position:relative;overflow:hidden;
 }
 .card::before {
-  content:'';
-  position:absolute;top:0;left:0;right:0;height:2px;
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,var(--green),var(--teal),var(--blue));
-  border-radius:16px 16px 0 0;
+  border-radius:20px 20px 0 0;
+}
+/* Shimmer sweep */
+.card::after {
+  content:'';position:absolute;
+  top:-50%;left:-60%;width:40%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);
+  transform:skewX(-20deg);
+  animation:shimmer 6s ease infinite;
+}
+@keyframes shimmer {
+  0%  {left:-60%}
+  30%,100%{left:160%}
 }
 
-/* ── Tabs ── */
+/* ─── Tabs ─── */
 .tabs {
-  display:flex;
-  background:var(--bg0);
-  border:1px solid var(--b0);
-  border-radius:var(--rsm);
-  padding:3px;
-  margin-bottom:24px;
+  display:flex;background:var(--bg0);border:1px solid var(--b0);
+  border-radius:var(--rsm);padding:3px;margin-bottom:24px;
 }
 .tab-btn {
-  flex:1;
-  padding:8px;
-  border:none;
-  background:none;
-  color:var(--t2);
-  font-family:var(--fui);
-  font-size:12.5px;
-  font-weight:600;
-  border-radius:5px;
-  cursor:pointer;
-  transition:all .2s;
-  letter-spacing:.3px;
+  flex:1;padding:8px;border:none;background:none;
+  color:var(--t2);font-family:var(--fui);font-size:12.5px;font-weight:600;
+  border-radius:5px;cursor:pointer;transition:all .2s;letter-spacing:.3px;
 }
 .tab-btn.active {
-  background:var(--bg3);
-  color:var(--green);
+  background:var(--bg3);color:var(--green);
   box-shadow:0 2px 8px rgba(0,0,0,.3);
 }
 
-/* ── Form ── */
-.form-section { display:none; }
-.form-section.active { display:block; animation:fadeUp .25s ease both; }
+/* ─── Form ─── */
+.form-section{display:none}
+.form-section.active{display:block;animation:fadeUp .25s ease both}
+.form-title{font-size:17px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
+.form-sub{font-size:11.5px;color:var(--t1);margin-bottom:20px;line-height:1.5}
+.field{margin-bottom:14px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
 
-.form-title {
-  font-size:17px;
-  font-weight:700;
-  letter-spacing:-.4px;
-  margin-bottom:4px;
-}
-.form-sub {
-  font-size:11.5px;
-  color:var(--t1);
-  margin-bottom:20px;
-  line-height:1.5;
-}
-
-.field { margin-bottom:14px; }
-.field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-label {
-  display:block;
-  font-size:11px;
-  font-weight:600;
-  color:var(--t2);
-  text-transform:uppercase;
-  letter-spacing:.7px;
-  margin-bottom:5px;
-}
 input {
-  width:100%;
-  padding:9px 12px;
-  background:var(--bg0);
-  border:1px solid var(--b1);
+  width:100%;padding:9px 12px;
+  background:rgba(5,8,16,.6);
+  border:1px solid rgba(255,255,255,.08);
   border-radius:var(--rsm);
-  color:var(--t0);
-  font-family:var(--fui);
-  font-size:13px;
-  outline:none;
-  transition:border-color .2s, box-shadow .2s;
+  color:var(--t0);font-family:var(--fui);font-size:13px;
+  outline:none;transition:all .2s;
 }
-input::placeholder { color:var(--t2); }
-input:focus {
+input::placeholder{color:var(--t2)}
+input:focus{
   border-color:rgba(0,245,160,.4);
-  box-shadow:0 0 0 3px rgba(0,245,160,.07);
+  box-shadow:0 0 0 3px rgba(0,245,160,.06),0 0 20px rgba(0,245,160,.05);
+  background:rgba(5,8,16,.8);
 }
-input.err { border-color:rgba(255,77,107,.5); }
+input.err{border-color:rgba(255,77,107,.5)}
 
 .form-divider {
-  font-size:10px;
-  color:var(--t2);
-  text-transform:uppercase;
-  letter-spacing:1px;
-  font-weight:600;
-  margin:16px 0 12px;
-  display:flex;align-items:center;gap:8px;
+  font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;font-weight:600;
+  margin:16px 0 12px;display:flex;align-items:center;gap:8px;
 }
-.form-divider::before,.form-divider::after{
-  content:'';flex:1;height:1px;background:var(--b1);
-}
+.form-divider::before,.form-divider::after{content:'';flex:1;height:1px;background:var(--b1)}
 
 .btn-submit {
-  width:100%;
-  padding:11px;
+  width:100%;padding:12px;
   background:linear-gradient(135deg,var(--green),var(--teal));
-  border:none;
-  border-radius:var(--rsm);
-  color:#000;
-  font-family:var(--fui);
-  font-size:13.5px;
-  font-weight:800;
-  letter-spacing:.3px;
-  cursor:pointer;
-  margin-top:18px;
-  transition:all .2s;
+  border:none;border-radius:var(--rsm);
+  color:#000;font-family:var(--fui);font-size:13.5px;font-weight:800;letter-spacing:.3px;
+  cursor:pointer;margin-top:18px;transition:all .2s;
   display:flex;align-items:center;justify-content:center;gap:8px;
-  box-shadow: 0 4px 20px rgba(0,245,160,.25);
+  box-shadow:0 4px 24px rgba(0,245,160,.3),inset 0 1px 0 rgba(255,255,255,.2);
+  position:relative;overflow:hidden;
 }
-.btn-submit:hover {
-  transform:translateY(-1px);
-  box-shadow:0 8px 28px rgba(0,245,160,.35);
+.btn-submit::after {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.2),transparent);
+  opacity:0;transition:opacity .2s;
 }
-.btn-submit:active { transform:translateY(0); }
-.btn-submit:disabled {
-  opacity:.5;cursor:not-allowed;transform:none;
+.btn-submit:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 32px rgba(0,245,160,.4);
 }
+.btn-submit:hover::after{opacity:1}
+.btn-submit:active{transform:translateY(0)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-.msg {
-  padding:9px 13px;
-  border-radius:var(--rsm);
-  font-size:12px;
-  font-weight:500;
-  margin-top:12px;
-  display:none;
-  align-items:center;
-  gap:8px;
+.msg{padding:9px 13px;border-radius:var(--rsm);font-size:12px;font-weight:500;margin-top:12px;display:none;align-items:center;gap:8px}
+.msg.show{display:flex}
+.msg.error{background:rgba(255,77,107,.1);border:1px solid rgba(255,77,107,.25);color:var(--red)}
+.msg.success{background:rgba(0,245,160,.08);border:1px solid rgba(0,245,160,.2);color:var(--green)}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.btn-submit.loading .spinner{display:block}
+.btn-submit.loading .btn-label{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+.auth-footer{text-align:center;font-size:10.5px;color:var(--t2);margin-top:16px;font-family:var(--fmono);animation:fadeUp .4s ease both .3s}
+
+/* ─── Floating particles decoration ─── */
+.particle-decoration {
+  position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;
 }
-.msg.show { display:flex; }
-.msg.error   { background:rgba(255,77,107,.1);  border:1px solid rgba(255,77,107,.25);  color:var(--red); }
-.msg.success { background:rgba(0,245,160,.08);  border:1px solid rgba(0,245,160,.2);    color:var(--green); }
-
-.spinner {
-  width:14px;height:14px;
-  border:2px solid rgba(0,0,0,.3);
-  border-top-color:#000;
-  border-radius:50%;
-  animation:spin .6s linear infinite;
-  display:none;
+.p-dot {
+  position:absolute;border-radius:50%;
+  animation:floatDot linear infinite;
+  opacity:0;
 }
-.btn-submit.loading .spinner { display:block; }
-.btn-submit.loading .btn-label { display:none; }
-@keyframes spin { to { transform:rotate(360deg); } }
-
-@keyframes fadeUp   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-@keyframes fadeDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
-
-.auth-footer {
-  text-align:center;
-  font-size:10.5px;
-  color:var(--t2);
-  margin-top:16px;
-  font-family:var(--fmono);
-  animation:fadeUp .4s ease both .3s;
+@keyframes floatDot {
+  0%  {opacity:0;transform:translateY(0) scale(0)}
+  10% {opacity:.6}
+  90% {opacity:.3}
+  100%{opacity:0;transform:translateY(-100vh) scale(1.5)}
 }
 </style>
 </head>
 <body>
 
-<div class="page-wrap">
-  <!-- Full horizontal BatiSense logo -->
-  <div class="brand">
-    <svg class="brand-logo-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 180">
-      <defs>
-        <linearGradient id="gGreen" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#00f5a0"/>
-          <stop offset="100%" stop-color="#00d4e0"/>
-        </linearGradient>
-        <linearGradient id="gDark" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#0d1424"/>
-          <stop offset="100%" stop-color="#090e1a"/>
-        </linearGradient>
-        <linearGradient id="gMark" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#00f5a0"/>
-          <stop offset="60%" stop-color="#00d4e0"/>
-          <stop offset="100%" stop-color="#4d8dff"/>
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <filter id="softglow">
-          <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
-          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      <!-- Background -->
-      <rect width="480" height="180" rx="16" fill="url(#gDark)"/>
-      <!-- Subtle grid texture -->
-      <line x1="0" y1="60" x2="480" y2="60" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-      <line x1="0" y1="120" x2="480" y2="120" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-      <line x1="160" y1="0" x2="160" y2="180" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-      <line x1="320" y1="0" x2="320" y2="180" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-      <!-- Glow blob behind mark -->
-      <ellipse cx="75" cy="90" rx="55" ry="50" fill="rgba(0,245,160,0.06)" filter="url(#softglow)"/>
-      <!-- House shape -->
-      <polygon points="75,28 110,62 110,118 40,118 40,62" fill="none" stroke="url(#gMark)" stroke-width="2.5" stroke-linejoin="round" filter="url(#glow)"/>
-      <!-- Roof peak cap -->
-      <circle cx="75" cy="28" r="3.5" fill="url(#gMark)" filter="url(#glow)"/>
-      <!-- Door -->
-      <rect x="62" y="90" width="26" height="28" rx="13" fill="none" stroke="url(#gMark)" stroke-width="2" opacity="0.9"/>
-      <!-- Inner dot / sensor -->
-      <circle cx="75" cy="73" r="4" fill="url(#gMark)" filter="url(#glow)"/>
-      <!-- Signal arcs -->
-      <path d="M 63,64 Q 75,52 87,64" fill="none" stroke="url(#gMark)" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
-      <path d="M 56,57 Q 75,40 94,57" fill="none" stroke="url(#gMark)" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
-      <!-- Corner accent lines -->
-      <line x1="32" y1="118" x2="20" y2="118" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-      <line x1="20" y1="118" x2="20" y2="106" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-      <line x1="118" y1="118" x2="130" y2="118" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-      <line x1="130" y1="118" x2="130" y2="106" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-      <!-- Divider -->
-      <line x1="148" y1="40" x2="148" y2="140" stroke="rgba(0,245,160,0.15)" stroke-width="1"/>
-      <!-- WORDMARK: BATI -->
-      <text x="168" y="100"
-        font-family="'Arial Black', 'Impact', sans-serif"
-        font-size="58" font-weight="900" letter-spacing="-2"
-        fill="url(#gMark)" filter="url(#glow)">BATI</text>
-      <!-- SENSE -->
-      <text x="168" y="100"
-        font-family="'Arial Black', 'Impact', sans-serif"
-        font-size="58" font-weight="900" letter-spacing="-2"
-        fill="rgba(220,232,255,0.92)" dx="132">SENSE</text>
-      <!-- Tagline -->
-      <text x="170" y="128"
-        font-family="'Courier New', monospace"
-        font-size="11" letter-spacing="4"
-        fill="rgba(0,245,160,0.55)" font-weight="400">SMART HOME MONITORING</text>
-      <!-- PRO badge -->
-      <rect x="420" y="18" width="44" height="18" rx="5" fill="rgba(0,245,160,0.1)" stroke="rgba(0,245,160,0.25)" stroke-width="1"/>
-      <text x="442" y="31" text-anchor="middle"
-        font-family="'Courier New', monospace"
-        font-size="9.5" fill="rgba(0,245,160,0.7)" letter-spacing="1">PRO</text>
-      <!-- Bottom accent bar -->
-      <rect x="168" y="140" width="280" height="2" rx="1" fill="url(#gGreen)" opacity="0.3"/>
-      <rect x="168" y="140" width="80" height="2" rx="1" fill="url(#gGreen)" opacity="0.8"/>
-    </svg>
+<!-- ═══════════════ INTRO SPLASH ═══════════════ -->
+<div id="splash">
+  <canvas id="splash-canvas"></canvas>
+
+  <div class="splash-house-wrap">
+    <div class="signal-ring"></div>
+    <div class="signal-ring"></div>
+    <div class="signal-ring"></div>
+    <div class="house-3d">
+      <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="hgMark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f5a0"/>
+            <stop offset="60%" stop-color="#00d4e0"/>
+            <stop offset="100%" stop-color="#4d8dff"/>
+          </linearGradient>
+          <linearGradient id="hgDark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0d1424"/>
+            <stop offset="100%" stop-color="#090e1a"/>
+          </linearGradient>
+          <filter id="hglow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="hsoftglow">
+            <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <rect width="120" height="120" rx="22" fill="url(#hgDark)"/>
+        <rect width="120" height="120" rx="22" fill="none" stroke="rgba(0,245,160,0.18)" stroke-width="1.5"/>
+        <ellipse cx="60" cy="60" rx="45" ry="42" fill="rgba(0,245,160,0.07)" filter="url(#hsoftglow)"/>
+        <polygon points="60,16 98,48 98,96 22,96 22,48" fill="none" stroke="url(#hgMark)" stroke-width="3" stroke-linejoin="round" filter="url(#hglow)"/>
+        <circle cx="60" cy="16" r="4" fill="url(#hgMark)" filter="url(#hglow)"/>
+        <rect x="46" y="68" width="28" height="28" rx="14" fill="none" stroke="url(#hgMark)" stroke-width="2.5" opacity="0.95"/>
+        <circle cx="60" cy="53" r="5" fill="url(#hgMark)" filter="url(#hglow)"/>
+        <path d="M 47,43 Q 60,30 73,43" fill="none" stroke="url(#hgMark)" stroke-width="2.5" stroke-linecap="round" opacity="0.75" filter="url(#hglow)"/>
+        <path d="M 38,35 Q 60,17 82,35" fill="none" stroke="url(#hgMark)" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+        <path d="M14,96 L14,108 L26,108" fill="none" stroke="rgba(0,245,160,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M106,96 L106,108 L94,108" fill="none" stroke="rgba(0,245,160,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="splash-glow"></div>
   </div>
 
-  <!-- Card -->
-  <div class="card">
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">
-        <i class="fas fa-sign-in-alt" style="margin-right:5px;font-size:11px"></i> Connexion
-      </button>
-      <button class="tab-btn" id="tab-register" onclick="switchTab('register')">
-        <i class="fas fa-user-plus" style="margin-right:5px;font-size:11px"></i> Créer un compte
-      </button>
-    </div>
-
-    <!-- LOGIN FORM -->
-    <div class="form-section active" id="section-login">
-      <div class="form-title">Bon retour 👋</div>
-      <div class="form-sub">Connectez-vous pour accéder à votre tableau de bord.</div>
-
-      <div class="field">
-        <label><i class="fas fa-envelope" style="margin-right:4px;opacity:.6"></i> Adresse e-mail</label>
-        <input type="email" id="login-email" placeholder="votre@email.com" autocomplete="email">
-      </div>
-      <div class="field">
-        <label><i class="fas fa-lock" style="margin-right:4px;opacity:.6"></i> Mot de passe</label>
-        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
-      </div>
-
-      <div class="msg" id="login-msg"></div>
-
-      <button class="btn-submit" id="login-btn" onclick="doLogin()">
-        <div class="spinner"></div>
-        <span class="btn-label"><i class="fas fa-arrow-right"></i> &nbsp;Se connecter</span>
-      </button>
-    </div>
-
-    <!-- REGISTER FORM -->
-    <div class="form-section" id="section-register">
-      <div class="form-title">Créer un compte</div>
-      <div class="form-sub">Remplissez vos informations pour commencer à surveiller votre bâtiment.</div>
-
-      <div class="field field-row">
-        <div>
-          <label>Prénom</label>
-          <input type="text" id="reg-firstname" placeholder="Jean" autocomplete="given-name">
-        </div>
-        <div>
-          <label>Nom</label>
-          <input type="text" id="reg-lastname" placeholder="Dupont" autocomplete="family-name">
-        </div>
-      </div>
-      <div class="field">
-        <label><i class="fas fa-envelope" style="margin-right:4px;opacity:.6"></i> Adresse e-mail</label>
-        <input type="email" id="reg-email" placeholder="votre@email.com" autocomplete="email">
-      </div>
-      <div class="field">
-        <label><i class="fas fa-lock" style="margin-right:4px;opacity:.6"></i> Mot de passe <span style="color:var(--t2);text-transform:none;letter-spacing:0">(min. 8 caractères)</span></label>
-        <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password">
-      </div>
-
-      <div class="form-divider">Adresse du bâtiment</div>
-
-      <div class="field">
-        <label><i class="fas fa-map-marker-alt" style="margin-right:4px;opacity:.6"></i> Rue</label>
-        <input type="text" id="reg-street" placeholder="12 rue de la Paix" autocomplete="street-address">
-      </div>
-      <div class="field field-row">
-        <div>
-          <label>Ville</label>
-          <input type="text" id="reg-city" placeholder="Paris" autocomplete="address-level2">
-        </div>
-        <div>
-          <label>Code postal</label>
-          <input type="text" id="reg-zip" placeholder="75001" autocomplete="postal-code">
-        </div>
-      </div>
-
-      <div class="msg" id="register-msg"></div>
-
-      <button class="btn-submit" id="register-btn" onclick="doRegister()">
-        <div class="spinner"></div>
-        <span class="btn-label"><i class="fas fa-user-plus"></i> &nbsp;Créer mon compte</span>
-      </button>
-    </div>
+  <div class="splash-brand">
+    <div class="splash-logo-text">BatiSense</div>
+    <div class="splash-tagline">Smart Home Monitoring</div>
   </div>
 
-  <div class="auth-footer">
-    BatiSense Pro · Système de surveillance intelligent
+  <div class="splash-loader">
+    <div class="splash-loader-bar">
+      <div class="splash-loader-fill"></div>
+    </div>
+    <div class="splash-loader-text" id="splash-status">INITIALISATION…</div>
+  </div>
+</div>
+
+<!-- ═══════════════ LOGIN PAGE ═══════════════ -->
+<div id="login-page">
+  <div class="bg-gradient"></div>
+  <div class="bg-grid"></div>
+  <div class="particle-decoration" id="particles"></div>
+
+  <div class="page-wrap">
+    <div class="brand">
+      <div class="brand-icon"><i class="fas fa-home"></i></div>
+      <div>
+        <div class="brand-text"><span>Bati</span>Sense</div>
+      </div>
+      <div class="brand-pro">PRO</div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">
+          <i class="fas fa-sign-in-alt" style="margin-right:5px;font-size:11px"></i> Connexion
+        </button>
+        <button class="tab-btn" id="tab-register" onclick="switchTab('register')">
+          <i class="fas fa-user-plus" style="margin-right:5px;font-size:11px"></i> Créer un compte
+        </button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="form-section active" id="section-login">
+        <div class="form-title">Bon retour 👋</div>
+        <div class="form-sub">Connectez-vous pour accéder à votre tableau de bord.</div>
+        <div class="field">
+          <label><i class="fas fa-envelope" style="margin-right:4px;opacity:.6"></i> Adresse e-mail</label>
+          <input type="email" id="login-email" placeholder="votre@email.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label><i class="fas fa-lock" style="margin-right:4px;opacity:.6"></i> Mot de passe</label>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div class="msg" id="login-msg"></div>
+        <button class="btn-submit" id="login-btn" onclick="doLogin()">
+          <div class="spinner"></div>
+          <span class="btn-label"><i class="fas fa-arrow-right"></i> &nbsp;Se connecter</span>
+        </button>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="form-section" id="section-register">
+        <div class="form-title">Créer un compte</div>
+        <div class="form-sub">Remplissez vos informations pour commencer à surveiller votre bâtiment.</div>
+        <div class="field field-row">
+          <div><label>Prénom</label><input type="text" id="reg-firstname" placeholder="Jean" autocomplete="given-name"></div>
+          <div><label>Nom</label><input type="text" id="reg-lastname" placeholder="Dupont" autocomplete="family-name"></div>
+        </div>
+        <div class="field">
+          <label><i class="fas fa-envelope" style="margin-right:4px;opacity:.6"></i> Adresse e-mail</label>
+          <input type="email" id="reg-email" placeholder="votre@email.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label><i class="fas fa-lock" style="margin-right:4px;opacity:.6"></i> Mot de passe</label>
+          <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <div class="form-divider">Adresse du bâtiment</div>
+        <div class="field">
+          <label><i class="fas fa-map-marker-alt" style="margin-right:4px;opacity:.6"></i> Rue</label>
+          <input type="text" id="reg-street" placeholder="12 rue de la Paix" autocomplete="street-address">
+        </div>
+        <div class="field field-row">
+          <div><label>Ville</label><input type="text" id="reg-city" placeholder="Paris" autocomplete="address-level2"></div>
+          <div><label>Code postal</label><input type="text" id="reg-zip" placeholder="75001" autocomplete="postal-code"></div>
+        </div>
+        <div class="msg" id="register-msg"></div>
+        <button class="btn-submit" id="register-btn" onclick="doRegister()">
+          <div class="spinner"></div>
+          <span class="btn-label"><i class="fas fa-user-plus"></i> &nbsp;Créer mon compte</span>
+        </button>
+      </div>
+    </div>
+    <div class="auth-footer">BatiSense Pro · Système de surveillance intelligent</div>
   </div>
 </div>
 
@@ -428,6 +504,116 @@ input.err { border-color:rgba(255,77,107,.5); }
 "use strict";
 const API_BASE = "https://batisense-production.up.railway.app";
 
+/* ══════════════════════════════════════
+   SPLASH CANVAS — animated particles
+══════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById("splash-canvas");
+  const ctx = canvas.getContext("2d");
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  const COLORS = ["#00f5a0","#00d4e0","#4d8dff","#ffc233"];
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * 1500 - 250,
+      y: Math.random() * 1500 - 250,
+      r: Math.random() * 1.5 + 0.3,
+      vx: (Math.random() - .5) * .4,
+      vy: (Math.random() - .5) * .4,
+      color: COLORS[Math.floor(Math.random()*COLORS.length)],
+      alpha: Math.random() * .5 + .1,
+    });
+  }
+
+  let running = true;
+  function draw() {
+    if (!running) return;
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -10) p.x = W + 10;
+      if (p.x > W + 10) p.x = -10;
+      if (p.y < -10) p.y = H + 10;
+      if (p.y > H + 10) p.y = -10;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.alpha;
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  window._stopSplashCanvas = () => { running = false; };
+})();
+
+/* ══════════════════════════════════════
+   SPLASH STATUS MESSAGES
+══════════════════════════════════════ */
+const splashMessages = [
+  "INITIALISATION…",
+  "CHARGEMENT DES CAPTEURS…",
+  "CONNEXION API…",
+  "PRÊT",
+];
+let msgIdx = 0;
+const statusEl = document.getElementById("splash-status");
+const msgInterval = setInterval(() => {
+  msgIdx++;
+  if (msgIdx < splashMessages.length) {
+    statusEl.textContent = splashMessages[msgIdx];
+  }
+}, 600);
+
+/* Dismiss splash after 3s */
+setTimeout(() => {
+  clearInterval(msgInterval);
+  statusEl.textContent = "PRÊT ✓";
+  const splash = document.getElementById("splash");
+  splash.classList.add("exit");
+  const loginPage = document.getElementById("login-page");
+  loginPage.classList.add("visible");
+  setTimeout(() => {
+    splash.style.display = "none";
+    window._stopSplashCanvas && window._stopSplashCanvas();
+    spawnParticles();
+  }, 800);
+}, 3100);
+
+/* ══════════════════════════════════════
+   FLOATING PARTICLES on login page
+══════════════════════════════════════ */
+function spawnParticles() {
+  const container = document.getElementById("particles");
+  const COLORS = ["#00f5a0","#00d4e0","#4d8dff","#ffc233"];
+  for (let i = 0; i < 20; i++) {
+    const dot = document.createElement("div");
+    dot.className = "p-dot";
+    const size = Math.random() * 3 + 1;
+    dot.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      bottom:${Math.random()*30-10}%;
+      background:${COLORS[Math.floor(Math.random()*COLORS.length)]};
+      animation-duration:${8+Math.random()*12}s;
+      animation-delay:${Math.random()*6}s;
+    `;
+    container.appendChild(dot);
+  }
+}
+
+/* ══════════════════════════════════════
+   AUTH LOGIC (unchanged)
+══════════════════════════════════════ */
 function switchTab(tab) {
   document.getElementById("section-login").classList.toggle("active", tab === "login");
   document.getElementById("section-register").classList.toggle("active", tab === "register");
@@ -435,61 +621,39 @@ function switchTab(tab) {
   document.getElementById("tab-register").classList.toggle("active", tab === "register");
   clearMsgs();
 }
-
 function clearMsgs() {
   ["login-msg","register-msg"].forEach(id => {
     const el = document.getElementById(id);
-    el.className = "msg";
-    el.textContent = "";
+    el.className = "msg"; el.textContent = "";
   });
 }
-
 function showMsg(id, text, type) {
   const el = document.getElementById(id);
   el.className = `msg ${type} show`;
   el.innerHTML = `<i class="fas ${type==='error'?'fa-exclamation-circle':'fa-check-circle'}"></i> ${text}`;
 }
-
 function setLoading(btnId, loading) {
   const btn = document.getElementById(btnId);
   btn.classList.toggle("loading", loading);
   btn.disabled = loading;
 }
-
 async function doLogin() {
-  const email    = document.getElementById("login-email").value.trim();
+  const email = document.getElementById("login-email").value.trim();
   const password = document.getElementById("login-password").value;
-
-  if (!email || !password) {
-    showMsg("login-msg", "Veuillez remplir tous les champs.", "error");
-    return;
-  }
-
-  setLoading("login-btn", true);
-  clearMsgs();
-
+  if (!email || !password) { showMsg("login-msg","Veuillez remplir tous les champs.","error"); return; }
+  setLoading("login-btn", true); clearMsgs();
   try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    const res = await fetch(`${API_BASE}/auth/login`, { method:"POST", credentials:"include", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,password}) });
     const data = await res.json();
-
     if (res.ok) {
-      showMsg("login-msg", "Connexion réussie. Redirection…", "success");
+      showMsg("login-msg","Connexion réussie. Redirection…","success");
       setTimeout(() => window.location.href = "/dashboard", 800);
     } else {
-      showMsg("login-msg", data.error || "Erreur de connexion.", "error");
+      showMsg("login-msg", data.error||"Erreur de connexion.", "error");
       setLoading("login-btn", false);
     }
-  } catch {
-    showMsg("login-msg", "Impossible de joindre le serveur.", "error");
-    setLoading("login-btn", false);
-  }
+  } catch { showMsg("login-msg","Impossible de joindre le serveur.","error"); setLoading("login-btn",false); }
 }
-
 async function doRegister() {
   const payload = {
     first_name: document.getElementById("reg-firstname").value.trim(),
@@ -500,48 +664,25 @@ async function doRegister() {
     city:       document.getElementById("reg-city").value.trim(),
     zip_code:   document.getElementById("reg-zip").value.trim(),
   };
-
-  for (const [k, v] of Object.entries(payload)) {
-    if (!v) {
-      showMsg("register-msg", "Veuillez remplir tous les champs.", "error");
-      return;
-    }
-  }
-  if (payload.password.length < 8) {
-    showMsg("register-msg", "Le mot de passe doit contenir au moins 8 caractères.", "error");
-    return;
-  }
-
-  setLoading("register-btn", true);
-  clearMsgs();
-
+  for (const [k,v] of Object.entries(payload)) { if (!v) { showMsg("register-msg","Veuillez remplir tous les champs.","error"); return; } }
+  if (payload.password.length < 8) { showMsg("register-msg","Le mot de passe doit contenir au moins 8 caractères.","error"); return; }
+  setLoading("register-btn",true); clearMsgs();
   try {
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const res = await fetch(`${API_BASE}/auth/register`, { method:"POST", credentials:"include", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) });
     const data = await res.json();
-
     if (res.ok) {
-      showMsg("register-msg", "Compte créé ! Redirection…", "success");
+      showMsg("register-msg","Compte créé ! Redirection…","success");
       setTimeout(() => window.location.href = "/dashboard", 900);
     } else {
-      showMsg("register-msg", data.error || "Erreur lors de la création.", "error");
-      setLoading("register-btn", false);
+      showMsg("register-msg", data.error||"Erreur lors de la création.","error");
+      setLoading("register-btn",false);
     }
-  } catch {
-    showMsg("register-msg", "Impossible de joindre le serveur.", "error");
-    setLoading("register-btn", false);
-  }
+  } catch { showMsg("register-msg","Impossible de joindre le serveur.","error"); setLoading("register-btn",false); }
 }
-
 document.addEventListener("keydown", e => {
   if (e.key !== "Enter") return;
   const loginActive = document.getElementById("section-login").classList.contains("active");
-  if (loginActive) doLogin();
-  else doRegister();
+  if (loginActive) doLogin(); else doRegister();
 });
 </script>
 </body>
