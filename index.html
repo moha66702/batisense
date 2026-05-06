@@ -155,7 +155,7 @@ button{cursor:pointer;font-family:var(--fui)}
 
 <aside class="sidebar">
   <div class="s-logo">
-    <div class="s-logo-mark">B</div>
+    <img src="/batisense-icon.svg" style="width:34px;height:34px;flex-shrink:0;">
     <div><div class="s-logo-name">BatiSense</div><div class="s-logo-sub">Pro</div></div>
   </div>
   <nav class="s-nav">
@@ -178,12 +178,17 @@ button{cursor:pointer;font-family:var(--fui)}
 <div class="main">
   <header class="topbar">
     <div class="topbar-l">
+      <div class="topbar-l" style="display:flex;align-items:center;gap:14px;">
+      <img src="/batisense-logo.svg" style="height:36px;opacity:0.92;">
+      <div>
       <h1 id="page-title">Vue d'ensemble</h1>
+  <h1 id="page-title">Vue d'ensemble</h1>
       <p>
         <span class="live-dot" id="live-dot"></span>
         Dernière donnée: <span id="last-update">—</span>
         · <span id="last-node">—</span>
       </p>
+      </div>
     </div>
     <div class="topbar-r">
       <button class="btn" onclick="exportCSV()"><i class="fas fa-download"></i> CSV</button>
