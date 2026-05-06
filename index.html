@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="icon" type="image/svg+xml" href="/batisense-icon.svg">
+<!-- Inlined SVG favicon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='gMark' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300f5a0'/%3E%3Cstop offset='60%25' stop-color='%2300d4e0'/%3E%3Cstop offset='100%25' stop-color='%234d8dff'/%3E%3C/linearGradient%3E%3ClinearGradient id='gDark' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%230d1424'/%3E%3Cstop offset='100%25' stop-color='%23090e1a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='120' height='120' rx='22' fill='url(%23gDark)'/%3E%3Cpolygon points='60,16 98,48 98,96 22,96 22,48' fill='none' stroke='url(%23gMark)' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='60' cy='16' r='4' fill='url(%23gMark)'/%3E%3Crect x='46' y='68' width='28' height='28' rx='14' fill='none' stroke='url(%23gMark)' stroke-width='2.5'/%3E%3Ccircle cx='60' cy='53' r='5' fill='url(%23gMark)'/%3E%3Cpath d='M 47,43 Q 60,30 73,43' fill='none' stroke='url(%23gMark)' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 /* ────── YOUR EXACT ORIGINAL STYLES ────── */
 :root{
@@ -35,7 +36,9 @@ button{cursor:pointer;font-family:var(--fui)}
 .app{display:flex;min-height:100vh}
 .sidebar{width:220px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--b0);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
 .s-logo{padding:20px 16px 16px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:10px}
-.s-logo-mark{width:34px;height:34px;border-radius:8px;flex-shrink:0;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#000}
+/* Updated logo mark to hold SVG */
+.s-logo-mark{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.s-logo-mark svg{width:34px;height:34px;border-radius:8px}
 .s-logo-name{font-size:14.5px;font-weight:700;letter-spacing:-.3px}
 .s-logo-sub{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px}
 .s-nav{padding:8px 6px;flex:1}
@@ -155,7 +158,41 @@ button{cursor:pointer;font-family:var(--fui)}
 
 <aside class="sidebar">
   <div class="s-logo">
-    <div class="s-logo-mark">B</div>
+    <!-- Real BatiSense icon SVG inlined -->
+    <div class="s-logo-mark">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="34" height="34">
+        <defs>
+          <linearGradient id="gMark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f5a0"/>
+            <stop offset="60%" stop-color="#00d4e0"/>
+            <stop offset="100%" stop-color="#4d8dff"/>
+          </linearGradient>
+          <linearGradient id="gDark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0d1424"/>
+            <stop offset="100%" stop-color="#090e1a"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="softglow">
+            <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <rect width="120" height="120" rx="22" fill="url(#gDark)"/>
+        <rect width="120" height="120" rx="22" fill="none" stroke="rgba(0,245,160,0.18)" stroke-width="1.5"/>
+        <ellipse cx="60" cy="60" rx="45" ry="42" fill="rgba(0,245,160,0.07)" filter="url(#softglow)"/>
+        <polygon points="60,16 98,48 98,96 22,96 22,48" fill="none" stroke="url(#gMark)" stroke-width="3" stroke-linejoin="round" filter="url(#glow)"/>
+        <circle cx="60" cy="16" r="4" fill="url(#gMark)" filter="url(#glow)"/>
+        <rect x="46" y="68" width="28" height="28" rx="14" fill="none" stroke="url(#gMark)" stroke-width="2.5" opacity="0.95"/>
+        <circle cx="60" cy="53" r="5" fill="url(#gMark)" filter="url(#glow)"/>
+        <path d="M 47,43 Q 60,30 73,43" fill="none" stroke="url(#gMark)" stroke-width="2.5" stroke-linecap="round" opacity="0.75" filter="url(#glow)"/>
+        <path d="M 38,35 Q 60,17 82,35" fill="none" stroke="url(#gMark)" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+        <path d="M14,96 L14,108 L26,108" fill="none" stroke="rgba(0,245,160,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M106,96 L106,108 L94,108" fill="none" stroke="rgba(0,245,160,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
     <div><div class="s-logo-name">BatiSense</div><div class="s-logo-sub">Pro</div></div>
   </div>
   <nav class="s-nav">
@@ -344,7 +381,7 @@ button{cursor:pointer;font-family:var(--fui)}
 <script>
 "use strict";
 
-const API_BASE = "https://batisense-production.up.railway.app";   // change to your server IP
+const API_BASE = "https://batisense-production.up.railway.app";
 const HISTORY_HOURS = 24;
 
 const NODES = {
@@ -368,10 +405,8 @@ const SENSOR_META = {
   daily_consumption: { icon:"fa-tachometer-alt",   color:"var(--green)", label:"Consomm.", fmt:v=>v.toFixed(2) },
 };
 
-// ── STATE ─────────────────────────────────────────
 const state = { latest: {}, nodeSeen: {}, alertCount: 0, averages: { avg_temperature: null, avg_humidity: null, sources: {} } };
 
-// ── CHART SETUP (same as original) ───────────────
 let CH = {};
 Chart.defaults.color       = "#7d95bc";
 Chart.defaults.borderColor = "rgba(255,255,255,0.05)";
@@ -419,7 +454,6 @@ function mkBarDS(label, color, data) {
 }
 function toXY(rows) { return rows ? rows.map(r=>({ x:new Date(r.t).getTime(), y:r.v })) : []; }
 
-// ── API HELPERS with credentials ──────────────────
 async function apiFetch(path) {
   try {
     const r = await fetch(API_BASE + path, { credentials: "include", signal:AbortSignal.timeout(6000) });
@@ -432,30 +466,22 @@ function setApiDot(ok) {
   document.getElementById("lbl-api").textContent = ok ? "API connectée" : "API hors ligne";
 }
 
-// ── AUTH & USER ──────────────────────────────────
 async function loadUser() {
   try {
     const res = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
-    if (res.status === 401) {
-      window.location.href = "/login";
-      return false;
-    }
+    if (res.status === 401) { window.location.href = "/login"; return false; }
     const data = await res.json();
     const u = data.user;
     document.getElementById("user-name").textContent = u.first_name + " " + u.last_name;
     document.getElementById("user-avatar").textContent = (u.first_name[0] + u.last_name[0]).toUpperCase();
     return true;
-  } catch {
-    window.location.href = "/login";
-    return false;
-  }
+  } catch { window.location.href = "/login"; return false; }
 }
 async function doLogout() {
   await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" });
   window.location.href = "/login";
 }
 
-// ── DATA LOADING (filtered by user) ───────────────
 async function loadInitial() {
   const data = await apiFetch("/api/latest");
   if (!data) { setApiDot(false); return; }
@@ -512,7 +538,6 @@ function appendChartPoint(chartKey, label, color, point) {
   chart.update("none");
 }
 
-// ── SSE with credentials (cookies are sent automatically) ──
 let _sse = null;
 let _sseRetryTimer = null;
 function connectSSE() {
@@ -531,7 +556,6 @@ function setSseDot(state) {
   else                     { dot.className = "dot"; label.textContent = "Connexion…"; }
 }
 
-// ── Real‑time event handlers ──────────────────────
 function onSensorEvent(d) {
   const { node_id: nid, sensor_type, value, timestamp } = d;
   if (!state.latest[nid]) state.latest[nid] = {};
@@ -661,7 +685,6 @@ function loadTheme() {
 function exportCSV() { window.open(API_BASE+"/api/export/csv","_blank"); }
 function escapeHtml(s) { return String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
 
-// ── NODE CARDS ─────────────────────────────────────
 function renderNodeCards() {
   const c = document.getElementById("nodes-container");
   c.innerHTML = Object.entries(NODES).map(([nid, meta]) => {
@@ -702,7 +725,6 @@ function updateNodeCard(nid) {
   flashEl(`nc-${nid}`);
 }
 
-// ── ALERTS ────────────────────────────────────────
 async function loadAlerts() {
   const data = await apiFetch("/api/alerts");
   const list = document.getElementById("alert-list");
@@ -730,7 +752,6 @@ function updateAlertBadge() {
   b.textContent = state.alertCount;
 }
 
-// ── NAVIGATION ────────────────────────────────────
 const SEC_TITLES = { overview:"Vue d'ensemble", nodes:"Nœuds capteurs", consumption:"Consommation", alerts:"Alertes" };
 document.querySelectorAll(".nav-btn[data-sec]").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -755,7 +776,6 @@ document.getElementById("temp-tabs").addEventListener("click", async e => {
   updateTempChart(kt, st);
 });
 
-// ── BOOT ──────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   loadTheme();
   initCharts();
