@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 180" width="480" height="180">
+  <defs>
+    <linearGradient id="gGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5a0"/>
+      <stop offset="100%" stop-color="#00d4e0"/>
+    </linearGradient>
+    <linearGradient id="gDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1424"/>
+      <stop offset="100%" stop-color="#090e1a"/>
+    </linearGradient>
+    <linearGradient id="gMark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5a0"/>
+      <stop offset="60%" stop-color="#00d4e0"/>
+      <stop offset="100%" stop-color="#4d8dff"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="markClip">
+      <rect x="0" y="0" width="120" height="180"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="480" height="180" rx="16" fill="url(#gDark)"/>
+
+  <!-- Subtle grid texture -->
+  <line x1="0" y1="60" x2="480" y2="60" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="0" y1="120" x2="480" y2="120" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="160" y1="0" x2="160" y2="180" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="320" y1="0" x2="320" y2="180" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+
+  <!-- Glow blob behind mark -->
+  <ellipse cx="75" cy="90" rx="55" ry="50" fill="rgba(0,245,160,0.06)" filter="url(#softglow)"/>
+
+  <!-- ── MARK: House + Signal waves ── -->
+  <!-- House shape -->
+  <polygon points="75,28 110,62 110,118 40,118 40,62" fill="none" stroke="url(#gMark)" stroke-width="2.5" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- Roof peak cap -->
+  <circle cx="75" cy="28" r="3.5" fill="url(#gMark)" filter="url(#glow)"/>
+
+  <!-- Door -->
+  <rect x="62" y="90" width="26" height="28" rx="13" fill="none" stroke="url(#gMark)" stroke-width="2" opacity="0.9"/>
+
+  <!-- Inner dot / sensor -->
+  <circle cx="75" cy="73" r="4" fill="url(#gMark)" filter="url(#glow)"/>
+
+  <!-- Signal arcs radiating from sensor dot -->
+  <path d="M 63,64 Q 75,52 87,64" fill="none" stroke="url(#gMark)" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <path d="M 56,57 Q 75,40 94,57" fill="none" stroke="url(#gMark)" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Corner accent lines -->
+  <line x1="32" y1="118" x2="20" y2="118" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="20" y1="118" x2="20" y2="106" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="118" y1="118" x2="130" y2="118" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="130" y1="118" x2="130" y2="106" stroke="url(#gGreen)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Divider -->
+  <line x1="148" y1="40" x2="148" y2="140" stroke="rgba(0,245,160,0.15)" stroke-width="1"/>
+
+  <!-- ── WORDMARK ── -->
+  <!-- BATI -->
+  <text x="168" y="100"
+    font-family="'Arial Black', 'Impact', sans-serif"
+    font-size="58"
+    font-weight="900"
+    letter-spacing="-2"
+    fill="url(#gMark)"
+    filter="url(#glow)">BATI</text>
+
+  <!-- SENSE -->
+  <text x="168" y="100"
+    font-family="'Arial Black', 'Impact', sans-serif"
+    font-size="58"
+    font-weight="900"
+    letter-spacing="-2"
+    fill="rgba(220,232,255,0.92)"
+    dx="132">SENSE</text>
+
+  <!-- Tagline -->
+  <text x="170" y="128"
+    font-family="'Courier New', monospace"
+    font-size="11"
+    letter-spacing="4"
+    fill="rgba(0,245,160,0.55)"
+    font-weight="400">SMART HOME MONITORING</text>
+
+  <!-- Top-right version badge -->
+  <rect x="420" y="18" width="44" height="18" rx="5" fill="rgba(0,245,160,0.1)" stroke="rgba(0,245,160,0.25)" stroke-width="1"/>
+  <text x="442" y="31" text-anchor="middle"
+    font-family="'Courier New', monospace"
+    font-size="9.5"
+    fill="rgba(0,245,160,0.7)"
+    letter-spacing="1">PRO</text>
+
+  <!-- Bottom accent bar -->
+  <rect x="168" y="140" width="280" height="2" rx="1" fill="url(#gGreen)" opacity="0.3"/>
+  <rect x="168" y="140" width="80" height="2" rx="1" fill="url(#gGreen)" opacity="0.8"/>
+</svg>

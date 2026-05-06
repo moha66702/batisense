@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="gMark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5a0"/>
+      <stop offset="60%" stop-color="#00d4e0"/>
+      <stop offset="100%" stop-color="#4d8dff"/>
+    </linearGradient>
+    <linearGradient id="gDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1424"/>
+      <stop offset="100%" stop-color="#090e1a"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background with rounded corners -->
+  <rect width="120" height="120" rx="22" fill="url(#gDark)"/>
+
+  <!-- Subtle border -->
+  <rect width="120" height="120" rx="22" fill="none" stroke="rgba(0,245,160,0.18)" stroke-width="1.5"/>
+
+  <!-- Glow blob -->
+  <ellipse cx="60" cy="60" rx="45" ry="42" fill="rgba(0,245,160,0.07)" filter="url(#softglow)"/>
+
+  <!-- House outline -->
+  <polygon points="60,16 98,48 98,96 22,96 22,48"
+    fill="none"
+    stroke="url(#gMark)"
+    stroke-width="3"
+    stroke-linejoin="round"
+    filter="url(#glow)"/>
+
+  <!-- Roof peak dot -->
+  <circle cx="60" cy="16" r="4" fill="url(#gMark)" filter="url(#glow)"/>
+
+  <!-- Door rounded -->
+  <rect x="46" y="68" width="28" height="28" rx="14"
+    fill="none"
+    stroke="url(#gMark)"
+    stroke-width="2.5"
+    opacity="0.95"/>
+
+  <!-- Sensor dot center -->
+  <circle cx="60" cy="53" r="5" fill="url(#gMark)" filter="url(#glow)"/>
+
+  <!-- Signal arc 1 -->
+  <path d="M 47,43 Q 60,30 73,43"
+    fill="none"
+    stroke="url(#gMark)"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    opacity="0.75"
+    filter="url(#glow)"/>
+
+  <!-- Signal arc 2 -->
+  <path d="M 38,35 Q 60,17 82,35"
+    fill="none"
+    stroke="url(#gMark)"
+    stroke-width="2"
+    stroke-linecap="round"
+    opacity="0.4"/>
+
+  <!-- Corner brackets -->
+  <path d="M14,96 L14,108 L26,108" fill="none" stroke="rgba(0,245,160,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M106,96 L106,108 L94,108" fill="none" stroke="rgba(0,245,160,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
