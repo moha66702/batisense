@@ -4,96 +4,78 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BatiSense Pro — Dashboard</title>
+
+<!-- ═══ FAVICON ═══ -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23050810'/%3E%3Cpolygon points='16,4 27,12 27,26 5,26 5,12' fill='none' stroke='%2300f5a0' stroke-width='1.8' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='4' r='1.5' fill='%2300f5a0'/%3E%3Crect x='12' y='18' width='8' height='8' rx='4' fill='none' stroke='%2300f5a0' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='14' r='1.8' fill='%2300f5a0'/%3E%3Cpath d='M 11,10 Q 16,6 21,10' fill='none' stroke='%2300f5a0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
-:root{
+/* ═══════════════════ DESIGN TOKENS ═══════════════════ */
+:root {
   --bg0:#040711;--bg1:#070c17;--bg2:#0b1120;--bg3:#101828;--bg4:#162034;
-  --b0:rgba(255,255,255,.03);--b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);
+  --b0:rgba(255,255,255,.03);--b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
   --green:#00f5a0;--teal:#00d4e0;--blue:#4d8dff;--amber:#ffc233;--red:#ff4d6b;--violet:#a06bff;
   --t0:#dce8ff;--t1:#7d95bc;--t2:#3d5070;
-  --r:14px;--rsm:8px;
+  --r:14px;--rsm:9px;
   --fui:'Syne',sans-serif;--fmono:'DM Mono',monospace;
-  --glow-g:0 0 30px rgba(0,245,160,.12);
-  --glow-r:0 0 30px rgba(255,77,107,.12);
-  --sidebar-w:230px;
+  --glow-g:0 0 30px rgba(0,245,160,.14);
+  --glow-r:0 0 30px rgba(255,77,107,.14);
+  --sidebar-w:236px;
+
+  /* topbar dark */
+  --topbar-bg:rgba(5,8,17,.85);
+  --topbar-border:rgba(255,255,255,.06);
+  --topbar-text:#dce8ff;
 }
-[data-theme=light]{
-  --bg0:#edf1fb;--bg1:#f0f4fe;--bg2:#ffffff;--bg3:#f4f7ff;--bg4:#e8eeff;
-  --b0:rgba(0,0,0,.04);--b1:rgba(0,0,0,.08);--b2:rgba(0,0,0,.13);
+
+/* LIGHT MODE OVERRIDES */
+[data-theme=light] {
+  --bg0:#eef2fb;--bg1:#f2f6ff;--bg2:#ffffff;--bg3:#f5f7ff;--bg4:#e8eeff;
+  --b0:rgba(0,0,0,.05);--b1:rgba(0,0,0,.09);--b2:rgba(0,0,0,.14);
   --t0:#0c1732;--t1:#3a4f72;--t2:#8898bb;
+  --glow-g:0 0 20px rgba(0,180,120,.1);
+  --glow-r:0 0 20px rgba(255,77,107,.1);
+
+  /* ─── FIXED: light mode topbar is now white/light ─── */
+  --topbar-bg:rgba(255,255,255,.92);
+  --topbar-border:rgba(0,0,0,.08);
+  --topbar-text:#0c1732;
 }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px;-webkit-font-smoothing:antialiased}
-body{font-family:var(--fui);background:var(--bg0);color:var(--t0);min-height:100vh}
+body{font-family:var(--fui);background:var(--bg0);color:var(--t0);min-height:100vh;transition:background .3s,color .3s}
 button{cursor:pointer;font-family:var(--fui)}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
 
-/* ═══════════════════════════════════
-   WELCOME ANIMATION OVERLAY
-═══════════════════════════════════ */
+/* ═══════════════════ WELCOME OVERLAY ═══════════════════ */
 #welcome-overlay {
   position:fixed;inset:0;z-index:999;
   background:var(--bg0);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
 }
-#welcome-overlay.hide {
-  animation:overlayOut .7s cubic-bezier(.76,0,.24,1) forwards;
-  pointer-events:none;
-}
-@keyframes overlayOut {
-  0%  {opacity:1;transform:scale(1)}
-  30% {opacity:1;transform:scale(1.02)}
-  100%{opacity:0;transform:scale(.95);display:none}
-}
-.wov-logo {
-  animation:wovLogoIn .8s cubic-bezier(.34,1.56,.64,1) both;
-}
-@keyframes wovLogoIn {
-  from{opacity:0;transform:scale(.3) rotateY(-180deg)}
-  to{opacity:1;transform:scale(1) rotateY(0deg)}
-}
-.wov-text {
-  font-size:32px;font-weight:800;letter-spacing:-1px;
+#welcome-overlay.hide{animation:overlayOut .7s cubic-bezier(.76,0,.24,1) forwards;pointer-events:none}
+@keyframes overlayOut{0%{opacity:1;transform:scale(1)}30%{opacity:1;transform:scale(1.02)}100%{opacity:0;transform:scale(.95)}}
+.wov-logo{animation:wovLogoIn .8s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes wovLogoIn{from{opacity:0;transform:scale(.3) rotateY(-180deg)}to{opacity:1;transform:scale(1) rotateY(0deg)}}
+.wov-text{font-size:34px;font-weight:800;letter-spacing:-1.5px;
   background:linear-gradient(90deg,var(--green),var(--teal),var(--blue));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  animation:wovTextIn .6s ease both .3s;
-}
-@keyframes wovTextIn {
-  from{opacity:0;transform:translateY(12px)}
-  to{opacity:1;transform:translateY(0)}
-}
-.wov-user {
-  font-size:15px;color:var(--t1);
-  animation:wovTextIn .6s ease both .5s;
-}
-.wov-bar-wrap {
-  width:220px;
-  animation:wovTextIn .6s ease both .6s;
-}
-.wov-bar {
-  height:3px;background:var(--bg3);border-radius:3px;overflow:hidden;
-}
-.wov-bar-fill {
-  height:100%;width:0;
-  background:linear-gradient(90deg,var(--green),var(--teal));
-  animation:wovFill 1.6s cubic-bezier(.4,0,.2,1) forwards;
-  animation-delay:.5s;
-}
+  animation:wovTextIn .6s ease both .3s}
+@keyframes wovTextIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.wov-user{font-size:15px;color:var(--t1);animation:wovTextIn .6s ease both .5s}
+.wov-bar-wrap{width:240px;animation:wovTextIn .6s ease both .6s}
+.wov-bar{height:3px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.wov-bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--teal),var(--blue));animation:wovFill 1.8s cubic-bezier(.4,0,.2,1) forwards;animation-delay:.5s}
 @keyframes wovFill{to{width:100%}}
-.wov-hint {
-  font-family:var(--fmono);font-size:10px;color:var(--t2);letter-spacing:2px;
-  text-align:center;
-  animation:wovTextIn .6s ease both .7s;
-}
+.wov-hint{font-family:var(--fmono);font-size:10px;color:var(--t2);letter-spacing:2px;text-align:center;animation:wovTextIn .6s ease both .7s;margin-top:8px}
 
-/* ═══════════════════════════════════
-   LAYOUT
-═══════════════════════════════════ */
+/* ═══════════════════ LAYOUT ═══════════════════ */
 .app{display:flex;min-height:100vh}
 
 /* ─── Sidebar ─── */
@@ -103,37 +85,38 @@ button{cursor:pointer;font-family:var(--fui)}
   border-right:1px solid var(--b0);
   display:flex;flex-direction:column;
   position:sticky;top:0;height:100vh;overflow-y:auto;
-  transition:width .3s cubic-bezier(.4,0,.2,1);
+  transition:width .3s cubic-bezier(.4,0,.2,1),background .3s;
 }
 .s-logo{padding:20px 16px 18px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:10px}
-.s-logo-mark{width:36px;height:36px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-.s-logo-mark::after{content:'';position:absolute;inset:0;border-radius:9px;box-shadow:0 0 16px rgba(0,245,160,.3);pointer-events:none}
-.s-logo-mark svg{width:36px;height:36px;border-radius:9px}
+.s-logo-mark{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
+  box-shadow:0 0 20px rgba(0,245,160,.2);
+}
+.s-logo-mark svg{width:38px;height:38px;border-radius:10px}
 .s-logo-name{font-size:15px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(90deg,var(--t0),var(--t1));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .s-logo-sub{font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--fmono);opacity:.8}
 .s-nav{padding:10px 8px;flex:1}
-.s-nav-sec{font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;padding:12px 10px 4px}
+.s-nav-sec{font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;padding:14px 10px 5px}
 .nav-btn{
-  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;
   border:none;background:none;color:var(--t1);font-size:12.5px;font-weight:500;
   width:100%;text-align:left;margin-bottom:2px;
   transition:all .2s;position:relative;overflow:hidden;
 }
 .nav-btn::before{
   content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
-  width:3px;height:0;background:var(--green);border-radius:2px;
+  width:3px;height:0;background:linear-gradient(180deg,var(--green),var(--teal));border-radius:2px;
   transition:height .2s;
 }
-.nav-btn i{width:17px;font-size:13px;opacity:.6;flex-shrink:0;transition:all .2s}
+.nav-btn i{width:18px;font-size:13.5px;opacity:.55;flex-shrink:0;transition:all .2s}
 .nav-btn:hover{background:var(--bg3);color:var(--t0)}
 .nav-btn:hover i{opacity:.9}
-.nav-btn.active{background:rgba(0,245,160,.08);color:var(--green);font-weight:600}
+.nav-btn.active{background:rgba(0,245,160,.08);color:var(--green);font-weight:600;border:1px solid rgba(0,245,160,.1)}
 .nav-btn.active::before{height:70%}
 .nav-btn.active i{opacity:1}
 .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;animation:badgePop .3s cubic-bezier(.34,1.56,.64,1)}
 @keyframes badgePop{from{transform:scale(0)}to{transform:scale(1)}}
 .s-footer{padding:12px 8px;border-top:1px solid var(--b0)}
-.conn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--rsm);background:rgba(255,255,255,.02);font-size:11px;color:var(--t1);margin-bottom:4px;border:1px solid var(--b0)}
+.conn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--rsm);background:var(--b0);font-size:11px;color:var(--t1);margin-bottom:4px;border:1px solid var(--b0)}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--t2);flex-shrink:0;transition:all .3s}
 .dot.ok{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2.5s infinite}
 .dot.err{background:var(--red);box-shadow:0 0 6px var(--red)}
@@ -141,96 +124,94 @@ button{cursor:pointer;font-family:var(--fui)}
 
 /* ─── Main ─── */
 .main{flex:1;display:flex;flex-direction:column;min-width:0}
+
+/* ─── TOPBAR — fully theme-aware ─── */
 .topbar{
-  padding:14px 28px;border-bottom:1px solid var(--b0);
-  background:rgba(7,12,23,.8);
-  backdrop-filter:blur(20px);
+  padding:14px 28px;
+  background:var(--topbar-bg);
+  border-bottom:1px solid var(--topbar-border);
+  backdrop-filter:blur(24px) saturate(1.8);
+  -webkit-backdrop-filter:blur(24px) saturate(1.8);
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   position:sticky;top:0;z-index:40;
+  transition:background .3s,border-color .3s;
 }
-.topbar-l h1{font-size:17px;font-weight:700;letter-spacing:-.5px}
+.topbar-l h1{font-size:17px;font-weight:700;letter-spacing:-.5px;color:var(--topbar-text);transition:color .3s}
 .topbar-l p{font-size:10.5px;color:var(--t2);margin-top:2px;font-family:var(--fmono);display:flex;align-items:center;gap:7px}
 .topbar-r{display:flex;gap:8px;align-items:center}
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--t2);flex-shrink:0;transition:all .2s}
 .live-dot.flash{background:var(--green);box-shadow:0 0 12px var(--green);animation:livePing .6s ease}
 @keyframes livePing{0%{transform:scale(1)}50%{transform:scale(1.6)}100%{transform:scale(1)}}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--bg2);color:var(--t0);font-size:12px;font-weight:500;transition:all .2s}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rsm);
+  border:1px solid var(--b1);background:var(--bg2);color:var(--t0);
+  font-size:12px;font-weight:500;transition:all .2s;
+}
 .btn:hover{background:var(--bg3);border-color:rgba(0,245,160,.4);color:var(--green);box-shadow:0 0 16px rgba(0,245,160,.08)}
 .btn.sm{padding:4px 10px;font-size:11px}
 
-.content{padding:24px 28px;flex:1}
+/* Theme btn special */
+#theme-btn{color:var(--topbar-text)}
+[data-theme=light] .btn{border-color:var(--b1);background:var(--bg2);color:var(--t0)}
+[data-theme=light] .btn:hover{border-color:rgba(0,160,100,.4);color:#009060}
+
+.content{padding:24px 28px;flex:1;position:relative;z-index:1}
 .sec{display:none}
-.sec.active{display:block;animation:secIn .25s ease}
-@keyframes secIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.sec.active{display:block;animation:secIn .3s ease}
+@keyframes secIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .gauto{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.sh h2{font-size:15px;font-weight:700}
+.sh h2{font-size:16px;font-weight:700}
 
 /* ─── KPI Cards ─── */
 .kcard{
   background:var(--bg2);
   border:1px solid var(--b1);
   border-radius:var(--r);
-  padding:16px 18px;
+  padding:18px 20px;
   position:relative;overflow:hidden;
-  transition:all .3s;
-  cursor:default;
+  transition:all .3s;cursor:default;
 }
 .kcard::before{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(255,255,255,.02) 0%,transparent 60%);
+  background:linear-gradient(135deg,rgba(255,255,255,.025) 0%,transparent 60%);
   pointer-events:none;
 }
-.kcard::after{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  border-radius:var(--r) var(--r) 0 0;
-  transition:box-shadow .3s;
-}
-.kcard.g::after{background:linear-gradient(90deg,var(--green),var(--teal));}
-.kcard.t::after{background:linear-gradient(90deg,var(--teal),var(--blue));}
-.kcard.b::after{background:linear-gradient(90deg,var(--blue),var(--violet));}
-.kcard.a::after{background:linear-gradient(90deg,var(--amber),var(--red));}
-.kcard.r::after{background:var(--red);}
-.kcard.v::after{background:linear-gradient(90deg,var(--violet),var(--blue));}
-.kcard:hover{
-  transform:translateY(-3px);
-  border-color:rgba(0,245,160,.2);
-  box-shadow:0 12px 32px rgba(0,0,0,.3),var(--glow-g);
-}
+.kcard::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:var(--r) var(--r) 0 0;transition:box-shadow .3s}
+.kcard.g::after{background:linear-gradient(90deg,var(--green),var(--teal))}
+.kcard.t::after{background:linear-gradient(90deg,var(--teal),var(--blue))}
+.kcard.b::after{background:linear-gradient(90deg,var(--blue),var(--violet))}
+.kcard.a::after{background:linear-gradient(90deg,var(--amber),var(--red))}
+.kcard.r::after{background:var(--red)}
+.kcard.v::after{background:linear-gradient(90deg,var(--violet),var(--blue))}
+.kcard:hover{transform:translateY(-4px);border-color:rgba(0,245,160,.22);box-shadow:0 16px 40px rgba(0,0,0,.35),var(--glow-g)}
 .kcard.updated{animation:cardFlash .7s ease}
-@keyframes cardFlash{
-  0%{border-color:var(--green);box-shadow:0 0 30px rgba(0,245,160,.25)}
-  100%{border-color:var(--b1);box-shadow:none}
-}
-.kcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.kcard-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;font-weight:600}
-.kcard-icon{font-size:16px;opacity:.8}
+@keyframes cardFlash{0%{border-color:var(--green);box-shadow:0 0 32px rgba(0,245,160,.28)}100%{border-color:var(--b1);box-shadow:none}}
+.kcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kcard-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.kcard-icon{font-size:18px;opacity:.8}
 .kcard-icon.g{color:var(--green)}.kcard-icon.t{color:var(--teal)}.kcard-icon.b{color:var(--blue)}.kcard-icon.a{color:var(--amber)}.kcard-icon.r{color:var(--red)}.kcard-icon.v{color:var(--violet)}
-.kcard-val{font-size:28px;font-weight:700;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:6px}
-.kcard-val sup{font-size:13px;font-weight:500;letter-spacing:0;margin-left:2px;opacity:.7}
+.kcard-val{font-size:30px;font-weight:800;letter-spacing:-2px;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:6px}
+.kcard-val sup{font-size:14px;font-weight:500;letter-spacing:0;margin-left:2px;opacity:.65}
 .kcard-sub{font-size:11px;color:var(--t1)}
 
 /* ─── Panel ─── */
 .panel{
   background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);
-  padding:18px 20px;margin-bottom:16px;
+  padding:18px 22px;margin-bottom:16px;
   position:relative;overflow:hidden;
+  transition:background .3s,border-color .3s;
 }
-.panel::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(255,255,255,.015) 0%,transparent 50%);
-  pointer-events:none;
-}
+.panel::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.018) 0%,transparent 50%);pointer-events:none}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .pt{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--t0)}
 .pt i{color:var(--green);opacity:.9;font-size:12px}
-.cbox{position:relative}
-.cbox.h180{height:180px}.cbox.h220{height:220px}.cbox.h260{height:260px}
+.cbox{position:relative}.cbox.h180{height:180px}.cbox.h220{height:220px}.cbox.h260{height:260px}
 
-/* ─── Door / Gas badges ─── */
+/* ─── Door/Gas badges ─── */
 .door-badge{
   display:inline-flex;align-items:center;gap:9px;padding:10px 18px;border-radius:var(--r);
   font-size:13px;font-weight:700;letter-spacing:.3px;border:2px solid;transition:all .3s;
@@ -245,50 +226,46 @@ button{cursor:pointer;font-family:var(--fui)}
   padding:18px 22px;display:flex;align-items:center;gap:16px;
   transition:all .3s;position:relative;overflow:hidden;
 }
-.avg-card::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-  border-radius:0 0 var(--r) var(--r);
-}
+.avg-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2.5px;border-radius:0 0 var(--r) var(--r)}
 .avg-card:nth-child(1)::after{background:linear-gradient(90deg,var(--teal),var(--blue))}
 .avg-card:nth-child(2)::after{background:linear-gradient(90deg,var(--blue),var(--violet))}
-.avg-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
+.avg-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.3)}
 .avg-card.updated{animation:cardFlash .7s ease}
-.avg-icon{width:48px;height:48px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;transition:transform .3s}
+.avg-icon{width:50px;height:50px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;transition:transform .3s}
 .avg-card:hover .avg-icon{transform:scale(1.1) rotate(-5deg)}
-.avg-icon.temp{background:rgba(0,212,224,.1);color:var(--teal);box-shadow:0 0 20px rgba(0,212,224,.15)}
-.avg-icon.hum{background:rgba(77,141,255,.1);color:var(--blue);box-shadow:0 0 20px rgba(77,141,255,.15)}
+.avg-icon.temp{background:rgba(0,212,224,.1);color:var(--teal);box-shadow:0 0 22px rgba(0,212,224,.18)}
+.avg-icon.hum{background:rgba(77,141,255,.1);color:var(--blue);box-shadow:0 0 22px rgba(77,141,255,.18)}
 .avg-lbl{font-size:10.5px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:4px}
-.avg-val{font-size:30px;font-weight:800;letter-spacing:-2px;font-variant-numeric:tabular-nums;line-height:1.1}
-.avg-unit{font-size:14px;font-weight:500;margin-left:3px;opacity:.7}
+.avg-val{font-size:32px;font-weight:800;letter-spacing:-2px;font-variant-numeric:tabular-nums;line-height:1.1}
+.avg-unit{font-size:14px;font-weight:500;margin-left:3px;opacity:.65}
 .avg-detail{font-size:10.5px;color:var(--t1);margin-top:4px}
 
 /* ─── Consumption Cards ─── */
 .cons-card{
   background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);
-  padding:20px;text-align:center;position:relative;overflow:hidden;
-  transition:all .3s;
+  padding:22px;text-align:center;position:relative;overflow:hidden;transition:all .3s;
 }
-.cons-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.3)}
+.cons-card:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(0,0,0,.3)}
 .cons-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px}
 .cons-card.water::before{background:linear-gradient(90deg,var(--teal),var(--blue))}
 .cons-card.elec::before{background:linear-gradient(90deg,var(--violet),var(--blue))}
 .cons-card.gas::before{background:linear-gradient(90deg,var(--amber),var(--red))}
 .cons-card.updated{animation:cardFlash .7s ease}
-.cons-ico{font-size:30px;margin-bottom:8px}
+.cons-ico{font-size:32px;margin-bottom:10px}
 .cons-card.water .cons-ico{color:var(--teal)}.cons-card.elec .cons-ico{color:var(--violet)}.cons-card.gas .cons-ico{color:var(--amber)}
-.cons-num{font-size:32px;font-weight:800;letter-spacing:-2px;font-variant-numeric:tabular-nums}
-.cons-unit{font-size:11px;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.cons-num{font-size:34px;font-weight:800;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.cons-unit{font-size:11px;color:var(--t2);margin-top:5px;text-transform:uppercase;letter-spacing:.6px}
 
 /* ─── Node Cards ─── */
 .ncard{
   background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);
   padding:16px;transition:all .3s;overflow:hidden;position:relative;
 }
-.ncard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3);border-color:rgba(0,245,160,.15)}
+.ncard:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3);border-color:rgba(0,245,160,.15)}
 .ncard.updated{animation:cardFlash .7s ease}
 .nc-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--b0)}
 .nc-name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px}
-.nc-status{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px}
+.nc-status{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.3px}
 .nc-status.online{background:rgba(0,245,160,.1);color:var(--green);box-shadow:0 0 10px rgba(0,245,160,.15)}
 .nc-status.offline{background:rgba(255,77,107,.1);color:var(--red)}
 .nc-sensors{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -301,51 +278,60 @@ button{cursor:pointer;font-family:var(--fui)}
 
 /* ─── Alerts ─── */
 .alert-list{display:flex;flex-direction:column;gap:10px}
-.al{display:flex;align-items:flex-start;gap:12px;background:var(--bg2);border:1px solid var(--b1);border-left:3px solid var(--b1);border-radius:var(--r);padding:13px 15px;transition:all .3s}
-.al:hover{transform:translateX(2px)}
+.al{display:flex;align-items:flex-start;gap:12px;background:var(--bg2);border:1px solid var(--b1);border-left:3px solid var(--b1);border-radius:var(--r);padding:13px 16px;transition:all .3s}
+.al:hover{transform:translateX(3px)}
 .al.danger{border-left-color:var(--red)}.al.warning{border-left-color:var(--amber)}.al.info{border-left-color:var(--blue)}
 .al-icon{font-size:16px;margin-top:1px;flex-shrink:0}
 .al.danger .al-icon{color:var(--red)}.al.warning .al-icon{color:var(--amber)}.al.info .al-icon{color:var(--blue)}
 .al-title{font-weight:700;font-size:12.5px;margin-bottom:3px}
 .al-msg{font-size:11.5px;color:var(--t1);line-height:1.4}
 .al-ts{font-size:10px;color:var(--t2);margin-top:3px;font-family:var(--fmono)}
-.btn-ack{flex-shrink:0;padding:4px 11px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--bg3);color:var(--t1);font-size:11px;transition:all .2s}
-.btn-ack:hover{background:rgba(0,245,160,.1);color:var(--green);border-color:var(--green)}
+.btn-ack{flex-shrink:0;padding:5px 12px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--bg3);color:var(--t1);font-size:11px;transition:all .2s}
+.btn-ack:hover{background:rgba(0,245,160,.1);color:var(--green);border-color:rgba(0,245,160,.3)}
 .empty{text-align:center;padding:48px 20px;color:var(--t2)}
 .empty i{font-size:40px;margin-bottom:12px;display:block;opacity:.2}
 
 /* ─── User badge ─── */
-.user-badge{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rsm);padding:6px 13px;font-size:12px}
-.user-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#000;flex-shrink:0}
+.user-badge{
+  display:flex;align-items:center;gap:9px;
+  background:var(--bg2);border:1px solid var(--b1);
+  border-radius:var(--rsm);padding:6px 14px;font-size:12px;
+}
+.user-av{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;color:#000;flex-shrink:0;
+  box-shadow:0 0 12px rgba(0,245,160,.3);
+}
 .user-name{color:var(--t1);font-weight:600}
 
-/* ─── 3D House in overview ─── */
-.house-widget {
-  display:flex;align-items:center;justify-content:center;
-  perspective:600px;
-  padding:10px 0;
-}
-.house-3d-dash {
+/* ─── 3D House (enhanced) ─── */
+.house-widget{display:flex;align-items:center;justify-content:center;perspective:700px;padding:10px 0}
+.house-3d-dash{
   transform-style:preserve-3d;
   animation:dashFloat 5s ease-in-out infinite;
-  cursor:grab;
-  user-select:none;
+  cursor:grab;user-select:none;
+  filter:drop-shadow(0 8px 24px rgba(0,245,160,.2));
 }
 .house-3d-dash:active{cursor:grabbing}
-@keyframes dashFloat {
-  0%,100%{transform:rotateY(-6deg) rotateX(4deg) translateY(0)}
-  50%    {transform:rotateY(6deg) rotateX(-4deg) translateY(-10px)}
+@keyframes dashFloat{
+  0%,100%{transform:rotateY(-8deg) rotateX(5deg) translateY(0)}
+  50%    {transform:rotateY(8deg) rotateX(-5deg) translateY(-12px)}
 }
 
-/* ─── Stats mini bar ─── */
-.mini-stat {
-  display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b0);
-}
+/* ─── Mini stats ─── */
+.mini-stat{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b0)}
 .mini-stat:last-child{border-bottom:none}
 .mini-stat-lbl{font-size:11px;color:var(--t1);flex:1}
 .mini-stat-bar{flex:2;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .mini-stat-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1)}
 .mini-stat-val{font-size:11px;font-family:var(--fmono);color:var(--t0);min-width:42px;text-align:right}
+
+/* ─── Ambient background ─── */
+.ambient-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.ambient-blob{position:absolute;border-radius:50%;filter:blur(90px);animation:blobDrift ease-in-out infinite alternate}
+@keyframes blobDrift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(40px,-30px) scale(1.08)}}
 
 /* ─── Responsive ─── */
 @media(max-width:900px){
@@ -358,25 +344,11 @@ button{cursor:pointer;font-family:var(--fui)}
   .g2,.g3,.g4,.gauto{grid-template-columns:1fr}
   .avg-row{flex-direction:column}
 }
-
-/* ─── Ambient background glow ─── */
-.ambient-bg {
-  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
-}
-.ambient-blob {
-  position:absolute;border-radius:50%;filter:blur(80px);
-  animation:blobDrift linear infinite;
-}
-@keyframes blobDrift {
-  0%,100%{transform:translate(0,0) scale(1)}
-  33%{transform:translate(30px,-20px) scale(1.05)}
-  66%{transform:translate(-20px,30px) scale(.95)}
-}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ WELCOME OVERLAY ═══════════════ -->
+<!-- ═══ WELCOME OVERLAY ═══ -->
 <div id="welcome-overlay">
   <div class="wov-logo">
     <svg width="90" height="90" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
@@ -405,24 +377,25 @@ button{cursor:pointer;font-family:var(--fui)}
   <div class="wov-user" id="wov-user-text">Chargement…</div>
   <div class="wov-bar-wrap">
     <div class="wov-bar"><div class="wov-bar-fill"></div></div>
-    <div class="wov-hint" style="margin-top:8px">CHARGEMENT DU TABLEAU DE BORD</div>
+    <div class="wov-hint">CHARGEMENT DU TABLEAU DE BORD</div>
   </div>
 </div>
 
-<!-- ═══════════════ AMBIENT ═══════════════ -->
+<!-- ═══ AMBIENT ═══ -->
 <div class="ambient-bg">
-  <div class="ambient-blob" style="width:600px;height:600px;background:rgba(0,245,160,.025);top:-200px;left:-100px;animation-duration:20s;animation-delay:0s"></div>
-  <div class="ambient-blob" style="width:500px;height:500px;background:rgba(0,212,224,.02);bottom:-100px;right:-100px;animation-duration:25s;animation-delay:-8s"></div>
-  <div class="ambient-blob" style="width:400px;height:400px;background:rgba(77,141,255,.02);top:40%;left:40%;animation-duration:18s;animation-delay:-4s"></div>
+  <div class="ambient-blob" style="width:600px;height:600px;background:rgba(0,245,160,.02);top:-200px;left:-100px;animation-duration:20s;animation-delay:0s"></div>
+  <div class="ambient-blob" style="width:500px;height:500px;background:rgba(0,212,224,.018);bottom:-100px;right:-100px;animation-duration:25s;animation-delay:-8s"></div>
+  <div class="ambient-blob" style="width:400px;height:400px;background:rgba(77,141,255,.016);top:40%;left:40%;animation-duration:18s;animation-delay:-4s"></div>
 </div>
 
-<!-- ═══════════════ APP ═══════════════ -->
+<!-- ═══ APP ═══ -->
 <div class="app" id="app" style="opacity:0;transition:opacity .5s">
 
 <aside class="sidebar">
   <div class="s-logo">
     <div class="s-logo-mark">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="36" height="36">
+      <!-- Enhanced logo SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="38" height="38">
         <defs>
           <linearGradient id="gMark" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="#00f5a0"/><stop offset="60%" stop-color="#00d4e0"/><stop offset="100%" stop-color="#4d8dff"/>
@@ -434,8 +407,8 @@ button{cursor:pointer;font-family:var(--fui)}
           <filter id="sglow2"><feGaussianBlur stdDeviation="8" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
         <rect width="120" height="120" rx="22" fill="url(#gDark2)"/>
-        <rect width="120" height="120" rx="22" fill="none" stroke="rgba(0,245,160,0.18)" stroke-width="1.5"/>
-        <ellipse cx="60" cy="60" rx="45" ry="42" fill="rgba(0,245,160,0.07)" filter="url(#sglow2)"/>
+        <rect width="120" height="120" rx="22" fill="none" stroke="rgba(0,245,160,0.22)" stroke-width="1.5"/>
+        <ellipse cx="60" cy="60" rx="45" ry="42" fill="rgba(0,245,160,0.08)" filter="url(#sglow2)"/>
         <polygon points="60,16 98,48 98,96 22,96 22,48" fill="none" stroke="url(#gMark)" stroke-width="3" stroke-linejoin="round" filter="url(#glow2)"/>
         <circle cx="60" cy="16" r="4" fill="url(#gMark)" filter="url(#glow2)"/>
         <rect x="46" y="68" width="28" height="28" rx="14" fill="none" stroke="url(#gMark)" stroke-width="2.5" opacity="0.95"/>
@@ -448,6 +421,7 @@ button{cursor:pointer;font-family:var(--fui)}
     </div>
     <div><div class="s-logo-name">BatiSense</div><div class="s-logo-sub">Pro</div></div>
   </div>
+
   <nav class="s-nav">
     <div class="s-nav-sec">Tableau de bord</div>
     <button class="nav-btn active" data-sec="overview"><i class="fas fa-home"></i><span>Vue d'ensemble</span></button>
@@ -459,6 +433,7 @@ button{cursor:pointer;font-family:var(--fui)}
       <span class="nav-badge" id="alert-badge" style="display:none">0</span>
     </button>
   </nav>
+
   <div class="s-footer">
     <div class="conn"><span class="dot" id="dot-sse"></span><span id="lbl-sse">Connexion…</span></div>
     <div class="conn"><span class="dot" id="dot-api"></span><span id="lbl-api">API…</span></div>
@@ -466,6 +441,8 @@ button{cursor:pointer;font-family:var(--fui)}
 </aside>
 
 <div class="main">
+
+  <!-- ─── TOPBAR — now fully theme-aware ─── -->
   <header class="topbar">
     <div class="topbar-l">
       <h1 id="page-title">Vue d'ensemble</h1>
@@ -477,7 +454,7 @@ button{cursor:pointer;font-family:var(--fui)}
     </div>
     <div class="topbar-r">
       <button class="btn" onclick="exportCSV()"><i class="fas fa-download"></i> CSV</button>
-      <button class="btn" id="theme-btn" onclick="toggleTheme()"><i class="fas fa-sun"></i></button>
+      <button class="btn" id="theme-btn" onclick="toggleTheme()" title="Changer le thème"><i class="fas fa-sun"></i></button>
       <div class="user-badge">
         <div class="user-av" id="user-avatar">?</div>
         <span class="user-name" id="user-name">…</span>
@@ -492,7 +469,7 @@ button{cursor:pointer;font-family:var(--fui)}
 
     <!-- ═══ OVERVIEW ═══ -->
     <section id="overview" class="sec active">
-      <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;margin-bottom:18px">
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:18px">
         <div>
           <div class="sh" style="margin-bottom:12px"><h2>Maison — Moyennes</h2></div>
           <div class="avg-row">
@@ -515,53 +492,75 @@ button{cursor:pointer;font-family:var(--fui)}
           </div>
         </div>
 
-        <!-- 3D House Widget -->
-        <div class="panel" style="margin-bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:160px">
-          <div class="pt" style="margin-bottom:8px;font-size:11px;color:var(--t2)"><i class="fas fa-home"></i> Modèle 3D</div>
+        <!-- Enhanced 3D House Widget -->
+        <div class="panel" style="margin-bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:170px;background:linear-gradient(135deg,var(--bg2),var(--bg3));position:relative;overflow:hidden">
+          <!-- decorative corner lines -->
+          <div style="position:absolute;top:10px;left:10px;width:40px;height:40px;border-top:1.5px solid rgba(0,245,160,.2);border-left:1.5px solid rgba(0,245,160,.2);border-radius:3px 0 0 0;pointer-events:none"></div>
+          <div style="position:absolute;bottom:10px;right:10px;width:40px;height:40px;border-bottom:1.5px solid rgba(77,141,255,.15);border-right:1.5px solid rgba(77,141,255,.15);border-radius:0 0 3px 0;pointer-events:none"></div>
+          <div class="pt" style="margin-bottom:6px;font-size:10px;color:var(--t2);letter-spacing:1px;font-family:var(--fmono)"><i class="fas fa-home" style="color:var(--green)"></i> MODÈLE 3D</div>
           <div class="house-widget">
             <div class="house-3d-dash" id="house3d">
-              <svg width="110" height="110" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+              <!-- Premium 3D House SVG -->
+              <svg width="130" height="130" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <linearGradient id="h3gMark" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#00f5a0"/><stop offset="60%" stop-color="#00d4e0"/><stop offset="100%" stop-color="#4d8dff"/>
+                  <linearGradient id="hDash" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00f5a0"/><stop offset="50%" stop-color="#00d4e0"/><stop offset="100%" stop-color="#4d8dff"/>
                   </linearGradient>
-                  <linearGradient id="h3gDark" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#0d1424"/><stop offset="100%" stop-color="#090e1a"/>
+                  <linearGradient id="hDashBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#0d2840"/><stop offset="100%" stop-color="#030710"/>
                   </linearGradient>
-                  <filter id="h3glow"><feGaussianBlur stdDeviation="3" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                  <filter id="h3sglow"><feGaussianBlur stdDeviation="10" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                  <linearGradient id="hDashSide" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#00d4e0" stop-opacity=".5"/><stop offset="100%" stop-color="#4d8dff" stop-opacity=".15"/>
+                  </linearGradient>
+                  <filter id="hDashGlow"><feGaussianBlur stdDeviation="3.5" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                  <filter id="hDashSoftGlow"><feGaussianBlur stdDeviation="12" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
                 </defs>
-                <rect width="120" height="120" rx="22" fill="url(#h3gDark)"/>
-                <rect width="120" height="120" rx="22" fill="none" stroke="rgba(0,245,160,0.15)" stroke-width="1.5"/>
-                <ellipse cx="60" cy="68" rx="50" ry="20" fill="rgba(0,245,160,0.06)" filter="url(#h3sglow)"/>
-                <!-- Shadow face (3D effect) -->
-                <polygon points="98,48 106,54 106,102 98,96" fill="rgba(0,245,160,0.04)" stroke="url(#h3gMark)" stroke-width="1" opacity="0.5"/>
-                <polygon points="22,96 22,48 14,54 14,102" fill="rgba(0,212,224,0.03)" opacity="0.4"/>
-                <!-- Main house -->
-                <polygon points="60,16 98,48 98,96 22,96 22,48" fill="rgba(0,245,160,0.05)" stroke="url(#h3gMark)" stroke-width="3" stroke-linejoin="round" filter="url(#h3glow)"/>
-                <circle cx="60" cy="16" r="5" fill="url(#h3gMark)" filter="url(#h3glow)"/>
-                <!-- Windows -->
-                <rect x="30" y="58" width="16" height="14" rx="3" fill="none" stroke="url(#h3gMark)" stroke-width="1.5" opacity="0.6"/>
-                <rect x="74" y="58" width="16" height="14" rx="3" fill="none" stroke="url(#h3gMark)" stroke-width="1.5" opacity="0.6"/>
-                <line x1="38" y1="58" x2="38" y2="72" stroke="url(#h3gMark)" stroke-width="1" opacity="0.4"/>
-                <line x1="82" y1="58" x2="82" y2="72" stroke="url(#h3gMark)" stroke-width="1" opacity="0.4"/>
-                <!-- Door -->
-                <rect x="48" y="70" width="24" height="26" rx="12" fill="none" stroke="url(#h3gMark)" stroke-width="2.5" opacity="0.95"/>
-                <!-- Sensor dot -->
-                <circle cx="60" cy="52" r="5" fill="url(#h3gMark)" filter="url(#h3glow)"/>
-                <!-- Signal arcs -->
-                <path d="M 47,43 Q 60,30 73,43" fill="none" stroke="url(#h3gMark)" stroke-width="2.5" stroke-linecap="round" opacity="0.8" filter="url(#h3glow)"/>
-                <path d="M 38,35 Q 60,17 82,35" fill="none" stroke="url(#h3gMark)" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
-                <path d="M 29,27 Q 60,4 91,27" fill="none" stroke="url(#h3gMark)" stroke-width="1.5" stroke-linecap="round" opacity="0.2"/>
+                <rect width="140" height="140" rx="26" fill="url(#hDashBg)"/>
+                <rect width="140" height="140" rx="26" fill="none" stroke="url(#hDash)" stroke-width="1.2" opacity=".4"/>
+                <!-- Specular top highlight -->
+                <ellipse cx="50" cy="35" rx="28" ry="14" fill="rgba(255,255,255,.04)"/>
+                <!-- Ground glow -->
+                <ellipse cx="70" cy="108" rx="55" ry="18" fill="rgba(0,245,160,.06)" filter="url(#hDashSoftGlow)"/>
+                <!-- 3D side depth panels -->
+                <polygon points="108,50 120,58 120,108 108,100" fill="url(#hDashSide)" opacity=".45"/>
+                <polygon points="20,100 20,50 8,58 8,108" fill="rgba(0,212,224,.05)" opacity=".5"/>
+                <!-- Roof depth top -->
+                <polygon points="70,16 108,50 120,58 80,22" fill="rgba(0,245,160,.04)" opacity=".6"/>
+                <!-- Main house front -->
+                <polygon points="70,16 108,50 108,100 32,100 32,50" fill="rgba(0,245,160,.04)" stroke="url(#hDash)" stroke-width="2.8" stroke-linejoin="round" filter="url(#hDashGlow)"/>
+                <!-- Roof ridge line -->
+                <line x1="70" y1="16" x2="70" y2="48" stroke="url(#hDash)" stroke-width="1.2" opacity=".3"/>
+                <!-- Peak apex -->
+                <circle cx="70" cy="16" r="5.5" fill="url(#hDash)" filter="url(#hDashGlow)"/>
+                <!-- Left window with glow -->
+                <rect x="36" y="62" width="22" height="17" rx="4.5" fill="rgba(0,245,160,.07)" stroke="url(#hDash)" stroke-width="1.5" opacity=".75"/>
+                <line x1="47" y1="62" x2="47" y2="79" stroke="url(#hDash)" stroke-width="1" opacity=".45"/>
+                <line x1="36" y1="70.5" x2="58" y2="70.5" stroke="url(#hDash)" stroke-width="1" opacity=".3"/>
+                <!-- Right window -->
+                <rect x="82" y="62" width="22" height="17" rx="4.5" fill="rgba(0,212,224,.07)" stroke="url(#hDash)" stroke-width="1.5" opacity=".75"/>
+                <line x1="93" y1="62" x2="93" y2="79" stroke="url(#hDash)" stroke-width="1" opacity=".45"/>
+                <line x1="82" y1="70.5" x2="104" y2="70.5" stroke="url(#hDash)" stroke-width="1" opacity=".3"/>
+                <!-- Door arch -->
+                <rect x="56" y="76" width="28" height="24" rx="14" fill="rgba(0,245,160,.05)" stroke="url(#hDash)" stroke-width="2.5" opacity=".95"/>
+                <!-- Sensor dot center -->
+                <circle cx="70" cy="56" r="6" fill="url(#hDash)" filter="url(#hDashGlow)"/>
+                <!-- Signal arcs — 3 levels -->
+                <path d="M 56,44 Q 70,30 84,44" fill="none" stroke="url(#hDash)" stroke-width="3" stroke-linecap="round" opacity=".9" filter="url(#hDashGlow)"/>
+                <path d="M 44,34 Q 70,14 96,34" fill="none" stroke="url(#hDash)" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+                <path d="M 32,24 Q 70,0 108,24" fill="none" stroke="url(#hDash)" stroke-width="1.5" stroke-linecap="round" opacity=".22"/>
                 <!-- Ground line -->
-                <line x1="10" y1="96" x2="110" y2="96" stroke="url(#h3gMark)" stroke-width="1.5" opacity="0.3"/>
+                <line x1="14" y1="100" x2="126" y2="100" stroke="url(#hDash)" stroke-width="1.5" opacity=".3"/>
                 <!-- Corner brackets -->
-                <path d="M14,96 L14,108 L26,108" fill="none" stroke="rgba(0,245,160,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M106,96 L106,108 L94,108" fill="none" stroke="rgba(0,245,160,0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16,100 L16,114 L28,114" fill="none" stroke="rgba(0,245,160,.45)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M124,100 L124,114 L112,114" fill="none" stroke="rgba(0,245,160,.45)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- IoT status dots -->
+                <circle cx="36" cy="54" r="2.8" fill="var(--amber)" opacity=".85" filter="url(#hDashGlow)"/>
+                <circle cx="104" cy="58" r="2.8" fill="var(--teal)" opacity=".85" filter="url(#hDashGlow)"/>
+                <circle cx="70" cy="100" r="2.5" fill="var(--green)" opacity=".7"/>
               </svg>
             </div>
           </div>
-          <div style="font-size:9px;font-family:var(--fmono);color:var(--t2);letter-spacing:1px;margin-top:4px">DRAG TO ROTATE</div>
+          <div style="font-size:9px;font-family:var(--fmono);color:var(--t2);letter-spacing:1.5px;margin-top:2px;opacity:.7">DRAG TO ROTATE</div>
         </div>
       </div>
 
@@ -679,15 +678,15 @@ button{cursor:pointer;font-family:var(--fui)}
         <div class="empty"><i class="fas fa-spinner fa-spin"></i></div>
       </div>
     </section>
-  </div>
-</div>
+
+  </div><!-- .content -->
+</div><!-- .main -->
 </div><!-- .app -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
 "use strict";
-
 const API_BASE = "https://batisense-production.up.railway.app";
 const HISTORY_HOURS = 24;
 
@@ -714,44 +713,57 @@ const SENSOR_META = {
 const state = { latest:{}, nodeSeen:{}, alertCount:0, averages:{avg_temperature:null,avg_humidity:null,sources:{}} };
 let CH = {};
 
-/* ══ Chart defaults ══ */
-Chart.defaults.color       = "#4a6080";
-Chart.defaults.borderColor = "rgba(255,255,255,0.04)";
-Chart.defaults.font.family = "'Syne',sans-serif";
-const GRID    = { color:"rgba(255,255,255,0.035)" };
-const TOOLTIP = { backgroundColor:"#0b1120", borderColor:"rgba(255,255,255,.07)", borderWidth:1, padding:12, cornerRadius:8, titleFont:{weight:'700'} };
-
-function lineOpts(yLabel) {
+/* ── Chart defaults — theme-aware ── */
+function getThemeColors() {
+  const isLight = document.documentElement.getAttribute("data-theme") === "light";
   return {
-    responsive:true, maintainAspectRatio:false, animation:{ duration:400, easing:'easeInOutQuart' },
-    interaction:{ mode:"index", intersect:false },
-    plugins:{ legend:{ position:"top", labels:{ boxWidth:10, padding:16, usePointStyle:true } }, tooltip:TOOLTIP },
-    scales:{
-      x:{ type:"time", time:{ displayFormats:{minute:"HH:mm",hour:"HH:mm",day:"dd/MM"} }, ticks:{ maxTicksLimit:8, maxRotation:0 }, grid:GRID },
-      y:{ title:{ display:!!yLabel, text:yLabel, color:"#4a6080" }, grid:GRID, ticks:{ maxTicksLimit:6 } }
-    }
+    gridColor: isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.04)",
+    tickColor: isLight ? "#8898bb" : "#3d5070",
+    tooltipBg: isLight ? "#ffffff" : "#0b1120",
+    tooltipBorder: isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,.07)",
   };
 }
+
 function initCharts() {
-  CH.temp = new Chart(document.getElementById("chartTemp"), { type:"line", data:{ datasets:[] }, options:lineOpts("°C") });
-  CH.hum  = new Chart(document.getElementById("chartHum"),  { type:"line", data:{ datasets:[] }, options:lineOpts("%") });
+  const tc = getThemeColors();
+  Chart.defaults.color       = tc.tickColor;
+  Chart.defaults.borderColor = tc.gridColor;
+  Chart.defaults.font.family = "'Syne',sans-serif";
+
+  const GRID    = { color:tc.gridColor };
+  const TOOLTIP = { backgroundColor:tc.tooltipBg, borderColor:tc.tooltipBorder, borderWidth:1, padding:12, cornerRadius:8, titleFont:{weight:'700'} };
+
+  function lineOpts(yLabel) {
+    return {
+      responsive:true, maintainAspectRatio:false, animation:{ duration:400, easing:'easeInOutQuart' },
+      interaction:{ mode:"index", intersect:false },
+      plugins:{ legend:{ position:"top", labels:{ boxWidth:10, padding:16, usePointStyle:true } }, tooltip:TOOLTIP },
+      scales:{
+        x:{ type:"time", time:{ displayFormats:{minute:"HH:mm",hour:"HH:mm",day:"dd/MM"} }, ticks:{ maxTicksLimit:8, maxRotation:0 }, grid:GRID },
+        y:{ title:{ display:!!yLabel, text:yLabel, color:tc.tickColor }, grid:GRID, ticks:{ maxTicksLimit:6 } }
+      }
+    };
+  }
+
+  CH.temp     = new Chart(document.getElementById("chartTemp"),     { type:"line", data:{datasets:[]}, options:lineOpts("°C") });
+  CH.hum      = new Chart(document.getElementById("chartHum"),      { type:"line", data:{datasets:[]}, options:lineOpts("%") });
   CH.presence = new Chart(document.getElementById("chartPresence"), {
-    type:"line", data:{ datasets:[] },
+    type:"line", data:{datasets:[]},
     options:{ ...lineOpts(""),
       scales:{ x:{ type:"time", time:{ displayFormats:{minute:"HH:mm",hour:"HH:mm"} }, grid:GRID, ticks:{ maxTicksLimit:8 } },
                y:{ ticks:{ callback:v=>v===1?"Présent":"Absent", stepSize:1 }, min:0, max:1, grid:GRID } }
     }
   });
   CH.water = new Chart(document.getElementById("chartWater"), {
-    type:"bar", data:{ datasets:[] },
+    type:"bar", data:{datasets:[]},
     options:{ responsive:true, maintainAspectRatio:false, animation:{ duration:400 },
       plugins:{ legend:{ display:false }, tooltip:TOOLTIP },
       scales:{ x:{ type:"time", time:{ displayFormats:{minute:"HH:mm",hour:"HH:mm",day:"dd/MM"} }, grid:GRID, ticks:{ maxTicksLimit:10,maxRotation:0 } },
-               y:{ title:{ display:true, text:"Litres", color:"#4a6080" }, grid:GRID, beginAtZero:true, ticks:{ maxTicksLimit:6 } } }
+               y:{ title:{ display:true, text:"Litres", color:tc.tickColor }, grid:GRID, beginAtZero:true, ticks:{ maxTicksLimit:6 } } }
     }
   });
-  CH.elec = new Chart(document.getElementById("chartElec"), { type:"line", data:{ datasets:[] }, options:lineOpts("kWh") });
-  CH.gas  = new Chart(document.getElementById("chartGas"),  { type:"line", data:{ datasets:[] }, options:lineOpts("m³") });
+  CH.elec = new Chart(document.getElementById("chartElec"), { type:"line", data:{datasets:[]}, options:lineOpts("kWh") });
+  CH.gas  = new Chart(document.getElementById("chartGas"),  { type:"line", data:{datasets:[]}, options:lineOpts("m³") });
 }
 
 function mkDS(label, color, data, stepped=false) {
@@ -764,50 +776,55 @@ function toXY(rows) { return rows ? rows.map(r=>({ x:new Date(r.t).getTime(), y:
 
 async function apiFetch(path) {
   try {
-    const r = await fetch(API_BASE + path, { credentials:"include", signal:AbortSignal.timeout(6000) });
-    if (!r.ok) throw new Error(r.status);
+    const r = await fetch(API_BASE+path, { credentials:"include", signal:AbortSignal.timeout(6000) });
+    if(!r.ok) throw new Error(r.status);
     return await r.json();
   } catch { return null; }
 }
 function setApiDot(ok) {
-  document.getElementById("dot-api").className   = "dot " + (ok?"ok":"err");
-  document.getElementById("lbl-api").textContent = ok ? "API connectée" : "API hors ligne";
+  document.getElementById("dot-api").className   = "dot "+(ok?"ok":"err");
+  document.getElementById("lbl-api").textContent = ok?"API connectée":"API hors ligne";
 }
 
 async function loadUser() {
   try {
     const res = await fetch(`${API_BASE}/auth/me`, { credentials:"include" });
-    if (res.status === 401) { window.location.href = "/login"; return false; }
+    if(res.status===401){ window.location.href="/login"; return false; }
     const data = await res.json();
     const u = data.user;
-    const fullName = u.first_name + " " + u.last_name;
-    document.getElementById("user-name").textContent = fullName;
-    document.getElementById("user-avatar").textContent = (u.first_name[0] + u.last_name[0]).toUpperCase();
-    document.getElementById("wov-user-text").textContent = "Bienvenue, " + u.first_name + " 👋";
+    const fullName = u.first_name+" "+u.last_name;
+    document.getElementById("user-name").textContent    = fullName;
+    document.getElementById("user-avatar").textContent  = (u.first_name[0]+u.last_name[0]).toUpperCase();
+    document.getElementById("wov-user-text").textContent = "Bienvenue, "+u.first_name+" 👋";
     return true;
-  } catch { window.location.href = "/login"; return false; }
+  } catch { window.location.href="/login"; return false; }
 }
 async function doLogout() {
   await fetch(`${API_BASE}/auth/logout`, { method:"POST", credentials:"include" });
-  window.location.href = "/login";
+  window.location.href="/login";
 }
 
 async function loadInitial() {
   const data = await apiFetch("/api/latest");
-  if (!data) { setApiDot(false); return; }
+  if(!data){ setApiDot(false); return; }
   setApiDot(true);
-  for (const [nid, sensors] of Object.entries(data)) {
-    if (!state.latest[nid]) state.latest[nid] = {};
-    for (const [sensor, info] of Object.entries(sensors)) {
-      state.latest[nid][sensor] = info.value;
-      if (!state.nodeSeen[nid] || info.timestamp > state.nodeSeen[nid])
-        state.nodeSeen[nid] = info.timestamp;
+  for(const [nid,sensors] of Object.entries(data)){
+    if(!state.latest[nid]) state.latest[nid]={};
+    for(const [sensor,info] of Object.entries(sensors)){
+      state.latest[nid][sensor]=info.value;
+      if(!state.nodeSeen[nid]||info.timestamp>state.nodeSeen[nid]) state.nodeSeen[nid]=info.timestamp;
+    }
+  }
+  // Render initial data
+  for(const [nid,sensors] of Object.entries(state.latest)){
+    for(const [sensor,value] of Object.entries(sensors)){
+      updateCardForNode(nid,sensor,value);
     }
   }
 }
 async function loadAverages() {
   const data = await apiFetch("/api/averages");
-  if (!data) return;
+  if(!data) return;
   state.averages = data;
   renderAverages();
 }
@@ -823,51 +840,51 @@ async function loadHistory() {
     apiFetch(`/api/history?node_id=gas_node&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
   ]);
   updateTempChart(kt,st);
-  if (CH.hum)      { CH.hum.data.datasets = [mkDS("Cuisine","var(--green)",toXY(kh)), mkDS("Salon","var(--teal)",toXY(sh))]; CH.hum.update("none"); }
-  if (CH.presence) { CH.presence.data.datasets = [mkDS("Cuisine","var(--amber)",toXY(kp),true)]; CH.presence.update("none"); }
-  if (CH.water)    { CH.water.data.datasets = [mkBarDS("Eau","var(--teal)",toXY(w))]; CH.water.update("none"); }
-  if (CH.elec)     { CH.elec.data.datasets = [mkDS("Élec.","var(--violet)",toXY(e))]; CH.elec.update("none"); }
-  if (CH.gas)      { CH.gas.data.datasets = [mkDS("Gaz","var(--amber)",toXY(g))]; CH.gas.update("none"); }
+  if(CH.hum)      { CH.hum.data.datasets=[mkDS("Cuisine","var(--green)",toXY(kh)),mkDS("Salon","var(--teal)",toXY(sh))]; CH.hum.update("none"); }
+  if(CH.presence) { CH.presence.data.datasets=[mkDS("Cuisine","var(--amber)",toXY(kp),true)]; CH.presence.update("none"); }
+  if(CH.water)    { CH.water.data.datasets=[mkBarDS("Eau","var(--teal)",toXY(w))]; CH.water.update("none"); }
+  if(CH.elec)     { CH.elec.data.datasets=[mkDS("Élec.","var(--violet)",toXY(e))]; CH.elec.update("none"); }
+  if(CH.gas)      { CH.gas.data.datasets=[mkDS("Gaz","var(--amber)",toXY(g))]; CH.gas.update("none"); }
 }
 
-let _tempFilter = "all";
+let _tempFilter="all";
 function updateTempChart(kRows, sRows) {
-  if (!CH.temp) return;
-  const ds = [];
-  if (_tempFilter==="all"||_tempFilter==="kitchen") ds.push(mkDS("Cuisine","var(--green)",toXY(kRows)));
-  if (_tempFilter==="all"||_tempFilter==="salon")   ds.push(mkDS("Salon","var(--teal)",toXY(sRows)));
-  CH.temp.data.datasets = ds; CH.temp.update("none");
+  if(!CH.temp) return;
+  const ds=[];
+  if(_tempFilter==="all"||_tempFilter==="kitchen") ds.push(mkDS("Cuisine","var(--green)",toXY(kRows)));
+  if(_tempFilter==="all"||_tempFilter==="salon")   ds.push(mkDS("Salon","var(--teal)",toXY(sRows)));
+  CH.temp.data.datasets=ds; CH.temp.update("none");
 }
-function appendChartPoint(chartKey, label, color, point) {
-  const chart = CH[chartKey]; if (!chart) return;
-  let ds = chart.data.datasets.find(d => d.label === label);
-  if (!ds) { ds = mkDS(label, color, []); chart.data.datasets.push(ds); }
+function appendChartPoint(chartKey,label,color,point) {
+  const chart=CH[chartKey]; if(!chart) return;
+  let ds=chart.data.datasets.find(d=>d.label===label);
+  if(!ds){ ds=mkDS(label,color,[]); chart.data.datasets.push(ds); }
   ds.data.push(point);
-  if (ds.data.length > 500) ds.data.shift();
+  if(ds.data.length>500) ds.data.shift();
   chart.update("none");
 }
 
-/* ══ SSE ══ */
+/* ── SSE ── */
 let _sse=null, _sseRetryTimer=null;
 function connectSSE() {
-  if (_sse) { _sse.close(); _sse=null; }
+  if(_sse){ _sse.close(); _sse=null; }
   setSseDot("connecting");
-  _sse = new EventSource(API_BASE + "/api/stream", { withCredentials:true });
-  _sse.onopen = () => { setSseDot("ok"); clearTimeout(_sseRetryTimer); };
-  _sse.addEventListener("sensor", e => onSensorEvent(JSON.parse(e.data)));
-  _sse.addEventListener("alert",  e => onAlertEvent(JSON.parse(e.data)));
-  _sse.onerror = () => { setSseDot("err"); _sse.close(); _sse=null; _sseRetryTimer=setTimeout(connectSSE,5000); };
+  _sse=new EventSource(API_BASE+"/api/stream",{ withCredentials:true });
+  _sse.onopen=()=>{ setSseDot("ok"); clearTimeout(_sseRetryTimer); };
+  _sse.addEventListener("sensor",e=>onSensorEvent(JSON.parse(e.data)));
+  _sse.addEventListener("alert",e=>onAlertEvent(JSON.parse(e.data)));
+  _sse.onerror=()=>{ setSseDot("err"); _sse.close(); _sse=null; _sseRetryTimer=setTimeout(connectSSE,5000); };
 }
 function setSseDot(s) {
   const dot=document.getElementById("dot-sse"), lbl=document.getElementById("lbl-sse");
-  if (s==="ok")      { dot.className="dot ok"; lbl.textContent="Temps réel"; }
-  else if (s==="err"){ dot.className="dot err"; lbl.textContent="SSE déconnecté"; }
-  else               { dot.className="dot"; lbl.textContent="Connexion…"; }
+  if(s==="ok"){ dot.className="dot ok"; lbl.textContent="Temps réel"; }
+  else if(s==="err"){ dot.className="dot err"; lbl.textContent="SSE déconnecté"; }
+  else{ dot.className="dot"; lbl.textContent="Connexion…"; }
 }
 
 function onSensorEvent(d) {
   const {node_id:nid,sensor_type,value,timestamp}=d;
-  if (!state.latest[nid]) state.latest[nid]={};
+  if(!state.latest[nid]) state.latest[nid]={};
   state.latest[nid][sensor_type]=value; state.nodeSeen[nid]=timestamp;
   flashLiveDot(nid,timestamp); updateCardForNode(nid,sensor_type,value); updateNodeCard(nid);
   const pt={x:new Date(timestamp).getTime(),y:value};
@@ -885,7 +902,7 @@ function onAlertEvent(d) {
   const list=document.getElementById("alert-list");
   const el=document.createElement("div");
   el.className=`al ${d.level}`;
-  el.innerHTML=`<i class="fas ${d.level==='danger'?'fa-exclamation-circle':d.level==='warning'?'fa-exclamation-triangle':'fa-info-circle'} al-icon"></i>
+  el.innerHTML=`<i class="fas ${d.level==="danger"?"fa-exclamation-circle":d.level==="warning"?"fa-exclamation-triangle":"fa-info-circle"} al-icon"></i>
     <div class="al-body"><div class="al-title">${escapeHtml(d.node_id)} — ${escapeHtml(d.sensor_type)}</div>
     <div class="al-msg">${escapeHtml(d.message)}</div><div class="al-ts">${d.timestamp}</div></div>
     <button class="btn-ack" onclick="this.closest('.al').remove()">Acquitter</button>`;
@@ -938,7 +955,7 @@ function updateCardForNode(nid,sensor,value) {
   }
   if(nid==="room"){
     flashEl("kpi-room");
-    if(sensor==="presence")  setText("k-room-pres",value===1?"Présent":"Absent");
+    if(sensor==="presence") setText("k-room-pres",value===1?"Présent":"Absent");
     if(sensor==="luminosity") setText("k-room-lum",`Luminosité: ${Math.round(value)} lux`);
   }
 }
@@ -957,11 +974,18 @@ function flashLiveDot(nid,ts) {
 }
 function flashEl(id){const el=document.getElementById(id);if(el){el.classList.remove("updated");void el.offsetWidth;el.classList.add("updated");}}
 function setText(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
+
+/* ── Theme toggle — full rerender ── */
 function toggleTheme() {
   const isDark=document.documentElement.getAttribute("data-theme")!=="light";
   document.documentElement.setAttribute("data-theme",isDark?"light":"dark");
   document.getElementById("theme-btn").innerHTML=isDark?'<i class="fas fa-moon"></i>':'<i class="fas fa-sun"></i>';
   localStorage.setItem("bs_theme",isDark?"light":"dark");
+  // Refresh chart colors for new theme
+  const tc=getThemeColors();
+  Chart.defaults.color=tc.tickColor;
+  Chart.defaults.borderColor=tc.gridColor;
+  Object.values(CH).forEach(c=>{if(c)c.update()});
 }
 function loadTheme() {
   const t=localStorage.getItem("bs_theme")||"dark";
@@ -1008,8 +1032,9 @@ async function loadAlerts() {
   if(data.length===0){list.innerHTML=`<div class="empty"><i class="fas fa-check-circle"></i><p>Aucune alerte active</p></div>`;return;}
   list.innerHTML=data.map(a=>`
     <div class="al ${a.level}" id="al-${a.id}">
-      <i class="fas ${a.level==='danger'?'fa-exclamation-circle':a.level==='warning'?'fa-exclamation-triangle':'fa-info-circle'} al-icon"></i>
-      <div class="al-body"><div class="al-title">${escapeHtml(a.node_id)} — ${escapeHtml(a.sensor_type)}</div><div class="al-msg">${escapeHtml(a.message)}</div><div class="al-ts">${a.timestamp}</div></div>
+      <i class="fas ${a.level==="danger"?"fa-exclamation-circle":a.level==="warning"?"fa-exclamation-triangle":"fa-info-circle"} al-icon"></i>
+      <div class="al-body"><div class="al-title">${escapeHtml(a.node_id)} — ${escapeHtml(a.sensor_type)}</div>
+      <div class="al-msg">${escapeHtml(a.message)}</div><div class="al-ts">${a.timestamp}</div></div>
       <button class="btn-ack" onclick="ackAlert(${a.id})">Acquitter</button>
     </div>`).join("");
 }
@@ -1024,7 +1049,7 @@ function updateAlertBadge() {
   b.style.display=state.alertCount>0?"inline":"none"; b.textContent=state.alertCount;
 }
 
-/* ══ Navigation ══ */
+/* ── Navigation ── */
 const SEC_TITLES={overview:"Vue d'ensemble",nodes:"Nœuds capteurs",consumption:"Consommation",alerts:"Alertes"};
 document.querySelectorAll(".nav-btn[data-sec]").forEach(btn=>{
   btn.addEventListener("click",()=>{
@@ -1037,7 +1062,7 @@ document.querySelectorAll(".nav-btn[data-sec]").forEach(btn=>{
     setTimeout(()=>Object.values(CH).forEach(c=>c?.resize?.()),60);
   });
 });
-document.getElementById("temp-tabs").addEventListener("click", async e=>{
+document.getElementById("temp-tabs").addEventListener("click",async e=>{
   const b=e.target.closest(".btn"); if(!b||!b.dataset.node) return;
   _tempFilter=b.dataset.node;
   document.querySelectorAll("#temp-tabs .btn").forEach(x=>x.classList.toggle("active",x===b));
@@ -1048,10 +1073,10 @@ document.getElementById("temp-tabs").addEventListener("click", async e=>{
   updateTempChart(kt,st);
 });
 
-/* ══ 3D House drag rotation ══ */
-(function() {
+/* ── 3D House drag ── */
+(function(){
   const el=document.getElementById("house3d"); if(!el) return;
-  let dragging=false, startX=0, startY=0, rotY=-6, rotX=4;
+  let dragging=false,startX=0,startY=0,rotY=-8,rotX=5;
   el.addEventListener("mousedown",e=>{dragging=true;startX=e.clientX;startY=e.clientY;el.style.animation="none";});
   window.addEventListener("mousemove",e=>{
     if(!dragging) return;
@@ -1071,15 +1096,13 @@ document.getElementById("temp-tabs").addEventListener("click", async e=>{
   el.addEventListener("touchend",()=>{el.style.animation="";});
 })();
 
-/* ══ Init ══ */
-document.addEventListener("DOMContentLoaded", async ()=>{
+/* ── Init ── */
+document.addEventListener("DOMContentLoaded",async()=>{
   loadTheme();
   initCharts();
-  const loggedIn = await loadUser();
+  const loggedIn=await loadUser();
   if(!loggedIn) return;
-
-  /* Show welcome overlay then reveal app */
-  setTimeout(async ()=>{
+  setTimeout(async()=>{
     document.getElementById("welcome-overlay").classList.add("hide");
     document.getElementById("app").style.opacity="1";
     await loadInitial();
@@ -1089,7 +1112,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     await loadAlerts();
     connectSSE();
     setTimeout(()=>{ document.getElementById("welcome-overlay").style.display="none"; },700);
-  }, 2000);
+  },2000);
 });
 </script>
 </body>
