@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="icon" type="image/svg+xml" href="/batisense-icon.svg">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%22100%22%20y2%3D%22100%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%2300f5a0%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2300d4e0%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M28%2078V42h14v36H28zm18%200V50h14v28H46zm18%200V36h14v42H64z%22%20fill%3D%22%23050810%22%20opacity%3D%220.3%22%2F%3E%3Ccircle%20cx%3D%2278%22%20cy%3D%2224%22%20r%3D%2210%22%20fill%3D%22%23050810%22%20opacity%3D%220.2%22%2F%3E%3Ccircle%20cx%3D%2278%22%20cy%3D%2224%22%20r%3D%224%22%20fill%3D%22%23050810%22%20opacity%3D%220.5%22%2F%3E%3C%2Fsvg%3E">
 <style>
 /* ────── YOUR EXACT ORIGINAL STYLES ────── */
 :root{
@@ -155,7 +155,18 @@ button{cursor:pointer;font-family:var(--fui)}
 
 <aside class="sidebar">
   <div class="s-logo">
-    <img src="/batisense-icon.svg" style="width:34px;height:34px;flex-shrink:0;">
+    <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:34px;height:34px;flex-shrink:0;display:block">
+      <defs>
+        <linearGradient id="bs-grad1" x1="0" y1="0" x2="100" y2="100">
+          <stop offset="0%" stop-color="#00f5a0"/>
+          <stop offset="100%" stop-color="#00d4e0"/>
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="22" fill="url(#bs-grad1)"/>
+      <path d="M28 78V42h14v36H28zm18 0V50h14v28H46zm18 0V36h14v42H64z" fill="#050810" opacity="0.3"/>
+      <circle cx="78" cy="24" r="10" fill="#050810" opacity="0.2"/>
+      <circle cx="78" cy="24" r="4" fill="#050810" opacity="0.5"/>
+    </svg>
     <div><div class="s-logo-name">BatiSense</div><div class="s-logo-sub">Pro</div></div>
   </div>
   <nav class="s-nav">
@@ -177,17 +188,27 @@ button{cursor:pointer;font-family:var(--fui)}
 
 <div class="main">
   <header class="topbar">
-    <div class="topbar-l">
-      <div class="topbar-l" style="display:flex;align-items:center;gap:14px;">
-      <img src="/batisense-logo.svg" style="height:36px;opacity:0.92;">
+    <div class="topbar-l" style="display:flex;align-items:center;gap:14px;">
+      <svg viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:36px;width:auto;display:block;color:var(--t0)">
+        <defs>
+          <linearGradient id="bs-grad2" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#00f5a0"/>
+            <stop offset="100%" stop-color="#00d4e0"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="3" width="34" height="34" rx="8" fill="url(#bs-grad2)"/>
+        <path d="M7 30V15h5v15H7zm7 0V18h5v12h-5zm7 0V12h5v18h-5z" fill="#050810" opacity="0.25"/>
+        <circle cx="28" cy="10" r="3.5" fill="#050810" opacity="0.2"/>
+        <circle cx="28" cy="10" r="1.5" fill="#050810" opacity="0.5"/>
+        <text x="42" y="28" font-family="Syne, sans-serif" font-size="20" font-weight="700" fill="currentColor">BatiSense</text>
+      </svg>
       <div>
-      <h1 id="page-title">Vue d'ensemble</h1>
-  <h1 id="page-title">Vue d'ensemble</h1>
-      <p>
-        <span class="live-dot" id="live-dot"></span>
-        Dernière donnée: <span id="last-update">—</span>
-        · <span id="last-node">—</span>
-      </p>
+        <h1 id="page-title">Vue d'ensemble</h1>
+        <p>
+          <span class="live-dot" id="live-dot"></span>
+          Dernière donnée: <span id="last-update">—</span>
+          · <span id="last-node">—</span>
+        </p>
       </div>
     </div>
     <div class="topbar-r">
