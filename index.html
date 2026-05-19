@@ -557,7 +557,34 @@
         .account-panel.open{display:block;animation:accountIn .18s ease}
         @keyframes accountIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
         .account-head{display:flex;align-items:center;gap:12px;padding-bottom:13px;border-bottom:1px solid rgba(0,0,0,.09)}
+        .account-avatar,.user-av{
+            background-size:cover!important;
+            background-position:center!important;
+            overflow:hidden;
+        }
         .account-avatar{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#24231e;color:#fff;font-weight:900}
+        .avatar-actions{
+            margin:12px 0 2px;
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+        }
+        .avatar-input{display:none}
+        .avatar-btn{
+            min-height:32px;
+            border:1px solid rgba(0,0,0,.10);
+            border-radius:999px;
+            padding:7px 11px;
+            background:rgba(255,255,255,.76);
+            color:#24231e;
+            font-size:12px;
+            font-weight:850;
+            display:inline-flex;
+            align-items:center;
+            gap:7px;
+            cursor:pointer;
+        }
+        .avatar-btn:hover{background:var(--client-gold)}
         .account-title{font-weight:900;font-size:15px;letter-spacing:-.02em}
         .account-sub{font-size:12px;color:#69685f;margin-top:2px}
         .account-row{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.07)}
@@ -1291,6 +1318,11 @@
                             <div class="account-sub">Compte BatiSense Pro</div>
                         </div>
                     </div>
+                    <div class="avatar-actions">
+                        <label class="avatar-btn" for="avatar-input"><i class="fas fa-camera"></i> Ajouter une image</label>
+                        <button class="avatar-btn" type="button" id="avatar-remove"><i class="fas fa-trash"></i> Supprimer</button>
+                        <input class="avatar-input" type="file" id="avatar-input" accept="image/png,image/jpeg,image/webp">
+                    </div>
                     <div class="account-row"><span>Nom</span><span id="account-name">—</span></div>
                     <div class="account-row"><span>Email</span><span id="account-email">—</span></div>
                     <div class="password-box">
@@ -1598,6 +1630,48 @@ function renderAccount(u) {
     document.getElementById("account-name").textContent = full;
     document.getElementById("account-email").textContent = u.email || "Non renseigné";
     document.getElementById("wov-user-text").textContent = "Bienvenue, "+(first || full);
+    applyAccountAvatar(localStorage.getItem("bs_account_avatar"));
+}
+function applyAccountAvatar(src) {
+    const avatarEls = [document.getElementById("user-avatar"),document.getElementById("account-avatar")];
+    avatarEls.forEach(el=>{
+        if(!el) return;
+        if(src){
+            el.style.backgroundImage = `url("${src}")`;
+            el.textContent = "";
+        } else {
+            el.style.backgroundImage = "";
+            const u = state.user || {};
+            const first = u.first_name || "";
+            const last = u.last_name || "";
+            el.textContent = ((first[0] || "") + (last[0] || "") || "?").toUpperCase();
+        }
+    });
+}
+function handleAvatarUpload(e) {
+    const file = e.target.files?.[0];
+    if(!file) return;
+    if(!file.type.startsWith("image/")){
+        setAccountMessage("Veuillez choisir une image valide.","err");
+        return;
+    }
+    if(file.size > 1024 * 1024){
+        setAccountMessage("Image trop grande. Choisissez une image de moins de 1 Mo.","err");
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = ()=>{
+        localStorage.setItem("bs_account_avatar",reader.result);
+        applyAccountAvatar(reader.result);
+        setAccountMessage("Image du compte mise à jour sur ce navigateur.","ok");
+    };
+    reader.readAsDataURL(file);
+}
+function removeAccountAvatar() {
+    localStorage.removeItem("bs_account_avatar");
+    applyAccountAvatar(null);
+    document.getElementById("avatar-input").value = "";
+    setAccountMessage("Image du compte supprimée.","ok");
 }
 function toggleAccountPanel(force) {
     const panel = document.getElementById("account-panel");
@@ -1880,10 +1954,7 @@ document.querySelectorAll(".nav-btn[data-sec]").forEach(btn=>{
         btn.classList.add("active");
         document.getElementById("page-title").textContent=SEC_TITLES[id]||id;
         history.replaceState(null,"","#"+id);
-        requestAnimationFrame(()=>{
-            target.scrollIntoView({behavior:"smooth",block:"start"});
-            window.scrollBy({top:-14,left:0,behavior:"smooth"});
-        });
+        window.scrollTo({top:0,left:0,behavior:"smooth"});
         setTimeout(()=>Object.values(CH).forEach(c=>c?.resize?.()),140);
     });
 });
@@ -1960,6 +2031,8 @@ function initAccountMenu() {
     const toggle = document.getElementById("account-toggle");
     const panel = document.getElementById("account-panel");
     const form = document.getElementById("password-form");
+    const avatarInput = document.getElementById("avatar-input");
+    const avatarRemove = document.getElementById("avatar-remove");
     toggle.addEventListener("click",e=>{
         e.stopPropagation();
         toggleAccountPanel();
@@ -1970,6 +2043,8 @@ function initAccountMenu() {
         if(e.key==="Escape") toggleAccountPanel(false);
     });
     form.addEventListener("submit",submitPasswordChange);
+    avatarInput.addEventListener("change",handleAvatarUpload);
+    avatarRemove.addEventListener("click",removeAccountAvatar);
 }
 document.addEventListener("DOMContentLoaded",async()=>{
     loadTheme();
