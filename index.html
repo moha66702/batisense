@@ -446,13 +446,30 @@
             padding:0;
             border:0;
             border-radius:50%;
-            justify-content:center;
+            display:grid;
+            place-items:center;
             background:#f3f1e7;
             color:#25241f;
             box-shadow:inset 0 0 0 6px rgba(142,207,123,.26),0 12px 24px rgba(0,0,0,.12);
         }
+        .s-logo-mark{
+            width:100%;
+            height:100%;
+            display:grid;
+            place-items:center;
+            background:transparent;
+            box-shadow:none;
+            border-radius:50%;
+        }
         .s-logo-mark svg,.s-logo-name,.s-logo-sub,.s-nav-sec,.nav-btn span,.conn span{display:none}
-        .s-logo-mark::before{content:"\f015";font-family:"Font Awesome 6 Free";font-weight:900;font-size:18px}
+        .s-logo-mark::before{
+            content:"\f015";
+            font-family:"Font Awesome 6 Free";
+            font-weight:900;
+            font-size:18px;
+            line-height:1;
+            display:block;
+        }
         .s-nav{display:flex;flex-direction:column;align-items:center;gap:11px;width:100%;padding:0;flex:0 0 auto}
         .nav-btn{
             width:50px;
