@@ -2,516 +2,1330 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>BatiSense Pro | Smart Home Control</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%23050810'/%3E%3Cpolygon points='24,6 40,22 40,40 8,40 8,22' fill='none' stroke='%2300f5a0' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='24' cy='30' r='4' fill='%2300f5a0'/%3E%3Ccircle cx='24' cy='10' r='3' fill='%2300d4e0'/%3E%3C/svg%3E">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BatiSense Pro — Dashboard</title>
 
+    <!-- ═══════════════ FAVICON (SVG dans la barre d'onglet) ═══════════════ -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'>
+        <rect width='48' height='48' rx='10' fill='%23050810'/>
+        <polygon points='24,6 40,22 40,40 8,40 8,22' fill='none' stroke='%2300f5a0' stroke-width='3' stroke-linejoin='round'/>
+        <circle cx='24' cy='30' r='4' fill='%2300f5a0'/>
+        <circle cx='24' cy='10' r='3' fill='%2300d4e0'/>
+        <path d='M20,30 L24,24 L28,30' fill='none' stroke='%2300f5a0' stroke-width='2' stroke-linecap='round'/>
+    </svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
         :root {
-            --bg-deep: #070b15;
-            --bg-surface: #0f1422;
-            --bg-elevated: #181e2f;
-            --card-bg: rgba(18, 25, 45, 0.75);
-            --border-glow: rgba(0, 245, 160, 0.2);
-            --green-primary: #00f5a0;
-            --teal-accent: #00d4e0;
-            --blue-accent: #4d8dff;
-            --amber-glow: #ffc233;
-            --red-alert: #ff4d6b;
-            --violet-soft: #a06bff;
-            --text-main: #f0f3fc;
-            --text-dim: #8e9fc3;
-            --text-muted: #4c6188;
-            --shadow-card: 0 20px 35px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,245,160,0.1);
-            --shadow-glow: 0 0 15px rgba(0,245,160,0.2);
-            --radius-xl: 28px;
-            --radius-lg: 20px;
-            --radius-md: 16px;
-            --radius-sm: 12px;
+            --bg0: #040711;
+            --bg1: #070c17;
+            --bg2: #0b1120;
+            --bg3: #101828;
+            --bg4: #162034;
+            --b0: rgba(255,255,255,.03);
+            --b1: rgba(255,255,255,.07);
+            --b2: rgba(255,255,255,.12);
+            --green: #00f5a0;
+            --teal: #00d4e0;
+            --blue: #4d8dff;
+            --amber: #ffc233;
+            --red: #ff4d6b;
+            --violet: #a06bff;
+            --t0: #dce8ff;
+            --t1: #7d95bc;
+            --t2: #3d5070;
+            --t3: #253550;
+            --r: 16px;
+            --rsm: 9px;
+            --rxs: 6px;
+            --fui: 'Syne', sans-serif;
+            --fmono: 'DM Mono', monospace;
+            --fbody: 'Inter', sans-serif;
+            --glow-g: 0 0 40px rgba(0,245,160,.15);
+            --glow-b: 0 0 30px rgba(77,141,255,.08);
+            --sidebar-w: 240px;
+            --topbar-h: 56px;
+            --topbar-bg: rgba(7,12,23,.8);
+            --topbar-border: rgba(255,255,255,.05);
+            --sidebar-bg: linear-gradient(180deg, #070c17 0%, #040711 100%);
+            --card-bg: #0b1120;
+            --card-border: rgba(255,255,255,.07);
+            --card-shadow: 0 4px 24px rgba(0,0,0,.3);
+            --card-hover-shadow: 0 12px 40px rgba(0,0,0,.5);
+            --noise-opacity: .03;
         }
 
         [data-theme="light"] {
-            --bg-deep: #f1f5fe;
-            --bg-surface: #ffffff;
-            --bg-elevated: #eef2fa;
-            --card-bg: rgba(255,255,255,0.9);
-            --text-main: #101c3a;
-            --text-dim: #39507a;
-            --text-muted: #7c8fb0;
-            --shadow-card: 0 8px 28px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03);
-            --border-glow: rgba(0,160,100,0.25);
+            --bg0: #f0f3fa;
+            --bg1: #f5f7fd;
+            --bg2: #ffffff;
+            --bg3: #f0f4ff;
+            --bg4: #e4ebf8;
+            --b0: rgba(0,0,0,.04);
+            --b1: rgba(0,0,0,.07);
+            --b2: rgba(0,0,0,.11);
+            --t0: #0c1732;
+            --t1: #3a4f72;
+            --t2: #8898bb;
+            --t3: #b8c7dd;
+            --topbar-bg: rgba(255,255,255,.85);
+            --topbar-border: rgba(0,0,0,.06);
+            --sidebar-bg: linear-gradient(180deg, #f5f7fd 0%, #f0f3fa 100%);
+            --card-bg: #ffffff;
+            --card-border: rgba(0,0,0,.07);
+            --card-shadow: 0 2px 16px rgba(0,0,0,.06);
+            --card-hover-shadow: 0 8px 30px rgba(0,0,0,.1);
+            --glow-g: 0 0 20px rgba(0,200,130,.1);
+            --glow-b: 0 0 20px rgba(77,141,255,.08);
+            --noise-opacity: .015;
         }
 
-        body {
-            background: var(--bg-deep);
-            font-family: 'Inter', sans-serif;
-            color: var(--text-main);
-            overflow-x: hidden;
-        }
-
-        /* animated noise texture */
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.25'/%3E%3C/svg%3E");
-            background-size: 280px;
-            opacity: 0.025;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .app-container {
-            max-width: 1440px;
-            margin: 0 auto;
-            padding: 24px 32px 48px;
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{font-size:14px;-webkit-font-smoothing:antialiased}
+        body{
+            font-family:var(--fbody);
+            background:var(--bg0);
+            color:var(--t0);
+            min-height:100vh;
+            overflow-x:hidden;
             position: relative;
-            z-index: 2;
+        }
+        /* ═══════════════ NOISE TEXTURE ═══════════════ */
+        body::after {
+            content:'';
+            position:fixed;
+            inset:0;
+            pointer-events:none;
+            z-index:9999;
+            opacity:var(--noise-opacity);
+            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
+            background-size:180px 180px;
+            transition:opacity .4s;
+        }
+        button{cursor:pointer;font-family:var(--fui)}
+        ::-webkit-scrollbar{width:5px;height:5px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+        /* ═══════════════ WELCOME OVERLAY ═══════════════ */
+        #welcome-overlay{
+            position:fixed;inset:0;z-index:1000;
+            background:var(--bg0);
+            display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+        }
+        #welcome-overlay.hide{animation:overlayOut .7s cubic-bezier(.76,0,.24,1) forwards;pointer-events:none}
+        @keyframes overlayOut{0%{opacity:1;transform:scale(1)}30%{opacity:1;transform:scale(1.02)}100%{opacity:0;transform:scale(.95);display:none}}
+        .wov-logo{animation:wovLogoIn .9s cubic-bezier(.34,1.56,.64,1) both;filter:drop-shadow(0 0 40px rgba(0,245,160,.3))}
+        @keyframes wovLogoIn{from{opacity:0;transform:scale(.3) rotateY(-180deg)}to{opacity:1;transform:scale(1) rotateY(0deg)}}
+        .wov-text{font-family:var(--fui);font-size:34px;font-weight:800;letter-spacing:-1px;background:linear-gradient(90deg,var(--green),var(--teal),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:wovTextIn .6s ease both .3s}
+        @keyframes wovTextIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        .wov-user{font-size:16px;color:var(--t1);animation:wovTextIn .6s ease both .5s}
+        .wov-bar-wrap{width:240px;animation:wovTextIn .6s ease both .6s}
+        .wov-bar{height:3px;background:var(--bg3);border-radius:3px;overflow:hidden}
+        .wov-bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--teal),var(--blue));animation:wovFill 1.4s cubic-bezier(.4,0,.2,1) forwards;animation-delay:.4s;box-shadow:0 0 12px rgba(0,245,160,.5)}
+        @keyframes wovFill{to{width:100%}}
+        .wov-hint{font-family:var(--fmono);font-size:10px;color:var(--t2);letter-spacing:2px;text-align:center;animation:wovTextIn .6s ease both .7s;margin-top:8px}
+
+        /* ═══════════════ APP LAYOUT ═══════════════ */
+        .app{display:flex;min-height:100vh}
+        .sidebar{
+            width:var(--sidebar-w);
+            flex-shrink:0;
+            background:var(--sidebar-bg);
+            border-right:1px solid var(--b0);
+            display:flex;flex-direction:column;
+            position:sticky;top:0;height:100vh;overflow-y:auto;
+            transition:background .4s,border-color .4s;
+            z-index:50;
+        }
+        .s-logo{padding:20px 18px 16px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:12px;transition:border-color .4s}
+        .s-logo-mark{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg3);box-shadow:0 0 20px rgba(0,245,160,.2);overflow:hidden}
+        .s-logo-mark svg{width:38px;height:38px;border-radius:10px}
+        .s-logo-name{font-family:var(--fui);font-size:16px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(90deg,var(--t0),var(--t1));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .s-logo-sub{font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:2px;font-family:var(--fmono);opacity:.85}
+        .s-nav{padding:10px 8px;flex:1}
+        .s-nav-sec{font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:14px 12px 5px;font-family:var(--fui)}
+        .nav-btn{
+            display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;
+            border:none;background:none;color:var(--t1);font-size:13px;font-weight:500;
+            width:100%;text-align:left;margin-bottom:3px;
+            transition:all .25s cubic-bezier(.4,0,.2,1);position:relative;
+        }
+        .nav-btn::before{
+            content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+            width:3px;height:0;background:var(--green);border-radius:3px;
+            transition:height .3s cubic-bezier(.34,1.56,.64,1);
+        }
+        .nav-btn i{width:18px;font-size:14px;opacity:.55;flex-shrink:0;transition:all .25s}
+        .nav-btn:hover{background:var(--bg3);color:var(--t0);transform:translateX(3px)}
+        .nav-btn:hover i{opacity:.9;color:var(--green)}
+        .nav-btn.active{
+            background:rgba(0,245,160,.1);color:var(--green);font-weight:600;
+            box-shadow:0 0 20px rgba(0,245,160,.08);
+        }
+        .nav-btn.active::before{height:65%}
+        .nav-btn.active i{opacity:1;color:var(--green)}
+        .nav-badge{
+            margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;
+            padding:2px 7px;border-radius:12px;min-width:20px;text-align:center;
+            animation:badgePop .35s cubic-bezier(.34,1.56,.64,1);
+        }
+        @keyframes badgePop{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0deg)}}
+        .s-footer{padding:12px 8px;border-top:1px solid var(--b0)}
+        .conn{
+            display:flex;align-items:center;gap:8px;padding:8px 12px;
+            border-radius:var(--rxs);background:var(--b0);
+            font-size:11px;color:var(--t1);margin-bottom:4px;
+            font-family:var(--fmono);
+        }
+        .dot{width:7px;height:7px;border-radius:50%;background:var(--t2);flex-shrink:0;transition:all .3s}
+        .dot.ok{background:var(--green);box-shadow:0 0 12px var(--green);animation:dotBlink 2.5s infinite}
+        .dot.err{background:var(--red);box-shadow:0 0 8px var(--red);animation:dotBlinkFast 1s infinite}
+        @keyframes dotBlink{0%,100%{opacity:1}50%{opacity:.3}}
+        @keyframes dotBlinkFast{0%,100%{opacity:1}50%{opacity:.4}}
+
+        .main{flex:1;display:flex;flex-direction:column;min-width:0}
+        .topbar{
+            padding:0 28px;height:var(--topbar-h);
+            border-bottom:1px solid var(--topbar-border);
+            background:var(--topbar-bg);
+            backdrop-filter:blur(20px);
+            -webkit-backdrop-filter:blur(20px);
+            display:flex;align-items:center;justify-content:space-between;
+            gap:12px;
+            position:sticky;top:0;z-index:40;
+            transition:background .4s,border-color .4s;
+        }
+        .topbar-l h1{font-family:var(--fui);font-size:18px;font-weight:700;letter-spacing:-.5px}
+        .topbar-l p{font-size:10.5px;color:var(--t2);margin-top:2px;font-family:var(--fmono);display:flex;align-items:center;gap:7px}
+        .topbar-r{display:flex;gap:8px;align-items:center}
+        .live-dot{width:9px;height:9px;border-radius:50%;background:var(--t2);flex-shrink:0;transition:all .3s}
+        .live-dot.flash{background:var(--green);box-shadow:0 0 18px var(--green);animation:livePing .5s ease}
+        @keyframes livePing{0%{transform:scale(1)}50%{transform:scale(1.8)}100%{transform:scale(1)}}
+        .btn{
+            display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+            border-radius:var(--rxs);border:1px solid var(--b1);
+            background:var(--card-bg);color:var(--t0);font-size:12px;font-weight:500;
+            transition:all .25s cubic-bezier(.4,0,.2,1);
+            position:relative;overflow:hidden;
+        }
+        .btn:hover{background:var(--bg3);border-color:rgba(0,245,160,.35);color:var(--green);box-shadow:0 0 20px rgba(0,245,160,.1)}
+        .btn.sm{padding:5px 11px;font-size:11px}
+        .content{padding:22px 28px;flex:1}
+        .sec{display:none}
+        .sec.active{display:block;animation:secIn .35s cubic-bezier(.4,0,.2,1)}
+        @keyframes secIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+        .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+        .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+        .gauto{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+        .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+        .sh h2{font-family:var(--fui);font-size:16px;font-weight:700;letter-spacing:-.4px}
+
+        /* ═══════════════ TILT CARD (effet 3D) ═══════════════ */
+        .tilt-card{perspective:800px}
+        .tilt-card-inner{transition:transform .15s ease-out;transform-style:preserve-3d;position:relative}
+
+        /* ═══════════════ KPI CARDS ═══════════════ */
+        .kcard{
+            background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);
+            padding:18px 20px;position:relative;overflow:hidden;
+            transition:all .35s cubic-bezier(.4,0,.2,1);
+            box-shadow:var(--card-shadow);
+        }
+        .kcard::before{
+            content:'';position:absolute;inset:0;
+            background:linear-gradient(135deg,rgba(255,255,255,.03) 0%,transparent 60%);
+            pointer-events:none;border-radius:var(--r);z-index:1;
+        }
+        .kcard::after{
+            content:'';position:absolute;top:0;left:0;right:0;height:3px;
+            border-radius:var(--r) var(--r) 0 0;z-index:2;
+            transition:box-shadow .4s;
+        }
+        .kcard.g::after{background:linear-gradient(90deg,var(--green),var(--teal));box-shadow:0 0 20px rgba(0,245,160,.3)}
+        .kcard.t::after{background:linear-gradient(90deg,var(--teal),var(--blue));box-shadow:0 0 20px rgba(0,212,224,.3)}
+        .kcard.b::after{background:linear-gradient(90deg,var(--blue),var(--violet));box-shadow:0 0 20px rgba(77,141,255,.3)}
+        .kcard.a::after{background:linear-gradient(90deg,var(--amber),var(--red));box-shadow:0 0 20px rgba(255,194,51,.3)}
+        .kcard.r::after{background:var(--red);box-shadow:0 0 20px rgba(255,77,107,.3)}
+        .kcard.v::after{background:linear-gradient(90deg,var(--violet),var(--blue));box-shadow:0 0 20px rgba(160,107,255,.3)}
+        .kcard:hover{transform:translateY(-4px);border-color:rgba(0,245,160,.2);box-shadow:var(--card-hover-shadow),var(--glow-g)}
+        .kcard.updated{animation:cardFlash .6s ease}
+        @keyframes cardFlash{0%{border-color:var(--green);box-shadow:0 0 40px rgba(0,245,160,.35)}100%{border-color:var(--card-border);box-shadow:var(--card-shadow)}}
+        .kcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;z-index:3;position:relative}
+        .kcard-lbl{font-size:10.5px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;font-weight:700;font-family:var(--fui)}
+        .kcard-icon{font-size:17px;opacity:.85;transition:all .3s}
+        .kcard:hover .kcard-icon{opacity:1;transform:scale(1.1)}
+        .kcard-icon.g{color:var(--green)}.kcard-icon.t{color:var(--teal)}.kcard-icon.b{color:var(--blue)}.kcard-icon.a{color:var(--amber)}.kcard-icon.r{color:var(--red)}.kcard-icon.v{color:var(--violet)}
+        .kcard-val{font-family:var(--fui);font-size:30px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:6px;z-index:3;position:relative}
+        .kcard-val sup{font-size:13px;font-weight:500;margin-left:3px;opacity:.7}
+        .kcard-sub{font-size:11px;color:var(--t1);z-index:3;position:relative}
+
+        /* ═══════════════ PANEL ═══════════════ */
+        .panel{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);padding:20px 22px;margin-bottom:18px;box-shadow:var(--card-shadow);position:relative}
+        .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+        .pt{font-family:var(--fui);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--t0)}
+        .pt i{color:var(--green);opacity:.85}
+        .cbox{position:relative}
+        .cbox.h180{height:180px}.cbox.h220{height:220px}.cbox.h260{height:260px}
+
+        /* ═══════════════ DOOR/GAS BADGES ═══════════════ */
+        .door-badge{display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border-radius:var(--r);font-size:13px;font-weight:700;border:2px solid;transition:all .35s;font-family:var(--fui)}
+        .door-badge.open{background:rgba(255,77,107,.1);border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,77,107,.15)}
+        .door-badge.closed{background:rgba(0,245,160,.07);border-color:var(--green);color:var(--green);box-shadow:var(--glow-g)}
+
+        /* ═══════════════ AVG CARDS ═══════════════ */
+        .avg-row{display:flex;gap:18px;margin-bottom:18px}
+        .avg-card{flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;gap:16px;box-shadow:var(--card-shadow);transition:all .35s}
+        .avg-card:hover{transform:translateY(-3px);box-shadow:var(--card-hover-shadow)}
+        .avg-icon{width:50px;height:50px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:23px}
+        .avg-icon.temp{background:rgba(0,212,224,.1);color:var(--teal)}.avg-icon.hum{background:rgba(77,141,255,.1);color:var(--blue)}
+        .avg-lbl{font-size:10.5px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;font-weight:700;font-family:var(--fui)}
+        .avg-val{font-family:var(--fui);font-size:32px;font-weight:800;letter-spacing:-2.5px;line-height:1.1}
+        .avg-unit{font-size:15px;font-weight:500;margin-left:3px;opacity:.65}
+        .avg-detail{font-size:10.5px;color:var(--t1)}
+
+        /* ═══════════════ CONSUMPTION CARDS ═══════════════ */
+        .cons-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);padding:22px;text-align:center;box-shadow:var(--card-shadow);transition:all .35s}
+        .cons-card:hover{transform:translateY(-4px);box-shadow:var(--card-hover-shadow)}
+        .cons-ico{font-size:34px;margin-bottom:10px}
+        .cons-card.water .cons-ico{color:var(--teal)}.cons-card.elec .cons-ico{color:var(--violet)}.cons-card.gas .cons-ico{color:var(--amber)}
+        .cons-num{font-family:var(--fui);font-size:34px;font-weight:800;letter-spacing:-2.5px}
+        .cons-unit{font-size:11px;color:var(--t2);margin-top:5px}
+
+        /* ═══════════════ NODE CARDS ═══════════════ */
+        .ncard{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);padding:18px;box-shadow:var(--card-shadow);transition:all .35s}
+        .ncard:hover{transform:translateY(-3px);box-shadow:var(--card-hover-shadow)}
+        .nc-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--b0)}
+        .nc-name{font-family:var(--fui);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+        .nc-status{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px}
+        .nc-status.online{background:rgba(0,245,160,.12);color:var(--green)}.nc-status.offline{background:rgba(255,77,107,.1);color:var(--red)}
+        .nc-sensors{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+        .ns{background:var(--bg3);border:1px solid var(--b0);border-radius:var(--rxs);padding:11px 12px;display:flex;align-items:center;gap:10px}
+        .ns-val{font-family:var(--fui);font-size:14px;font-weight:700;white-space:nowrap}
+        .ns-lbl{font-size:10px;color:var(--t2)}
+
+        /* ═══════════════ ALERTS ═══════════════ */
+        .alert-list{display:flex;flex-direction:column;gap:12px}
+        .al{display:flex;align-items:flex-start;gap:14px;background:var(--card-bg);border:1px solid var(--card-border);border-left:4px solid;border-radius:var(--r);padding:15px 18px;box-shadow:var(--card-shadow)}
+        .al.danger{border-left-color:var(--red)}.al.warning{border-left-color:var(--amber)}.al.info{border-left-color:var(--blue)}
+        .al-icon{font-size:18px;margin-top:2px}
+        .al.danger .al-icon{color:var(--red)}.al.warning .al-icon{color:var(--amber)}.al.info .al-icon{color:var(--blue)}
+        .btn-ack{padding:5px 13px;border-radius:var(--rxs);border:1px solid var(--b1);background:var(--bg3);color:var(--t1);font-size:11px}
+        .btn-ack:hover{background:rgba(0,245,160,.12);color:var(--green);border-color:var(--green)}
+
+        /* ═══════════════ USER BADGE ═══════════════ */
+        .user-badge{display:flex;align-items:center;gap:9px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--rxs);padding:6px 14px;font-size:12px}
+        .user-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;box-shadow:0 0 16px rgba(0,245,160,.35)}
+        .user-name{color:var(--t1);font-weight:600}
+
+        /* ═══════════════ 3D HOUSE WIDGET ═══════════════ */
+        .house-widget{display:flex;align-items:center;justify-content:center;perspective:700px;padding:12px 0;position:relative}
+        .house-3d-dash{transform-style:preserve-3d;animation:dashFloat 5.5s ease-in-out infinite;cursor:grab;user-select:none;transition:transform .1s ease-out}
+        .house-3d-dash:active{cursor:grabbing}
+        @keyframes dashFloat{0%,100%{transform:rotateY(-6deg) rotateX(4deg) translateY(0)}50%{transform:rotateY(6deg) rotateX(-4deg) translateY(-12px)}}
+        .house-orbit-ring{position:absolute;border-radius:50%;border:1.5px solid rgba(0,245,160,.25);pointer-events:none;animation:orbitSpin 8s linear infinite}
+        .house-orbit-ring:nth-child(1){width:150px;height:150px;animation-duration:8s}
+        .house-orbit-ring:nth-child(2){width:190px;height:190px;animation-duration:13s;animation-delay:-4s;border-color:rgba(0,212,224,.2)}
+        @keyframes orbitSpin{from{transform:rotateX(65deg) rotateZ(0deg)}to{transform:rotateX(65deg) rotateZ(360deg)}}
+
+        /* ═══════════════ RIPPLE EFFECT ═══════════════ */
+        .ripple{position:absolute;border-radius:50%;background:rgba(0,245,160,.3);transform:scale(0);animation:rippleAnim .6s ease-out;pointer-events:none}
+        @keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+
+        /* ═══════════════ RESPONSIVE ═══════════════ */
+        @media(max-width:900px){
+            .sidebar{width:54px}
+            .s-logo-name,.s-logo-sub,.nav-btn span,.conn span,.nav-badge,.s-nav-sec{display:none}
+            .s-logo{justify-content:center;padding:16px 0}
+            .nav-btn{justify-content:center}
+            .topbar,.content{padding-left:14px;padding-right:14px}
+            .g2,.g3,.g4,.gauto{grid-template-columns:1fr}
+            .avg-row{flex-direction:column}
+            .topbar{height:auto;padding-top:10px;padding-bottom:10px;flex-wrap:wrap}
         }
 
-        /* header greeting */
-        .hero-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 28px;
-            flex-wrap: wrap;
-            gap: 16px;
+        /* Reference dashboard restyle */
+        :root{
+            --bg0:#2f2a18;
+            --bg1:#16140e;
+            --bg2:rgba(238,238,231,.58);
+            --bg3:rgba(255,255,255,.34);
+            --bg4:rgba(255,255,255,.22);
+            --b0:rgba(255,255,255,.30);
+            --b1:rgba(255,255,255,.44);
+            --b2:rgba(0,0,0,.12);
+            --green:#8ecf7b;
+            --teal:#74bfc2;
+            --blue:#8ea8d8;
+            --amber:#f4c84d;
+            --red:#d35b4d;
+            --violet:#a995c8;
+            --t0:#f7f7f2;
+            --t1:rgba(255,255,255,.72);
+            --t2:rgba(255,255,255,.54);
+            --card-bg:rgba(238,238,231,.60);
+            --card-border:rgba(255,255,255,.36);
+            --card-shadow:0 18px 55px rgba(0,0,0,.22);
+            --card-hover-shadow:0 24px 70px rgba(0,0,0,.28);
+            --r:20px;
+            --rsm:14px;
+            --rxs:10px;
+            --topbar-bg:transparent;
+            --topbar-border:transparent;
+            --sidebar-w:72px;
         }
-        .greeting h1 {
-            font-family: 'Syne', sans-serif;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            background: linear-gradient(120deg, var(--text-main), var(--green-primary));
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
+        [data-theme="light"]{
+            --bg0:#c7c2aa;
+            --bg1:#eeeadd;
+            --t0:#24231e;
+            --t1:rgba(36,35,30,.68);
+            --t2:rgba(36,35,30,.48);
+            --card-bg:rgba(255,255,255,.64);
+            --card-border:rgba(255,255,255,.70);
+            --topbar-bg:transparent;
         }
-        .greeting p {
-            color: var(--text-dim);
-            font-size: 14px;
-            margin-top: 6px;
+        body{
+            background:
+                radial-gradient(circle at 20% 10%,rgba(255,255,255,.10),transparent 28%),
+                linear-gradient(135deg,var(--bg0),var(--bg1) 72%);
         }
-        .top-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
+        body::before{
+            content:"";
+            position:fixed;
+            inset:0;
+            pointer-events:none;
+            opacity:.14;
+            background-image:linear-gradient(135deg,rgba(255,255,255,.13) 1px,transparent 1px);
+            background-size:24px 24px;
         }
-        .icon-btn {
-            background: var(--bg-surface);
-            border: 1px solid rgba(0,245,160,0.2);
-            border-radius: 40px;
-            padding: 8px 16px;
-            color: var(--text-dim);
-            font-size: 13px;
-            font-weight: 500;
-            backdrop-filter: blur(4px);
-            transition: 0.2s;
+        body::after{display:none}
+        #welcome-overlay{background:#2f2a18}
+        .wov-logo{
+            width:76px;
+            height:76px;
+            border-radius:24px;
+            display:grid;
+            place-items:center;
+            background:var(--amber);
+            color:#24231e;
+            box-shadow:0 22px 55px rgba(0,0,0,.30);
         }
-        .icon-btn i { margin-right: 6px; }
-        .icon-btn:hover {
-            border-color: var(--green-primary);
-            color: var(--green-primary);
-            transform: translateY(-2px);
+        .wov-logo svg{display:none}
+        .wov-logo::before{content:"\f015";font-family:"Font Awesome 6 Free";font-weight:900;font-size:30px}
+        .wov-text{-webkit-text-fill-color:currentColor;background:none;color:#fff;font-family:Inter,sans-serif;letter-spacing:-.04em}
+        .wov-bar-fill{background:var(--amber)}
+        .app{
+            display:grid;
+            grid-template-columns:72px minmax(0,1fr);
+            gap:18px;
+            padding:26px;
         }
-        .user-badge {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: var(--bg-surface);
-            padding: 6px 18px 6px 12px;
-            border-radius: 60px;
-            border: 1px solid var(--border-glow);
+        .sidebar{
+            width:72px;
+            height:calc(100vh - 52px);
+            top:26px;
+            border-radius:28px;
+            padding:12px 10px;
+            align-items:center;
+            background:rgba(238,238,231,.55);
+            border:1px solid rgba(255,255,255,.42);
+            box-shadow:0 20px 60px rgba(0,0,0,.25);
+            backdrop-filter:blur(18px);
         }
-        .avatar {
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(135deg, var(--green-primary), var(--teal-accent));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 18px;
-            color: #0a0f1c;
+        .s-logo{
+            width:48px;
+            height:48px;
+            padding:0;
+            border:0;
+            border-radius:18px;
+            justify-content:center;
+            background:#f3f1e7;
+            color:#25241f;
         }
-        /* quick row cards */
-        .quick-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 18px;
-            margin-bottom: 32px;
+        .s-logo-mark svg,.s-logo-name,.s-logo-sub,.s-nav-sec,.nav-btn span,.conn span{display:none}
+        .s-logo-mark::before{content:"\f015";font-family:"Font Awesome 6 Free";font-weight:900;font-size:18px}
+        .s-nav{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding:0;flex:1}
+        .nav-btn{
+            width:48px;
+            height:48px;
+            padding:0;
+            border-radius:18px;
+            display:grid;
+            place-items:center;
+            background:rgba(255,255,255,.30);
+            color:#68685f;
+            margin:0;
         }
-        .quick-card {
-            background: var(--bg-surface);
-            backdrop-filter: blur(12px);
-            border-radius: var(--radius-lg);
-            padding: 18px 12px;
-            text-align: center;
-            border: 1px solid rgba(0,245,160,0.15);
-            transition: all 0.25s;
-            box-shadow: var(--shadow-card);
+        .nav-btn::before{display:none}
+        .nav-btn i{width:auto;font-size:16px;opacity:1}
+        .nav-btn:hover,.nav-btn.active{background:var(--amber);color:#25241f;transform:translateY(-2px)}
+        .nav-badge{position:absolute;top:-3px;right:-3px;margin:0}
+        .s-footer{border:0;padding:0;display:flex;flex-direction:column;gap:8px}
+        .conn{width:48px;height:28px;padding:0;display:grid;place-items:center;border-radius:999px;background:rgba(255,255,255,.34)}
+        .dot,.live-dot{width:8px;height:8px;border-radius:50%;background:#8d8d82}
+        .dot.ok,.live-dot.flash{background:var(--green);box-shadow:0 0 0 6px rgba(142,207,123,.18)}
+        .dot.err{background:var(--red);box-shadow:0 0 0 6px rgba(211,91,77,.14)}
+        .main{min-width:0}
+        .topbar{
+            min-height:58px;
+            height:auto;
+            padding:0;
+            margin-bottom:16px;
+            background:transparent;
+            border:0;
+            position:relative;
         }
-        .quick-card i { font-size: 28px; color: var(--green-primary); margin-bottom: 10px; display: block; }
-        .quick-card span { font-weight: 600; font-size: 14px; letter-spacing: 0.5px; }
-        .quick-card:hover { transform: translateY(-5px); border-color: var(--green-primary); background: var(--bg-elevated); }
-
-        /* main control panel (design match) */
-        .dashboard-main {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 40px;
+        .topbar-l h1{font-size:16px;font-weight:800;letter-spacing:-.03em}
+        .topbar-l p{color:var(--t1);font-family:Inter,sans-serif}
+        .btn,.btn-ack{
+            min-height:34px;
+            border:1px solid var(--b1);
+            border-radius:999px;
+            padding:8px 13px;
+            color:#24231e;
+            background:rgba(255,255,255,.58);
+            font-size:12px;
+            font-weight:800;
+            box-shadow:none;
         }
-        .climate-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border-radius: var(--radius-xl);
-            border: 1px solid rgba(0,245,160,0.2);
-            padding: 24px 28px;
-            box-shadow: var(--shadow-card);
+        .btn:hover,.btn.active,.btn-ack:hover{background:var(--amber);color:#24231e;transform:translateY(-1px);border-color:rgba(255,255,255,.62)}
+        .user-badge{border-radius:999px;background:rgba(255,255,255,.52);color:#24231e;border:1px solid var(--b1)}
+        .user-av{background:#24231e;color:#fff}
+        .user-name{color:#24231e;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .content{padding:0}
+        .sec.active{animation:secIn .28s ease}
+        #overview{
+            min-height:620px;
+            border-radius:30px;
+            overflow:hidden;
+            position:relative;
+            padding:24px;
+            background:
+                linear-gradient(90deg,rgba(0,0,0,.64),rgba(0,0,0,.10) 46%,rgba(0,0,0,.42)),
+                url("https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=80") center/cover;
+            box-shadow:0 30px 80px rgba(0,0,0,.35);
         }
-        .big-temp {
-            display: flex;
-            align-items: baseline;
-            gap: 6px;
-            margin-bottom: 12px;
+        #overview::before{
+            content:"BatiSense Home";
+            position:absolute;
+            left:28px;
+            top:28px;
+            color:#fff;
+            font-size:31px;
+            font-weight:900;
+            letter-spacing:-.06em;
+            z-index:1;
         }
-        .big-temp .value {
-            font-size: 72px;
-            font-weight: 800;
-            font-family: 'Syne', sans-serif;
-            letter-spacing: -3px;
-            background: linear-gradient(135deg, var(--text-main), var(--green-primary));
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
+        #overview::after{
+            content:"Ready to control your smart home?";
+            position:absolute;
+            left:28px;
+            top:66px;
+            color:rgba(255,255,255,.82);
+            font-size:13px;
+            z-index:1;
         }
-        .big-temp .unit { font-size: 24px; font-weight: 500; color: var(--text-dim); }
-        .hum-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 12px;
+        #overview>.sh,#overview>div:first-of-type{display:none!important}
+        #overview>.g4{
+            position:relative;
+            z-index:2;
+            margin-left:auto!important;
+            margin-top:4px;
+            width:min(500px,100%);
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:12px;
         }
-        .hum-val { font-size: 28px; font-weight: 700; font-family: 'DM Mono', monospace; }
-        .grid-controls {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 18px;
-            margin-top: 20px;
+        #overview>.g2{
+            position:relative;
+            z-index:2;
+            margin-left:auto!important;
+            width:min(500px,100%);
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:12px;
         }
-        .control-card {
-            background: var(--bg-elevated);
-            border-radius: var(--radius-md);
-            padding: 18px;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: 0.2s;
+        #overview>.panel{
+            position:relative;
+            z-index:2;
+            margin-left:auto!important;
+            width:min(500px,100%);
         }
-        .control-card i { font-size: 22px; color: var(--teal-accent); margin-right: 12px; }
-        .control-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; display: flex; align-items: center; }
-        .status-badge { font-size: 13px; color: var(--text-dim); font-weight: 500; }
-        .fan-speed {
-            background: var(--bg-surface);
-            border-radius: 30px;
-            padding: 4px 12px;
-            display: inline-block;
-            font-size: 13px;
+        #overview>.g2:last-child{
+            width:min(760px,100%);
+            grid-template-columns:1fr 1fr;
         }
-        .energy-badge {
-            background: linear-gradient(90deg, var(--green-primary), var(--teal-accent));
-            border-radius: 40px;
-            padding: 8px 16px;
-            font-weight: 700;
-            color: #0a101c;
-            font-family: 'DM Mono', monospace;
-            font-size: 18px;
-            text-align: center;
+        .panel,.kcard,.avg-card,.cons-card,.ncard,.al{
+            background:var(--card-bg);
+            border:1px solid var(--card-border);
+            box-shadow:var(--card-shadow);
+            backdrop-filter:blur(18px) saturate(130%);
+            -webkit-backdrop-filter:blur(18px) saturate(130%);
+            color:#24231e;
         }
-
-        /* second column - smart hub */
-        .hub-card {
-            background: var(--card-bg);
-            border-radius: var(--radius-xl);
-            border: 1px solid rgba(0,245,160,0.2);
-            padding: 24px;
+        .panel,.kcard,.avg-card,.cons-card{border-radius:var(--r);padding:15px}
+        .kcard::before,.kcard::after{display:none}
+        .kcard:hover,.panel:hover,.avg-card:hover,.cons-card:hover{box-shadow:var(--card-hover-shadow);transform:translateY(-2px)}
+        .kcard-top,.ph{margin-bottom:12px}
+        .kcard-lbl,.pt,.avg-lbl{font-size:11px;font-weight:900;color:#24231e;letter-spacing:0;text-transform:none}
+        .pt i{color:var(--amber)}
+        .kcard-val,.avg-val,.cons-num{color:#24231e;font-weight:900;letter-spacing:-.05em}
+        .kcard-val{font-size:24px}
+        .kcard-sub,.avg-detail,.cons-unit{font-size:11px;color:#67665e}
+        .kcard-icon{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.60);color:#24231e!important}
+        .kcard-icon::after{content:"";width:34px;height:20px;border-radius:999px;background:#fff;position:absolute;right:14px;bottom:14px}
+        .door-badge{border-radius:999px;border:1px solid var(--b1);background:rgba(255,255,255,.55);color:#24231e;font-weight:900}
+        .door-badge.open{background:rgba(211,91,77,.88);color:#fff;border-color:rgba(255,255,255,.35)}
+        .door-badge.closed{background:rgba(142,207,123,.82);color:#1d2c18;border-color:rgba(255,255,255,.35)}
+        .cbox.h180{height:180px}.cbox.h220{height:220px}
+        #overview .cbox.h220{height:150px}
+        #overview .cbox.h180{height:135px}
+        #nodes,#consumption,#alerts{
+            border-radius:28px;
+            padding:18px;
+            background:rgba(255,255,255,.15);
+            border:1px solid rgba(255,255,255,.22);
+            backdrop-filter:blur(12px);
         }
-        .hub-stats {
-            display: flex;
-            justify-content: space-between;
-            margin: 16px 0;
+        .sh h2{font-size:18px;letter-spacing:-.04em}
+        .cons-card{text-align:center}
+        .cons-ico{font-size:25px;color:#24231e!important;margin-bottom:8px}
+        .ncard{border-radius:20px;padding:16px}
+        .nc-name{font-weight:900}
+        .nc-status{font-size:10px;font-weight:900;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.64)}
+        .nc-status.online{color:#2f7c36}.nc-status.offline{color:var(--red)}
+        .nc-sensors{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .ns{border-radius:14px;background:rgba(255,255,255,.52);border:0}
+        .ns-val{font-weight:900;color:#24231e}
+        .ns-lbl,.nc-ts{font-size:10px;color:#77766d}
+        .al{border-radius:18px;color:#24231e}
+        .al-body{flex:1}
+        .al-title{font-weight:900}
+        .al-msg,.al-ts{font-size:12px;color:#69685f;margin-top:3px}
+        .ripple{background:rgba(244,200,77,.35)}
+        @media(max-width:1100px){
+            #overview>.g4,#overview>.g2,#overview>.panel{width:100%}
+            #overview{padding-top:110px}
+            #overview>.g4{margin-top:0}
         }
-        .stat-item { text-align: center; flex:1; }
-        .stat-number { font-size: 32px; font-weight: 800; font-family: 'Syne', sans-serif; color: var(--green-primary); }
-        .remote-icons {
-            display: flex;
-            justify-content: space-around;
-            margin: 24px 0;
-            gap: 12px;
-        }
-        .remote-icon {
-            background: var(--bg-surface);
-            padding: 12px;
-            border-radius: 60px;
-            width: 60px;
-            text-align: center;
-            transition: 0.2s;
-        }
-        .remote-icon i { font-size: 24px; color: var(--text-dim); }
-
-        /* analytics section (preserve all previous charts & functionalities) */
-        .analytics-section {
-            margin-top: 40px;
-            background: var(--bg-surface);
-            border-radius: var(--radius-xl);
-            border: 1px solid rgba(0,245,160,0.1);
-            padding: 28px 24px;
-        }
-        .tabs-nav {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 28px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            padding-bottom: 12px;
-        }
-        .tab-btn {
-            background: none;
-            border: none;
-            padding: 8px 22px;
-            border-radius: 50px;
-            font-weight: 600;
-            color: var(--text-dim);
-            transition: 0.2s;
-        }
-        .tab-btn.active {
-            background: var(--green-primary);
-            color: #0a0f1c;
-            box-shadow: 0 0 12px var(--green-primary);
-        }
-        .tab-pane { display: none; animation: fadeIn 0.3s ease; }
-        .tab-pane.active { display: block; }
-        @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
-
-        .charts-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 24px; margin-bottom: 32px; }
-        .chart-box { background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; height: 260px; }
-        .nodes-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 18px; margin-top: 18px; }
-        .alert-list { display: flex; flex-direction: column; gap: 12px; max-height: 380px; overflow-y: auto; }
-
-        .door-badge, .gas-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 60px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        .door-badge.open { background: rgba(255,77,107,0.2); color: #ff4d6b; border: 1px solid #ff4d6b; }
-        .door-badge.closed { background: rgba(0,245,160,0.12); color: var(--green-primary); border: 1px solid var(--green-primary); }
-
-        .room-details { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
-        .room-chip { background: var(--bg-elevated); border-radius: 50px; padding: 6px 18px; font-size: 12px; }
-
-        button { cursor: pointer; background: none; border: none; font-family: inherit; }
-        .live-dot { width: 8px; height: 8px; background: var(--green-primary); border-radius: 50%; display: inline-block; margin-right: 6px; box-shadow: 0 0 8px var(--green-primary); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        @media (max-width: 900px) {
-            .dashboard-main { grid-template-columns: 1fr; }
-            .quick-grid { grid-template-columns: repeat(2,1fr); }
-            .charts-grid { grid-template-columns: 1fr; }
-            .app-container { padding: 16px; }
+        @media(max-width:760px){
+            .app{padding:12px;grid-template-columns:1fr}
+            .sidebar{position:static;height:auto;width:100%;flex-direction:row;border-radius:22px}
+            .s-nav{flex-direction:row;justify-content:center}
+            .s-footer{display:none}
+            .topbar{flex-direction:column;align-items:stretch}
+            .topbar-r{flex-wrap:wrap}
+            #overview>.g4,#overview>.g2,#overview>.g2:last-child{grid-template-columns:1fr}
+            .g2,.g3,.g4,.gauto{grid-template-columns:1fr}
         }
     </style>
 </head>
 <body>
-<div class="app-container">
-    <!-- header avec greeting dynamique -->
-    <div class="hero-header">
-        <div class="greeting">
-            <h1 id="dynamic-greeting">Hey, Jack! <span style="color:var(--green-primary)">Ready to control</span> your smart home?</h1>
-            <p><span class="live-dot"></span> live sync · <span id="last-update">—</span></p>
-        </div>
-        <div class="top-actions">
-            <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()"><i class="fas fa-sun"></i> Mode</button>
-            <button class="icon-btn" onclick="exportCSV()"><i class="fas fa-file-csv"></i> Export</button>
-            <div class="user-badge">
-                <div class="avatar" id="user-avatar">J</div>
-                <span id="user-name">Jack</span>
-            </div>
-            <button class="icon-btn" onclick="doLogout()" style="color:var(--red-alert);"><i class="fas fa-sign-out-alt"></i></button>
-        </div>
+
+<!-- ═══════════════ WELCOME OVERLAY ═══════════════ -->
+<div id="welcome-overlay">
+    <div class="wov-logo">
+        <svg width="90" height="90" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="wgMark" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00f5a0"/><stop offset="60%" stop-color="#00d4e0"/><stop offset="100%" stop-color="#4d8dff"/>
+                </linearGradient>
+                <filter id="wglow"><feGaussianBlur stdDeviation="4" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="wsglow"><feGaussianBlur stdDeviation="12" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="120" height="120" rx="24" fill="rgba(13,20,36,.85)"/>
+            <rect width="120" height="120" rx="24" fill="none" stroke="rgba(0,245,160,0.2)" stroke-width="2"/>
+            <ellipse cx="60" cy="60" rx="48" ry="45" fill="rgba(0,245,160,0.08)" filter="url(#wsglow)"/>
+            <polygon points="60,14 100,48 100,98 20,98 20,48" fill="none" stroke="url(#wgMark)" stroke-width="3.5" stroke-linejoin="round" filter="url(#wglow)"/>
+            <circle cx="60" cy="14" r="5" fill="url(#wgMark)" filter="url(#wglow)"/>
+            <rect x="44" y="66" width="32" height="32" rx="16" fill="none" stroke="url(#wgMark)" stroke-width="3" opacity="0.95"/>
+            <circle cx="60" cy="50" r="6" fill="url(#wgMark)" filter="url(#wglow)"/>
+            <path d="M 45,40 Q 60,26 75,40" fill="none" stroke="url(#wgMark)" stroke-width="3" stroke-linecap="round" opacity="0.8" filter="url(#wglow)"/>
+            <path d="M 35,31 Q 60,13 85,31" fill="none" stroke="url(#wgMark)" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>
+            <path d="M 25,22 Q 60,0 95,22" fill="none" stroke="url(#wgMark)" stroke-width="2" stroke-linecap="round" opacity="0.22"/>
+        </svg>
     </div>
-
-    <!-- Quick actions (CCTV, Security, Wi-Fi, Lighting) -->
-    <div class="quick-grid">
-        <div class="quick-card"><i class="fas fa-video"></i><span>CCTV</span></div>
-        <div class="quick-card"><i class="fas fa-shield-alt"></i><span>Security</span></div>
-        <div class="quick-card"><i class="fas fa-wifi"></i><span>Wi-Fi</span></div>
-        <div class="quick-card"><i class="fas fa-lightbulb"></i><span>Lighting</span></div>
-    </div>
-
-    <!-- MAIN PANEL: exactly matching PNG layout -->
-    <div class="dashboard-main">
-        <!-- left side: temperature, humidity, ac, fan speed -->
-        <div class="climate-card">
-            <div class="big-temp">
-                <span class="value" id="big-temp-val">22.5</span><span class="unit">°C</span>
-            </div>
-            <div class="hum-row">
-                <i class="fas fa-tint" style="color:var(--blue-accent); font-size: 24px;"></i>
-                <span class="hum-val" id="big-hum-val">—</span><span>% Humidity</span>
-            </div>
-            <div class="grid-controls">
-                <div class="control-card"><div class="control-title"><i class="fas fa-wind"></i> Air Conditioner</div><div class="status-badge" id="ac-status">Cool Mode · 22°C</div></div>
-                <div class="control-card"><div class="control-title"><i class="fas fa-fan"></i> Fan Speed</div><div class="status-badge"><span class="fan-speed" id="fan-speed-val">Medium</span></div></div>
-                <div class="control-card"><div class="control-title"><i class="fas fa-tv"></i> TV Remote</div><div class="status-badge">Samsung · Ready</div></div>
-                <div class="control-card"><div class="control-title"><i class="fas fa-microchip"></i> Smart Hub</div><div class="status-badge" id="hub-devices">12 devices online</div></div>
-            </div>
-        </div>
-
-        <!-- right side: energy consumption + extra realtime metrics -->
-        <div class="hub-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="font-family: 'Syne';">⚡ Energy Overview</h3>
-                <i class="fas fa-charging-station" style="color:var(--green-primary); font-size: 28px;"></i>
-            </div>
-            <div class="energy-badge" style="margin: 16px 0;">
-                <span id="energy-kwh-today">11.2</span> kWh <span style="font-size:12px;">today</span>
-            </div>
-            <div class="hub-stats">
-                <div class="stat-item"><div class="stat-number" id="water-today">—</div><span>Water (L)</span></div>
-                <div class="stat-item"><div class="stat-number" id="gas-today">—</div><span>Gas (m³)</span></div>
-            </div>
-            <div class="remote-icons">
-                <div class="remote-icon"><i class="fas fa-thermometer-half"></i><div style="font-size:10px;">HVAC</div></div>
-                <div class="remote-icon"><i class="fas fa-door-open"></i><div style="font-size:10px;" id="door-short-status">Closed</div></div>
-                <div class="remote-icon"><i class="fas fa-gas-pump"></i><div style="font-size:10px;" id="gas-alert-short">Safe</div></div>
-            </div>
-            <!-- hidden elements for internal updates (legacy/door status) but used for dynamic bind -->
-            <div style="display: none;" id="door-badge" class="door-badge closed"></div>
-            <div style="display: none;" id="gas-kitchen"></div><div style="display: none;" id="gas-salon"></div>
-            <div style="display: none;" id="k-door-pres"></div><div style="display: none;" id="k-room-pres"></div><div style="display: none;" id="k-room-lum"></div>
-            <div style="display: none;" id="k-kitchen-temp"></div><div style="display: none;" id="k-salon-temp"></div>
-            <div style="display: none;" id="k-kitchen-hum"></div><div style="display: none;" id="k-salon-hum"></div>
-        </div>
-    </div>
-
-    <!-- room conditions micro (to satisfy original UI elements needed but hidden) but we use for internal updates -->
-    <div style="display: none;" id="avg-temp-card"></div><div style="display: none;" id="avg-hum-card"></div>
-    <div style="display: none;" id="kpi-kitchen"></div><div style="display: none;" id="kpi-salon"></div>
-
-    <!-- ANALYTICS SECTION with original charts, nodes, alerts (preserved functionality) -->
-    <div class="analytics-section">
-        <div class="tabs-nav">
-            <button class="tab-btn active" data-tab="history">📈 History & Charts</button>
-            <button class="tab-btn" data-tab="nodes">📡 Smart Nodes</button>
-            <button class="tab-btn" data-tab="alerts">🔔 Alerts</button>
-        </div>
-        <div class="tab-pane active" id="tab-history">
-            <div class="charts-grid">
-                <div class="chart-box"><canvas id="chartTemp"></canvas><div style="text-align:center; font-size:12px;">Temperature 24h</div></div>
-                <div class="chart-box"><canvas id="chartHum"></canvas><div style="text-align:center;">Humidity 24h</div></div>
-                <div class="chart-box"><canvas id="chartPresence"></canvas><div style="text-align:center;">Presence (Kitchen)</div></div>
-                <div class="chart-box"><canvas id="chartWater"></canvas><div style="text-align:center;">Water (litres)</div></div>
-                <div class="chart-box"><canvas id="chartElec"></canvas><div style="text-align:center;">Electricity (kWh)</div></div>
-                <div class="chart-box"><canvas id="chartGas"></canvas><div style="text-align:center;">Gas (m³)</div></div>
-            </div>
-        </div>
-        <div class="tab-pane" id="tab-nodes">
-            <div id="nodes-container" class="nodes-container"><div class="empty">Loading devices...</div></div>
-        </div>
-        <div class="tab-pane" id="tab-alerts">
-            <div id="alert-list" class="alert-list"></div>
-        </div>
+    <div class="wov-text">BatiSense Pro</div>
+    <div class="wov-user" id="wov-user-text">Chargement…</div>
+    <div class="wov-bar-wrap">
+        <div class="wov-bar"><div class="wov-bar-fill"></div></div>
+        <div class="wov-hint">CHARGEMENT DU TABLEAU DE BORD</div>
     </div>
 </div>
 
+<!-- ═══════════════ APP ═══════════════ -->
+<div class="app" id="app" style="opacity:0;transition:opacity .6s ease">
+
+<aside class="sidebar">
+    <div class="s-logo">
+        <div class="s-logo-mark">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="38" height="38">
+                <defs>
+                    <linearGradient id="gMark" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#00f5a0"/><stop offset="60%" stop-color="#00d4e0"/><stop offset="100%" stop-color="#4d8dff"/>
+                    </linearGradient>
+                    <filter id="glow2"><feGaussianBlur stdDeviation="3" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+                <rect width="120" height="120" rx="24" fill="var(--bg3)"/>
+                <rect width="120" height="120" rx="24" fill="none" stroke="rgba(0,245,160,0.22)" stroke-width="2"/>
+                <ellipse cx="60" cy="60" rx="44" ry="40" fill="rgba(0,245,160,0.06)"/>
+                <polygon points="60,16 98,48 98,98 22,98 22,48" fill="none" stroke="url(#gMark)" stroke-width="3.5" stroke-linejoin="round" filter="url(#glow2)"/>
+                <circle cx="60" cy="16" r="4.5" fill="url(#gMark)" filter="url(#glow2)"/>
+                <rect x="44" y="66" width="32" height="32" rx="16" fill="none" stroke="url(#gMark)" stroke-width="3" opacity="0.95"/>
+                <circle cx="60" cy="52" r="5.5" fill="url(#gMark)" filter="url(#glow2)"/>
+                <path d="M 46,42 Q 60,28 74,42" fill="none" stroke="url(#gMark)" stroke-width="2.8" stroke-linecap="round" opacity="0.8" filter="url(#glow2)"/>
+                <path d="M 37,34 Q 60,15 83,34" fill="none" stroke="url(#gMark)" stroke-width="2.2" stroke-linecap="round" opacity="0.5"/>
+                <path d="M14,98 L14,110 L26,110" fill="none" stroke="rgba(0,245,160,0.45)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M106,98 L106,110 L94,110" fill="none" stroke="rgba(0,245,160,0.45)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div><div class="s-logo-name">BatiSense</div><div class="s-logo-sub">Pro</div></div>
+    </div>
+    <nav class="s-nav">
+        <div class="s-nav-sec">Tableau de bord</div>
+        <button class="nav-btn active" data-sec="overview"><i class="fas fa-compass"></i><span>Vue d'ensemble</span></button>
+        <button class="nav-btn" data-sec="nodes"><i class="fas fa-microchip"></i><span>Nœuds</span></button>
+        <div class="s-nav-sec">Consommation</div>
+        <button class="nav-btn" data-sec="consumption"><i class="fas fa-chart-pie"></i><span>Consommation</span></button>
+        <div class="s-nav-sec">Système</div>
+        <button class="nav-btn" data-sec="alerts"><i class="fas fa-bell"></i><span>Alertes</span>
+            <span class="nav-badge" id="alert-badge" style="display:none">0</span>
+        </button>
+    </nav>
+    <div class="s-footer">
+        <div class="conn"><span class="dot" id="dot-sse"></span><span id="lbl-sse">Connexion…</span></div>
+        <div class="conn"><span class="dot" id="dot-api"></span><span id="lbl-api">API…</span></div>
+    </div>
+</aside>
+
+<div class="main">
+    <header class="topbar">
+        <div class="topbar-l">
+            <h1 id="page-title">Vue d'ensemble</h1>
+            <p>
+                <span class="live-dot" id="live-dot"></span>
+                Dernière donnée: <span id="last-update">—</span>
+                · <span id="last-node">—</span>
+            </p>
+        </div>
+        <div class="topbar-r">
+            <button class="btn" onclick="exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+            <button class="btn" id="theme-btn" onclick="toggleTheme()"><i class="fas fa-sun"></i></button>
+            <div class="user-badge">
+                <div class="user-av" id="user-avatar">?</div>
+                <span class="user-name" id="user-name">…</span>
+            </div>
+            <button class="btn" onclick="doLogout()" title="Se déconnecter" style="color:var(--red);border-color:rgba(255,77,107,.2)">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="content">
+
+        <!-- ═══ OVERVIEW ═══ -->
+        <section id="overview" class="sec active">
+            <div style="display:grid;grid-template-columns:1fr 320px;gap:18px;margin-bottom:18px">
+                <div>
+                    <div class="sh" style="margin-bottom:12px"><h2>🏠 Maison — Moyennes</h2></div>
+                    <div class="avg-row">
+                        <div class="avg-card tilt-card" id="avg-temp-card">
+                            <div class="tilt-card-inner" style="display:flex;align-items:center;gap:16px;width:100%">
+                                <div class="avg-icon temp"><i class="fas fa-thermometer-half"></i></div>
+                                <div>
+                                    <div class="avg-lbl">Température moyenne</div>
+                                    <div class="avg-val"><span id="avg-temp">—</span><span class="avg-unit">°C</span></div>
+                                    <div class="avg-detail" id="avg-temp-detail">Cuisine + Salon</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="avg-card tilt-card" id="avg-hum-card">
+                            <div class="tilt-card-inner" style="display:flex;align-items:center;gap:16px;width:100%">
+                                <div class="avg-icon hum"><i class="fas fa-tint"></i></div>
+                                <div>
+                                    <div class="avg-lbl">Humidité moyenne</div>
+                                    <div class="avg-val"><span id="avg-hum">—</span><span class="avg-unit">%</span></div>
+                                    <div class="avg-detail" id="avg-hum-detail">Cuisine + Salon</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel" style="margin-bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:170px;position:relative;">
+                    <div class="pt" style="margin-bottom:0;font-size:10px;color:var(--t2);position:absolute;top:12px;left:16px;"><i class="fas fa-cube"></i> Modèle 3D interactif</div>
+                    <div class="house-widget" style="position:relative;">
+                        <div class="house-orbit-ring" style="width:150px;height:150px;"></div>
+                        <div class="house-orbit-ring" style="width:190px;height:190px;"></div>
+                        <div class="house-3d-dash" id="house3d">
+                            <svg width="115" height="115" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="h3gMark" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#00f5a0"/><stop offset="60%" stop-color="#00d4e0"/><stop offset="100%" stop-color="#4d8dff"/>
+                                    </linearGradient>
+                                    <filter id="h3glow"><feGaussianBlur stdDeviation="3.5" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                                    <filter id="h3sglow"><feGaussianBlur stdDeviation="12" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                                </defs>
+                                <rect width="120" height="120" rx="22" fill="rgba(13,20,36,.7)"/>
+                                <rect width="120" height="120" rx="22" fill="none" stroke="rgba(0,245,160,0.18)" stroke-width="1.5"/>
+                                <ellipse cx="60" cy="68" rx="52" ry="22" fill="rgba(0,245,160,0.07)" filter="url(#h3sglow)"/>
+                                <polygon points="98,48 108,54 108,102 98,96" fill="rgba(0,245,160,0.05)" stroke="url(#h3gMark)" stroke-width="1" opacity="0.5"/>
+                                <polygon points="22,96 22,48 12,54 12,102" fill="rgba(0,212,224,0.04)" opacity="0.4"/>
+                                <polygon points="60,14 100,48 100,96 20,96 20,48" fill="rgba(0,245,160,0.06)" stroke="url(#h3gMark)" stroke-width="3.5" stroke-linejoin="round" filter="url(#h3glow)"/>
+                                <circle cx="60" cy="14" r="5.5" fill="url(#h3gMark)" filter="url(#h3glow)"/>
+                                <rect x="28" y="56" width="18" height="16" rx="4" fill="none" stroke="url(#h3gMark)" stroke-width="1.8" opacity="0.7"/>
+                                <rect x="74" y="56" width="18" height="16" rx="4" fill="none" stroke="url(#h3gMark)" stroke-width="1.8" opacity="0.7"/>
+                                <line x1="37" y1="56" x2="37" y2="72" stroke="url(#h3gMark)" stroke-width="1" opacity="0.4"/>
+                                <line x1="83" y1="56" x2="83" y2="72" stroke="url(#h3gMark)" stroke-width="1" opacity="0.4"/>
+                                <rect x="46" y="68" width="28" height="28" rx="14" fill="none" stroke="url(#h3gMark)" stroke-width="3" opacity="0.95"/>
+                                <circle cx="60" cy="50" r="6" fill="url(#h3gMark)" filter="url(#h3glow)"/>
+                                <path d="M 45,40 Q 60,27 75,40" fill="none" stroke="url(#h3gMark)" stroke-width="3" stroke-linecap="round" opacity="0.85" filter="url(#h3glow)"/>
+                                <path d="M 36,32 Q 60,14 84,32" fill="none" stroke="url(#h3gMark)" stroke-width="2.2" stroke-linecap="round" opacity="0.5"/>
+                                <path d="M 27,24 Q 60,1 93,24" fill="none" stroke="url(#h3gMark)" stroke-width="1.6" stroke-linecap="round" opacity="0.25"/>
+                                <line x1="8" y1="96" x2="112" y2="96" stroke="url(#h3gMark)" stroke-width="1.8" opacity="0.35"/>
+                                <path d="M12,96 L12,109 L24,109" fill="none" stroke="rgba(0,245,160,0.45)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M108,96 L108,109 L96,109" fill="none" stroke="rgba(0,245,160,0.45)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div style="font-size:9px;font-family:var(--fmono);color:var(--t2);letter-spacing:1.5px;margin-top:6px">GLISSEZ POUR TOURNER 🖱️</div>
+                </div>
+            </div>
+
+            <div class="g4" style="margin-bottom:18px">
+                <div class="kcard g tilt-card" id="kpi-kitchen"><div class="tilt-card-inner">
+                    <div class="kcard-top"><span class="kcard-lbl">Cuisine</span><i class="fas fa-utensils kcard-icon g"></i></div>
+                    <div class="kcard-val"><span id="k-kitchen-temp">—</span><sup>°C</sup></div>
+                    <div class="kcard-sub" id="k-kitchen-hum">Humidité: —%</div>
+                </div></div>
+                <div class="kcard t tilt-card" id="kpi-salon"><div class="tilt-card-inner">
+                    <div class="kcard-top"><span class="kcard-lbl">Salon</span><i class="fas fa-couch kcard-icon t"></i></div>
+                    <div class="kcard-val"><span id="k-salon-temp">—</span><sup>°C</sup></div>
+                    <div class="kcard-sub" id="k-salon-hum">Humidité: —%</div>
+                </div></div>
+                <div class="kcard a tilt-card" id="kpi-port"><div class="tilt-card-inner">
+                    <div class="kcard-top"><span class="kcard-lbl">Porte</span><i class="fas fa-door-open kcard-icon a"></i></div>
+                    <div class="kcard-val" style="font-size:17px;margin-top:6px" id="k-door">—</div>
+                    <div class="kcard-sub" id="k-door-pres">Présence: —</div>
+                </div></div>
+                <div class="kcard b tilt-card" id="kpi-room"><div class="tilt-card-inner">
+                    <div class="kcard-top"><span class="kcard-lbl">Chambre</span><i class="fas fa-bed kcard-icon b"></i></div>
+                    <div class="kcard-val" style="font-size:17px;margin-top:6px" id="k-room-pres">—</div>
+                    <div class="kcard-sub" id="k-room-lum">Luminosité: — lux</div>
+                </div></div>
+            </div>
+
+            <div class="g2" style="margin-bottom:18px">
+                <div class="panel">
+                    <div class="ph"><div class="pt"><i class="fas fa-door-open"></i> État de la porte</div></div>
+                    <div style="display:flex;align-items:center;gap:14px">
+                        <div class="door-badge closed" id="door-badge"><i class="fas fa-door-closed"></i> FERMÉE</div>
+                        <span style="font-size:11px;color:var(--t1)" id="door-pres-label">Présence port: —</span>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="ph"><div class="pt"><i class="fas fa-wind"></i> Détection Gaz</div></div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap">
+                        <div class="door-badge closed" id="gas-kitchen"><i class="fas fa-utensils"></i> Cuisine: OK</div>
+                        <div class="door-badge closed" id="gas-salon"><i class="fas fa-couch"></i> Salon: OK</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="ph">
+                    <div class="pt"><i class="fas fa-chart-line"></i> Températures – 24h</div>
+                    <div style="display:flex;gap:6px" id="temp-tabs">
+                        <button class="btn sm active" data-node="all">Tous</button>
+                        <button class="btn sm" data-node="kitchen">Cuisine</button>
+                        <button class="btn sm" data-node="salon">Salon</button>
+                    </div>
+                </div>
+                <div class="cbox h220"><canvas id="chartTemp"></canvas></div>
+            </div>
+            <div class="g2">
+                <div class="panel">
+                    <div class="ph"><div class="pt"><i class="fas fa-tint"></i> Humidité – 24h</div></div>
+                    <div class="cbox h180"><canvas id="chartHum"></canvas></div>
+                </div>
+                <div class="panel">
+                    <div class="ph"><div class="pt"><i class="fas fa-walking"></i> Présence – 24h (Cuisine)</div></div>
+                    <div class="cbox h180"><canvas id="chartPresence"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ NODES ═══ -->
+        <section id="nodes" class="sec">
+            <div class="sh"><h2>📡 État des nœuds</h2></div>
+            <div class="gauto" id="nodes-container"><div class="empty"><i class="fas fa-spinner fa-spin"></i></div></div>
+        </section>
+
+        <!-- ═══ CONSUMPTION ═══ -->
+        <section id="consumption" class="sec">
+            <div class="sh"><h2>📊 Consommation journalière</h2></div>
+            <div class="g3" style="margin-bottom:18px">
+                <div class="cons-card water tilt-card" id="cons-water-card"><div class="tilt-card-inner">
+                    <div class="cons-ico"><i class="fas fa-faucet-drip"></i></div>
+                    <div class="cons-num" id="cons-water">—</div><div class="cons-unit">Litres aujourd'hui</div>
+                </div></div>
+                <div class="cons-card elec tilt-card" id="cons-elec-card"><div class="tilt-card-inner">
+                    <div class="cons-ico"><i class="fas fa-bolt"></i></div>
+                    <div class="cons-num" id="cons-elec">—</div><div class="cons-unit">kWh aujourd'hui</div>
+                </div></div>
+                <div class="cons-card gas tilt-card" id="cons-gas-card"><div class="tilt-card-inner">
+                    <div class="cons-ico"><i class="fas fa-fire"></i></div>
+                    <div class="cons-num" id="cons-gas">—</div><div class="cons-unit">m³ aujourd'hui</div>
+                </div></div>
+            </div>
+            <div class="panel"><div class="ph"><div class="pt"><i class="fas fa-chart-area"></i> Eau – historique (litres)</div></div><div class="cbox h220"><canvas id="chartWater"></canvas></div></div>
+            <div class="g2">
+                <div class="panel"><div class="ph"><div class="pt"><i class="fas fa-bolt"></i> Électricité – historique (kWh)</div></div><div class="cbox h180"><canvas id="chartElec"></canvas></div></div>
+                <div class="panel"><div class="ph"><div class="pt"><i class="fas fa-fire"></i> Gaz – historique (m³)</div></div><div class="cbox h180"><canvas id="chartGas"></canvas></div></div>
+            </div>
+        </section>
+
+        <!-- ═══ ALERTS ═══ -->
+        <section id="alerts" class="sec">
+            <div class="sh"><h2>🔔 Alertes</h2></div>
+            <div class="alert-list" id="alert-list"><div class="empty"><i class="fas fa-spinner fa-spin"></i></div></div>
+        </section>
+    </div>
+</div>
+</div><!-- .app -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
-    "use strict";
-    const API_BASE = "https://batisense-production.up.railway.app";
-    const HISTORY_HOURS = 24;
-    const NODES = {
-        kitchen:     { label:"Cuisine",     icon:"fa-utensils",  color:"var(--green)",  sensors:["temperature","humidity","gas_detected","presence"] },
-        salon:       { label:"Salon",       icon:"fa-couch",     color:"var(--teal)",   sensors:["temperature","humidity","gas_detected","presence"] },
-        port:        { label:"Porte",       icon:"fa-door-open", color:"var(--amber)",  sensors:["door_open","presence","structure_alert"] },
-        room:        { label:"Chambre",     icon:"fa-bed",       color:"var(--blue)",   sensors:["presence","luminosity","structure_alert"] },
-        water:       { label:"Eau",         icon:"fa-faucet",    color:"var(--teal)",   sensors:["daily_consumption"] },
-        electricity: { label:"Électricité", icon:"fa-plug",      color:"var(--violet)", sensors:["daily_consumption"] },
-        gas_node:    { label:"Gaz",         icon:"fa-fire",      color:"var(--amber)",  sensors:["daily_consumption"] },
+"use strict";
+const API_BASE = "https://batisense-production.up.railway.app";
+const HISTORY_HOURS = 24;
+
+const NODES = {
+    kitchen:     { label:"Cuisine",     icon:"fa-utensils",  color:"var(--green)",  sensors:["temperature","humidity","gas_detected","presence"] },
+    salon:       { label:"Salon",       icon:"fa-couch",     color:"var(--teal)",   sensors:["temperature","humidity","gas_detected","presence"] },
+    port:        { label:"Porte",       icon:"fa-door-open", color:"var(--amber)",  sensors:["door_open","presence","structure_alert"] },
+    room:        { label:"Chambre",     icon:"fa-bed",       color:"var(--blue)",   sensors:["presence","luminosity","structure_alert"] },
+    water:       { label:"Eau",         icon:"fa-faucet",    color:"var(--teal)",   sensors:["daily_consumption"] },
+    electricity: { label:"Électricité", icon:"fa-plug",      color:"var(--violet)", sensors:["daily_consumption"] },
+    gas_node:    { label:"Gaz",         icon:"fa-fire",      color:"var(--amber)",  sensors:["daily_consumption"] },
+};
+const SENSOR_META = {
+    temperature:       { icon:"fa-thermometer-half", color:"var(--teal)",  label:"Temp.",    fmt:v=>`${v.toFixed(1)}°C` },
+    humidity:          { icon:"fa-tint",             color:"var(--blue)",  label:"Humidité", fmt:v=>`${Math.round(v)}%` },
+    gas_detected:      { icon:"fa-wind",             color:"var(--red)",   label:"Gaz",      fmt:v=>(v===1?"⚠ DÉTECTÉ":"Normal") },
+    presence:          { icon:"fa-walking",          color:"var(--amber)", label:"Présence", fmt:v=>(v===1?"Oui":"Non") },
+    door_open:         { icon:"fa-door-open",        color:"var(--amber)", label:"Porte",    fmt:v=>(v===1?"Ouverte":"Fermée") },
+    structure_alert:   { icon:"fa-exclamation-triangle",color:"var(--red)",label:"Structure",fmt:v=>(v===1?"⚠ ALERTE":"Normal") },
+    luminosity:        { icon:"fa-sun",              color:"var(--amber)", label:"Lumino.",  fmt:v=>`${Math.round(v)} lux` },
+    daily_consumption: { icon:"fa-tachometer-alt",   color:"var(--green)", label:"Consomm.", fmt:v=>v.toFixed(2) },
+};
+
+const state = { latest:{}, nodeSeen:{}, alertCount:0, averages:{avg_temperature:null,avg_humidity:null,sources:{}} };
+let CH = {};
+
+Chart.defaults.color = "#4a6080";
+Chart.defaults.borderColor = "rgba(255,255,255,0.05)";
+Chart.defaults.font.family = "'Inter','Syne',sans-serif";
+const GRID = { color:"rgba(255,255,255,0.04)" };
+const TOOLTIP = { backgroundColor:"#0b1120", borderColor:"rgba(255,255,255,.08)", borderWidth:1, padding:14, cornerRadius:10, titleFont:{weight:'700',family:"'Syne',sans-serif"}, bodyFont:{family:"'Inter',sans-serif"} };
+
+function lineOpts(yLabel) {
+    return {
+        responsive:true, maintainAspectRatio:false, animation:{duration:500,easing:'easeInOutQuart'},
+        interaction:{mode:"index",intersect:false},
+        plugins:{legend:{position:"top",labels:{boxWidth:10,padding:18,usePointStyle:true,font:{size:11}}},tooltip:TOOLTIP},
+        scales:{
+            x:{type:"time",time:{displayFormats:{minute:"HH:mm",hour:"HH:mm",day:"dd/MM"}},ticks:{maxTicksLimit:8,maxRotation:0,font:{size:10}},grid:GRID},
+            y:{title:{display:!!yLabel,text:yLabel,color:"#4a6080",font:{size:10}},grid:GRID,ticks:{maxTicksLimit:6,font:{size:10}}}
+        }
     };
-    const SENSOR_META = {
-        temperature:       { icon:"fa-thermometer-half", color:"var(--teal)",  label:"Temp.",    fmt:v=>`${v.toFixed(1)}°C` },
-        humidity:          { icon:"fa-tint",             color:"var(--blue)",  label:"Humidité", fmt:v=>`${Math.round(v)}%` },
-        gas_detected:      { icon:"fa-wind",             color:"var(--red)",   label:"Gaz",      fmt:v=>(v===1?"⚠ GAZ":"Normal") },
-        presence:          { icon:"fa-walking",          color:"var(--amber)", label:"Présence", fmt:v=>(v===1?"Oui":"Non") },
-        door_open:         { icon:"fa-door-open",        color:"var(--amber)", label:"Porte",    fmt:v=>(v===1?"Ouverte":"Fermée") },
-        structure_alert:   { icon:"fa-exclamation-triangle",color:"var(--red)",label:"Structure",fmt:v=>(v===1?"⚠ ALERTE":"Normal") },
-        luminosity:        { icon:"fa-sun",              color:"var(--amber)", label:"Lumino.",  fmt:v=>`${Math.round(v)} lux` },
-        daily_consumption: { icon:"fa-tachometer-alt",   color:"var(--green)", label:"Consomm.", fmt:v=>v.toFixed(2) },
-    };
-    const state = { latest:{}, nodeSeen:{}, alertCount:0, averages:{avg_temperature:null,avg_humidity:null,sources:{}} };
-    let CH = {};
+}
+function initCharts() {
+    CH.temp = new Chart(document.getElementById("chartTemp"), {type:"line",data:{datasets:[]},options:lineOpts("°C")});
+    CH.hum  = new Chart(document.getElementById("chartHum"),  {type:"line",data:{datasets:[]},options:lineOpts("%")});
+    CH.presence = new Chart(document.getElementById("chartPresence"), {
+        type:"line",data:{datasets:[]},
+        options:{...lineOpts(""),
+            scales:{x:{type:"time",time:{displayFormats:{minute:"HH:mm",hour:"HH:mm"}},grid:GRID,ticks:{maxTicksLimit:8,font:{size:10}}},
+                    y:{ticks:{callback:v=>v===1?"Présent":"Absent",stepSize:1,font:{size:10}},min:0,max:1,grid:GRID}}
+        }
+    });
+    CH.water = new Chart(document.getElementById("chartWater"), {
+        type:"bar",data:{datasets:[]},
+        options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},plugins:{legend:{display:false},tooltip:TOOLTIP},
+            scales:{x:{type:"time",time:{displayFormats:{minute:"HH:mm",hour:"HH:mm",day:"dd/MM"}},grid:GRID,ticks:{maxTicksLimit:10,maxRotation:0,font:{size:10}}},
+                    y:{title:{display:true,text:"Litres",color:"#4a6080",font:{size:10}},grid:GRID,beginAtZero:true,ticks:{maxTicksLimit:6,font:{size:10}}}}
+        }
+    });
+    CH.elec = new Chart(document.getElementById("chartElec"), {type:"line",data:{datasets:[]},options:lineOpts("kWh")});
+    CH.gas  = new Chart(document.getElementById("chartGas"),  {type:"line",data:{datasets:[]},options:lineOpts("m³")});
+}
 
-    function initCharts() {
-        const lineOpts = (yLabel) => ({ responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:"var(--text-dim)"}}, tooltip:{backgroundColor:"#0f1422"}}, scales:{x:{type:"time", ticks:{color:"var(--text-muted)"}, grid:{color:"rgba(255,255,255,0.05)"}}, y:{title:{text:yLabel,color:"var(--text-dim)"}, grid:{color:"rgba(255,255,255,0.05)"}, ticks:{color:"var(--text-dim)"}}} });
-        CH.temp = new Chart(document.getElementById("chartTemp"), {type:"line",data:{datasets:[]},options:lineOpts("°C")});
-        CH.hum = new Chart(document.getElementById("chartHum"), {type:"line",data:{datasets:[]},options:lineOpts("%")});
-        CH.presence = new Chart(document.getElementById("chartPresence"), {type:"line",data:{datasets:[]},options:{...lineOpts(""), scales:{y:{min:0,max:1,ticks:{callback:v=>v===1?"Présent":"Absent"}}}}});
-        CH.water = new Chart(document.getElementById("chartWater"), {type:"bar",data:{datasets:[]},options:{...lineOpts("Litres"), plugins:{legend:{display:false}}}});
-        CH.elec = new Chart(document.getElementById("chartElec"), {type:"line",data:{datasets:[]},options:lineOpts("kWh")});
-        CH.gas = new Chart(document.getElementById("chartGas"), {type:"line",data:{datasets:[]},options:lineOpts("m³")});
+function mkDS(label,color,data,stepped=false) {
+    return {label,data,borderColor:color,backgroundColor:color+"18",borderWidth:2.5,tension:stepped?0:.5,fill:true,pointRadius:0,pointHoverRadius:6,stepped,pointHoverBorderWidth:3,pointHoverBorderColor:color};
+}
+function mkBarDS(label,color,data) {
+    return {label,data,backgroundColor:color+"90",borderRadius:8,borderSkipped:false,hoverBackgroundColor:color};
+}
+function toXY(rows) { return rows ? rows.map(r=>({x:new Date(r.t).getTime(),y:r.v})) : []; }
+
+async function apiFetch(path) {
+    try {
+        const r = await fetch(API_BASE+path,{credentials:"include",signal:AbortSignal.timeout(6000)});
+        if(!r.ok) throw new Error(r.status);
+        return await r.json();
+    } catch { return null; }
+}
+function setApiDot(ok) {
+    document.getElementById("dot-api").className = "dot "+(ok?"ok":"err");
+    document.getElementById("lbl-api").textContent = ok ? "API connectée" : "API hors ligne";
+}
+
+async function loadUser() {
+    try {
+        const res = await fetch(`${API_BASE}/auth/me`,{credentials:"include"});
+        if(res.status===401){window.location.href="/login";return false;}
+        const data = await res.json();
+        const u = data.user;
+        document.getElementById("user-name").textContent = u.first_name+" "+u.last_name;
+        document.getElementById("user-avatar").textContent = (u.first_name[0]+u.last_name[0]).toUpperCase();
+        document.getElementById("wov-user-text").textContent = "Bienvenue, "+u.first_name+" 👋";
+        return true;
+    } catch { window.location.href="/login"; return false; }
+}
+async function doLogout() {
+    await fetch(`${API_BASE}/auth/logout`,{method:"POST",credentials:"include"});
+    window.location.href="/login";
+}
+
+async function loadInitial() {
+    const data = await apiFetch("/api/latest");
+    if(!data){setApiDot(false);return;}
+    setApiDot(true);
+    for(const [nid,sensors] of Object.entries(data)) {
+        if(!state.latest[nid]) state.latest[nid]={};
+        for(const [sensor,info] of Object.entries(sensors)) {
+            state.latest[nid][sensor]=info.value;
+            if(!state.nodeSeen[nid]||info.timestamp>state.nodeSeen[nid]) state.nodeSeen[nid]=info.timestamp;
+        }
     }
-    function mkDS(label,color,data){ return {label,data,borderColor:color,backgroundColor:color+"20",borderWidth:2,fill:true,tension:0.3,pointRadius:0}; }
-    function toXY(rows){ return rows? rows.map(r=>({x:new Date(r.t).getTime(), y:r.v})) : []; }
+}
+async function loadAverages() {
+    const data = await apiFetch("/api/averages");
+    if(!data) return;
+    state.averages = data;
+    renderAverages();
+}
+async function loadHistory() {
+    const [kt,st,kh,sh,kp,w,e,g] = await Promise.all([
+        apiFetch(`/api/history?node_id=kitchen&sensor_type=temperature&hours=${HISTORY_HOURS}`),
+        apiFetch(`/api/history?node_id=salon&sensor_type=temperature&hours=${HISTORY_HOURS}`),
+        apiFetch(`/api/history?node_id=kitchen&sensor_type=humidity&hours=${HISTORY_HOURS}`),
+        apiFetch(`/api/history?node_id=salon&sensor_type=humidity&hours=${HISTORY_HOURS}`),
+        apiFetch(`/api/history?node_id=kitchen&sensor_type=presence&hours=${HISTORY_HOURS}`),
+        apiFetch(`/api/history?node_id=water&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
+        apiFetch(`/api/history?node_id=electricity&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
+        apiFetch(`/api/history?node_id=gas_node&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
+    ]);
+    updateTempChart(kt,st);
+    if(CH.hum){CH.hum.data.datasets=[mkDS("Cuisine","var(--green)",toXY(kh)),mkDS("Salon","var(--teal)",toXY(sh))];CH.hum.update("none");}
+    if(CH.presence){CH.presence.data.datasets=[mkDS("Cuisine","var(--amber)",toXY(kp),true)];CH.presence.update("none");}
+    if(CH.water){CH.water.data.datasets=[mkBarDS("Eau","var(--teal)",toXY(w))];CH.water.update("none");}
+    if(CH.elec){CH.elec.data.datasets=[mkDS("Élec.","var(--violet)",toXY(e))];CH.elec.update("none");}
+    if(CH.gas){CH.gas.data.datasets=[mkDS("Gaz","var(--amber)",toXY(g))];CH.gas.update("none");}
+}
 
-    async function apiFetch(path){ try{ const r=await fetch(API_BASE+path,{credentials:"include",signal:AbortSignal.timeout(6000)}); if(!r.ok)return null; return await r.json(); }catch{ return null; } }
-    function setText(id,val){ let e=document.getElementById(id); if(e) e.textContent=val; }
-    function flashEl(id){ let el=document.getElementById(id); if(el){ el.classList.add("updated"); setTimeout(()=>el.classList.remove("updated"),300); } }
+let _tempFilter = "all";
+function updateTempChart(kRows,sRows) {
+    if(!CH.temp) return;
+    const ds = [];
+    if(_tempFilter==="all"||_tempFilter==="kitchen") ds.push(mkDS("Cuisine","var(--green)",toXY(kRows)));
+    if(_tempFilter==="all"||_tempFilter==="salon") ds.push(mkDS("Salon","var(--teal)",toXY(sRows)));
+    CH.temp.data.datasets = ds; CH.temp.update("none");
+}
+function appendChartPoint(chartKey,label,color,point) {
+    const chart = CH[chartKey]; if(!chart) return;
+    let ds = chart.data.datasets.find(d=>d.label===label);
+    if(!ds){ds=mkDS(label,color,[]);chart.data.datasets.push(ds);}
+    ds.data.push(point);
+    if(ds.data.length>500) ds.data.shift();
+    chart.update("none");
+}
 
-    async function loadUser(){ 
-        try{ const res=await fetch(`${API_BASE}/auth/me`,{credentials:"include"}); if(res.status===401){window.location.href="/login";return false;} const data=await res.json(); const u=data.user; 
-            document.getElementById("user-name").innerHTML=u.first_name+" "+u.last_name; document.getElementById("user-avatar").innerHTML=(u.first_name[0]+u.last_name[0]).toUpperCase();
-            document.getElementById("dynamic-greeting").innerHTML=`Hey, ${u.first_name}! <span style="color:var(--green-primary)">Ready to control</span> your smart home?`;
-            return true;
-        }catch(e){ window.location.href="/login"; return false; }
+/* ══ SSE ══ */
+let _sse=null,_sseRetryTimer=null;
+function connectSSE() {
+    if(_sse){_sse.close();_sse=null;}
+    setSseDot("connecting");
+    _sse = new EventSource(API_BASE+"/api/stream",{withCredentials:true});
+    _sse.onopen = ()=>{setSseDot("ok");clearTimeout(_sseRetryTimer);};
+    _sse.addEventListener("sensor",e=>onSensorEvent(JSON.parse(e.data)));
+    _sse.addEventListener("alert",e=>onAlertEvent(JSON.parse(e.data)));
+    _sse.onerror = ()=>{setSseDot("err");_sse.close();_sse=null;_sseRetryTimer=setTimeout(connectSSE,5000);};
+}
+function setSseDot(s) {
+    const dot=document.getElementById("dot-sse"),lbl=document.getElementById("lbl-sse");
+    if(s==="ok"){dot.className="dot ok";lbl.textContent="Temps réel";}
+    else if(s==="err"){dot.className="dot err";lbl.textContent="SSE déconnecté";}
+    else{dot.className="dot";lbl.textContent="Connexion…";}
+}
+
+function onSensorEvent(d) {
+    const {node_id:nid,sensor_type,value,timestamp}=d;
+    if(!state.latest[nid]) state.latest[nid]={};
+    state.latest[nid][sensor_type]=value; state.nodeSeen[nid]=timestamp;
+    flashLiveDot(nid,timestamp); updateCardForNode(nid,sensor_type,value); updateNodeCard(nid);
+    const pt={x:new Date(timestamp).getTime(),y:value};
+    if(nid==="kitchen"&&sensor_type==="temperature"&&(_tempFilter==="all"||_tempFilter==="kitchen")) appendChartPoint("temp","Cuisine","var(--green)",pt);
+    if(nid==="salon"&&sensor_type==="temperature"&&(_tempFilter==="all"||_tempFilter==="salon")) appendChartPoint("temp","Salon","var(--teal)",pt);
+    if((nid==="kitchen"||nid==="salon")&&sensor_type==="humidity"){const l=nid==="kitchen"?"Cuisine":"Salon",c=nid==="kitchen"?"var(--green)":"var(--teal)";appendChartPoint("hum",l,c,pt);}
+    if(nid==="kitchen"&&sensor_type==="presence") appendChartPoint("presence","Cuisine","var(--amber)",pt);
+    if(nid==="water"&&sensor_type==="daily_consumption"){appendChartPoint("water","Eau","var(--teal)",pt);flashEl("cons-water-card");document.getElementById("cons-water").textContent=Math.round(value);}
+    if(nid==="electricity"&&sensor_type==="daily_consumption"){appendChartPoint("elec","Élec.","var(--violet)",pt);flashEl("cons-elec-card");document.getElementById("cons-elec").textContent=value.toFixed(2);}
+    if(nid==="gas_node"&&sensor_type==="daily_consumption"){appendChartPoint("gas","Gaz","var(--amber)",pt);flashEl("cons-gas-card");document.getElementById("cons-gas").textContent=value.toFixed(3);}
+    if((nid==="kitchen"||nid==="salon")&&(sensor_type==="temperature"||sensor_type==="humidity")) recalcAverages();
+}
+function onAlertEvent(d) {
+    state.alertCount++; updateAlertBadge();
+    const list=document.getElementById("alert-list");
+    const el=document.createElement("div");
+    el.className=`al ${d.level}`;
+    el.innerHTML=`<i class="fas ${d.level==='danger'?'fa-exclamation-circle':d.level==='warning'?'fa-exclamation-triangle':'fa-info-circle'} al-icon"></i><div class="al-body"><div class="al-title">${escapeHtml(d.node_id)} — ${escapeHtml(d.sensor_type)}</div><div class="al-msg">${escapeHtml(d.message)}</div><div class="al-ts">${d.timestamp}</div></div><button class="btn-ack" onclick="this.closest('.al').remove();state.alertCount=Math.max(0,state.alertCount-1);updateAlertBadge();">Acquitter</button>`;
+    const empty=list.querySelector(".empty"); if(empty) empty.remove();
+    list.prepend(el);
+}
+function recalcAverages() {
+    const kt=state.latest.kitchen?.temperature, st=state.latest.salon?.temperature;
+    const kh=state.latest.kitchen?.humidity, sh=state.latest.salon?.humidity;
+    function avg(a,b){const vs=[a,b].filter(v=>v!=null);return vs.length?Math.round((vs.reduce((x,y)=>x+y,0)/vs.length)*10)/10:null;}
+    state.averages={avg_temperature:avg(kt,st),avg_humidity:avg(kh,sh),sources:{kitchen_temperature:kt,salon_temperature:st,kitchen_humidity:kh,salon_humidity:sh}};
+    renderAverages();
+}
+function renderAverages() {
+    const a=state.averages;
+    setText("avg-temp",a.avg_temperature!==null?a.avg_temperature.toFixed(1):"—");
+    setText("avg-hum",a.avg_humidity!==null?Math.round(a.avg_humidity):"—");
+    const td=[],hd=[];
+    if(a.sources.kitchen_temperature!=null) td.push(`Cuisine ${a.sources.kitchen_temperature.toFixed(1)}°C`);
+    if(a.sources.salon_temperature!=null) td.push(`Salon ${a.sources.salon_temperature.toFixed(1)}°C`);
+    if(td.length) setText("avg-temp-detail",td.join(" · "));
+    if(a.sources.kitchen_humidity!=null) hd.push(`Cuisine ${Math.round(a.sources.kitchen_humidity)}%`);
+    if(a.sources.salon_humidity!=null) hd.push(`Salon ${Math.round(a.sources.salon_humidity)}%`);
+    if(hd.length) setText("avg-hum-detail",hd.join(" · "));
+    if(a.avg_temperature!==null) flashEl("avg-temp-card");
+    if(a.avg_humidity!==null) flashEl("avg-hum-card");
+}
+function updateCardForNode(nid,sensor,value) {
+    if(nid==="kitchen"){
+        if(sensor==="temperature"){setText("k-kitchen-temp",value.toFixed(1));flashEl("kpi-kitchen");}
+        if(sensor==="humidity") setText("k-kitchen-hum",`Humidité: ${Math.round(value)}%`);
+        if(sensor==="gas_detected") updateGasBadge("gas-kitchen","Cuisine","fa-utensils",value);
     }
-    async function doLogout(){ await fetch(`${API_BASE}/auth/logout`,{method:"POST",credentials:"include"}); window.location.href="/login"; }
-    function exportCSV(){ window.open(API_BASE+"/api/export/csv","_blank"); }
-    function toggleTheme(){ const isDark=document.documentElement.getAttribute("data-theme")!=="light"; document.documentElement.setAttribute("data-theme",isDark?"light":"dark"); localStorage.setItem("bs_theme",isDark?"light":"dark"); document.getElementById("themeToggleBtn").innerHTML=isDark?'<i class="fas fa-moon"></i> Mode':'<i class="fas fa-sun"></i> Mode'; }
-    function loadTheme(){ const t=localStorage.getItem("bs_theme")||"dark"; document.documentElement.setAttribute("data-theme",t); document.getElementById("themeToggleBtn").innerHTML=t==="dark"?'<i class="fas fa-sun"></i> Mode':'<i class="fas fa-moon"></i> Mode'; }
-
-    async function loadInitial(){ const data=await apiFetch("/api/latest"); if(!data)return; for(const [nid,sensors] of Object.entries(data)){ if(!state.latest[nid])state.latest[nid]={}; for(const [sensor,info] of Object.entries(sensors)){ state.latest[nid][sensor]=info.value; if(!state.nodeSeen[nid]||info.timestamp>state.nodeSeen[nid]) state.nodeSeen[nid]=info.timestamp; } } updateUIConsumption(); renderNodeCards(); }
-    async function loadAverages(){ const data=await apiFetch("/api/averages"); if(data){ state.averages=data; updateAvgUI(); } }
-    async function loadHistory(){ const [kt,st,kh,sh,kp,w,e,g] = await Promise.all([apiFetch(`/api/history?node_id=kitchen&sensor_type=temperature&hours=${HISTORY_HOURS}`),apiFetch(`/api/history?node_id=salon&sensor_type=temperature&hours=${HISTORY_HOURS}`),apiFetch(`/api/history?node_id=kitchen&sensor_type=humidity&hours=${HISTORY_HOURS}`),apiFetch(`/api/history?node_id=salon&sensor_type=humidity&hours=${HISTORY_HOURS}`),apiFetch(`/api/history?node_id=kitchen&sensor_type=presence&hours=${HISTORY_HOURS}`),apiFetch(`/api/history?node_id=water&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),apiFetch(`/api/history?node_id=electricity&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),apiFetch(`/api/history?node_id=gas_node&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`)]);
-        if(CH.temp) CH.temp.data.datasets=[mkDS("Cuisine","#00f5a0",toXY(kt)),mkDS("Salon","#00d4e0",toXY(st))]; CH.temp?.update("none");
-        if(CH.hum) CH.hum.data.datasets=[mkDS("Cuisine","#00f5a0",toXY(kh)),mkDS("Salon","#00d4e0",toXY(sh))]; CH.hum?.update("none");
-        if(CH.presence) CH.presence.data.datasets=[mkDS("Cuisine","#ffc233",toXY(kp),true)]; CH.presence?.update("none");
-        if(CH.water) CH.water.data.datasets=[{label:"Eau",data:toXY(w),backgroundColor:"#00d4e080",borderRadius:8}]; CH.water?.update("none");
-        if(CH.elec) CH.elec.data.datasets=[mkDS("Élec.","#a06bff",toXY(e))]; CH.elec?.update("none");
-        if(CH.gas) CH.gas.data.datasets=[mkDS("Gaz","#ffc233",toXY(g))]; CH.gas?.update("none");
+    if(nid==="salon"){
+        if(sensor==="temperature"){setText("k-salon-temp",value.toFixed(1));flashEl("kpi-salon");}
+        if(sensor==="humidity") setText("k-salon-hum",`Humidité: ${Math.round(value)}%`);
+        if(sensor==="gas_detected") updateGasBadge("gas-salon","Salon","fa-couch",value);
     }
-    function updateAvgUI(){ const a=state.averages; if(a.avg_temperature!=null){ setText("big-temp-val",a.avg_temperature.toFixed(1)); } if(a.avg_humidity!=null){ setText("big-hum-val",Math.round(a.avg_humidity)); } }
-    function updateUIConsumption(){ const elec=state.latest.electricity?.daily_consumption; if(elec!=null) setText("energy-kwh-today",elec.toFixed(1)); const water=state.latest.water?.daily_consumption; if(water!=null) setText("water-today",Math.round(water)); const gas=state.latest.gas_node?.daily_consumption; if(gas!=null) setText("gas-today",gas.toFixed(2)); const hubCount=Object.values(state.nodeSeen).filter(ts=>ts&&(Date.now()-new Date(ts).getTime())<30000).length; setText("hub-devices",`${hubCount || 4} devices online`); if(state.latest.port?.door_open!=null){ const open=state.latest.port.door_open===1; setText("door-short-status",open?"Open":"Closed"); } if(state.latest.kitchen?.gas_detected===1||state.latest.salon?.gas_detected===1) setText("gas-alert-short","⚠ GAS"); else setText("gas-alert-short","Safe"); }
-    function recalcAverages(){ const kt=state.latest.kitchen?.temperature, st=state.latest.salon?.temperature, kh=state.latest.kitchen?.humidity, sh=state.latest.salon?.humidity; const avgT=([kt,st].filter(v=>v!=null).reduce((a,b)=>a+b,0)/([kt,st].filter(v=>v!=null).length||1)); const avgH=([kh,sh].filter(v=>v!=null).reduce((a,b)=>a+b,0)/([kh,sh].filter(v=>v!=null).length||1)); state.averages.avg_temperature=isNaN(avgT)?null:avgT; state.averages.avg_humidity=isNaN(avgH)?null:avgH; updateAvgUI(); }
-    function onSensorEvent(d){ const {node_id,sensor_type,value,timestamp}=d; if(!state.latest[node_id])state.latest[node_id]={}; state.latest[node_id][sensor_type]=value; state.nodeSeen[node_id]=timestamp; updateUIConsumption(); if((node_id==="kitchen"||node_id==="salon") && (sensor_type==="temperature"||sensor_type==="humidity")) recalcAverages(); if(node_id==="electricity"&&sensor_type==="daily_consumption") updateUIConsumption(); if(node_id==="water"||node_id==="gas_node") updateUIConsumption(); if(node_id==="port"&&sensor_type==="door_open") updateUIConsumption(); renderNodeCards(); flashEl("hub-card"); document.getElementById("last-update").innerText=new Date(timestamp).toLocaleTimeString(); }
-    function renderNodeCards(){ const c=document.getElementById("nodes-container"); if(!c)return; c.innerHTML=Object.entries(NODES).map(([nid,meta])=>{ const d=state.latest[nid]||{}, lastSeen=state.nodeSeen[nid]; const online=lastSeen?(Date.now()-new Date(lastSeen).getTime())<15000:false; const ts=lastSeen?new Date(lastSeen).toLocaleTimeString():"jamais"; const sensorsHtml=meta.sensors.map(s=>{ const m=SENSOR_META[s]||{icon:"fa-question",color:"gray",label:s,fmt:v=>v}; const raw=d[s]; const txt=raw!=null?m.fmt(raw):"—"; return `<div class="ns" style="background:var(--bg-elevated); padding:10px; border-radius:12px;"><i class="fas ${m.icon}"></i> <strong>${m.label}</strong> ${txt}</div>`; }).join(""); return `<div class="ncard" style="background:var(--bg-elevated); border-radius:20px; padding:16px;"><div><i class="fas ${meta.icon}"></i> ${meta.label} <span style="color:${online?'#00f5a0':'gray'}">${online?"● Online":"○ Offline"}</span></div><div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">${sensorsHtml}</div><div style="font-size:10px; margin-top:8px;">🕐 ${ts}</div></div>`; }).join(""); }
-    async function loadAlerts(){ const data=await apiFetch("/api/alerts"); const listDiv=document.getElementById("alert-list"); if(!data){listDiv.innerHTML="<div>⚠️ No alerts</div>";return;} state.alertCount=data.length; if(data.length===0){listDiv.innerHTML="<div class='empty'>✅ No active alerts</div>";return;} listDiv.innerHTML=data.map(a=>`<div class="al" style="background:var(--bg-elevated); border-left:4px solid ${a.level==='danger'?'#ff4d6b':'#ffc233'}; padding:12px; border-radius:16px; margin-bottom:8px;"><i class="fas ${a.level==='danger'?'fa-exclamation-circle':'fa-bell'}"></i> <strong>${a.node_id}</strong> - ${a.message}<br><small>${a.timestamp}</small><button class="btn-ack" style="float:right;" onclick="ackAlert(${a.id})">Ack</button></div>`).join(""); }
-    window.ackAlert=async(id)=>{ await fetch(`${API_BASE}/api/alerts/${id}/ack`,{method:"POST",credentials:"include"}); loadAlerts(); };
-    let _sse=null; function connectSSE(){ if(_sse)_sse.close(); _sse=new EventSource(API_BASE+"/api/stream",{withCredentials:true}); _sse.addEventListener("sensor",e=>onSensorEvent(JSON.parse(e.data))); _sse.addEventListener("alert",e=>{ loadAlerts(); }); _sse.onerror=()=>setTimeout(connectSSE,5000); }
+    if(nid==="port"){
+        flashEl("kpi-port");
+        if(sensor==="door_open"){
+            const open=value===1;
+            const badge=document.getElementById("door-badge");
+            badge.className="door-badge "+(open?"open":"closed");
+            badge.innerHTML=`<i class="fas fa-door-${open?"open":"closed"}"></i> ${open?"OUVERTE":"FERMÉE"}`;
+            setText("k-door",open?"OUVERTE":"FERMÉE");
+            document.getElementById("k-door").style.color=open?"var(--red)":"var(--green)";
+        }
+        if(sensor==="presence"){setText("k-door-pres",`Présence: ${value===1?"Oui":"Non"}`);setText("door-pres-label",`Présence port: ${value===1?"Oui":"Non"}`);}
+    }
+    if(nid==="room"){
+        flashEl("kpi-room");
+        if(sensor==="presence") setText("k-room-pres",value===1?"Présent":"Absent");
+        if(sensor==="luminosity") setText("k-room-lum",`Luminosité: ${Math.round(value)} lux`);
+    }
+}
+function updateGasBadge(id,label,iconCls,value) {
+    const el=document.getElementById(id); if(!el) return;
+    const alert=value===1;
+    el.className="door-badge "+(alert?"open":"closed");
+    el.innerHTML=`<i class="fas ${iconCls}"></i> ${label}: ${alert?"<strong>GAZ!</strong>":"OK"}`;
+}
+function flashLiveDot(nid,ts) {
+    const dot=document.getElementById("live-dot");
+    dot.classList.remove("flash"); void dot.offsetWidth; dot.classList.add("flash");
+    setTimeout(()=>dot.classList.remove("flash"),500);
+    document.getElementById("last-update").textContent=new Date(ts).toLocaleTimeString("fr-FR");
+    document.getElementById("last-node").textContent=NODES[nid]?.label||nid;
+}
+function flashEl(id){const el=document.getElementById(id);if(el){el.classList.remove("updated");void el.offsetWidth;el.classList.add("updated");}}
+function setText(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
 
-    document.querySelectorAll(".tab-btn").forEach(btn=>{ btn.addEventListener("click",()=>{ document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active")); document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active"); setTimeout(()=>Object.values(CH).forEach(c=>c?.resize()),100); }); });
-    (async function init(){ loadTheme(); initCharts(); if(!await loadUser())return; await loadInitial(); await loadAverages(); await loadHistory(); renderNodeCards(); await loadAlerts(); connectSSE(); setInterval(()=>{ recalcAverages(); updateUIConsumption(); renderNodeCards(); }, 5000); })();
+function toggleTheme() {
+    const isDark = document.documentElement.getAttribute("data-theme")!=="light";
+    document.documentElement.setAttribute("data-theme",isDark?"light":"dark");
+    document.getElementById("theme-btn").innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+    localStorage.setItem("bs_theme",isDark?"light":"dark");
+}
+function loadTheme() {
+    const t = localStorage.getItem("bs_theme")||"dark";
+    document.documentElement.setAttribute("data-theme",t);
+    document.getElementById("theme-btn").innerHTML = t==="dark"?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+}
+function exportCSV(){window.open(API_BASE+"/api/export/csv","_blank");}
+function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+function renderNodeCards() {
+    const c=document.getElementById("nodes-container");
+    c.innerHTML=Object.entries(NODES).map(([nid,meta])=>{
+        const d=state.latest[nid]||{}, lastSeen=state.nodeSeen[nid];
+        const online=lastSeen?(Date.now()-new Date(lastSeen).getTime())<15000:false;
+        const ts=lastSeen?new Date(lastSeen).toLocaleTimeString("fr-FR"):"jamais";
+        const sensorsHtml=meta.sensors.map(s=>{
+            const m=SENSOR_META[s]||{icon:"fa-question",color:"var(--t1)",label:s,fmt:v=>v};
+            const raw=d[s], txt=raw!=null?m.fmt(raw):"—", isAlert=(s==="gas_detected"||s==="structure_alert")&&raw===1;
+            return `<div class="ns" data-sensor="${s}"><i class="fas ${m.icon} ns-icon" style="color:${isAlert?"var(--red)":m.color}"></i><div class="ns-body"><div class="ns-val" style="${isAlert?"color:var(--red)":""}">${txt}</div><div class="ns-lbl">${m.label}</div></div></div>`;
+        }).join("");
+        return `<div class="ncard" id="nc-${nid}"><div class="nc-head"><div class="nc-name" style="color:${meta.color}"><i class="fas ${meta.icon}"></i>${meta.label}</div><span class="nc-status ${online?"online":"offline"}">${online?"En ligne":"Hors ligne"}</span></div><div class="nc-sensors">${sensorsHtml}</div><div class="nc-ts">🕐 ${ts}</div></div>`;
+    }).join("");
+}
+function updateNodeCard(nid) {
+    const cardEl=document.getElementById(`nc-${nid}`); if(!cardEl) return;
+    const meta=NODES[nid], d=state.latest[nid]||{}, lastSeen=state.nodeSeen[nid];
+    const online=lastSeen?(Date.now()-new Date(lastSeen).getTime())<15000:false;
+    const pill=cardEl.querySelector(".nc-status");
+    if(pill){pill.className="nc-status "+(online?"online":"offline");pill.textContent=online?"En ligne":"Hors ligne";}
+    meta.sensors.forEach(s=>{
+        const cell=cardEl.querySelector(`[data-sensor="${s}"]`); if(!cell) return;
+        const m=SENSOR_META[s], raw=d[s], txt=raw!=null?m.fmt(raw):"—", isAlert=(s==="gas_detected"||s==="structure_alert")&&raw===1;
+        const valEl=cell.querySelector(".ns-val"); if(valEl){valEl.textContent=txt;valEl.style.color=isAlert?"var(--red)":"";}
+        const iconEl=cell.querySelector(".ns-icon"); if(iconEl) iconEl.style.color=isAlert?"var(--red)":m.color;
+    });
+    const tsEl=cardEl.querySelector(".nc-ts"); if(tsEl&&lastSeen) tsEl.textContent=`🕐 ${new Date(lastSeen).toLocaleTimeString("fr-FR")}`;
+    flashEl(`nc-${nid}`);
+}
+async function loadAlerts() {
+    const data=await apiFetch("/api/alerts");
+    const list=document.getElementById("alert-list");
+    if(!data){list.innerHTML=`<div class="empty"><i class="fas fa-times-circle"></i></div>`;return;}
+    state.alertCount=data.length; updateAlertBadge();
+    if(data.length===0){list.innerHTML=`<div class="empty"><i class="fas fa-check-circle"></i><p>Aucune alerte active</p></div>`;return;}
+    list.innerHTML=data.map(a=>`<div class="al ${a.level}" id="al-${a.id}"><i class="fas ${a.level==='danger'?'fa-exclamation-circle':a.level==='warning'?'fa-exclamation-triangle':'fa-info-circle'} al-icon"></i><div class="al-body"><div class="al-title">${escapeHtml(a.node_id)} — ${escapeHtml(a.sensor_type)}</div><div class="al-msg">${escapeHtml(a.message)}</div><div class="al-ts">${a.timestamp}</div></div><button class="btn-ack" onclick="ackAlert(${a.id})">Acquitter</button></div>`).join("");
+}
+async function ackAlert(id) {
+    await fetch(`${API_BASE}/api/alerts/${id}/ack`,{method:"POST",credentials:"include"});
+    const el=document.getElementById(`al-${id}`);
+    if(el){el.style.opacity="0";setTimeout(()=>el.remove(),350);}
+    state.alertCount=Math.max(0,state.alertCount-1); updateAlertBadge();
+}
+function updateAlertBadge() {
+    const b=document.getElementById("alert-badge");
+    b.style.display=state.alertCount>0?"inline":"none";
+    b.textContent=state.alertCount;
+}
+
+/* ══ Navigation ══ */
+const SEC_TITLES={overview:"Vue d'ensemble",nodes:"Nœuds capteurs",consumption:"Consommation",alerts:"Alertes"};
+document.querySelectorAll(".nav-btn[data-sec]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+        const id=btn.dataset.sec;
+        document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active"));
+        document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+        btn.classList.add("active");
+        document.getElementById("page-title").textContent=SEC_TITLES[id]||id;
+        setTimeout(()=>Object.values(CH).forEach(c=>c?.resize?.()),80);
+    });
+});
+document.getElementById("temp-tabs").addEventListener("click",async e=>{
+    const b=e.target.closest(".btn"); if(!b||!b.dataset.node) return;
+    _tempFilter=b.dataset.node;
+    document.querySelectorAll("#temp-tabs .btn").forEach(x=>x.classList.toggle("active",x===b));
+    const [kt,st]=await Promise.all([
+        apiFetch(`/api/history?node_id=kitchen&sensor_type=temperature&hours=${HISTORY_HOURS}`),
+        apiFetch(`/api/history?node_id=salon&sensor_type=temperature&hours=${HISTORY_HOURS}`),
+    ]);
+    updateTempChart(kt,st);
+});
+
+/* ══ 3D House drag ══ */
+(function(){
+    const el=document.getElementById("house3d"); if(!el) return;
+    let dragging=false, startX=0, startY=0, rotY=-6, rotX=4;
+    el.addEventListener("mousedown",e=>{dragging=true;startX=e.clientX;startY=e.clientY;el.style.animation="none";el.style.transition="none";});
+    window.addEventListener("mousemove",e=>{
+        if(!dragging) return;
+        rotY+=(e.clientX-startX)*.45; rotX-=(e.clientY-startY)*.45;
+        rotX=Math.max(-35,Math.min(35,rotX));
+        el.style.transform=`rotateY(${rotY}deg) rotateX(${rotX}deg)`;
+        startX=e.clientX; startY=e.clientY;
+    });
+    window.addEventListener("mouseup",()=>{dragging=false;el.style.animation="";el.style.transition="transform .6s cubic-bezier(.34,1.56,.64,1)";setTimeout(()=>{el.style.transition="transform .1s ease-out";},600);});
+    el.addEventListener("touchstart",e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY;el.style.animation="none";el.style.transition="none";},{passive:true});
+    el.addEventListener("touchmove",e=>{
+        rotY+=(e.touches[0].clientX-startX)*.45; rotX-=(e.touches[0].clientY-startY)*.45;
+        rotX=Math.max(-35,Math.min(35,rotX));
+        el.style.transform=`rotateY(${rotY}deg) rotateX(${rotX}deg)`;
+        startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+    },{passive:true});
+    el.addEventListener("touchend",()=>{el.style.animation="";el.style.transition="transform .6s cubic-bezier(.34,1.56,.64,1)";setTimeout(()=>{el.style.transition="transform .1s ease-out";},600);});
+})();
+
+/* ══ 3D Tilt effect on cards ══ */
+(function(){
+    document.querySelectorAll(".tilt-card").forEach(card=>{
+        card.addEventListener("mousemove",e=>{
+            const rect=card.getBoundingClientRect();
+            const x=e.clientX-rect.left, y=e.clientY-rect.top;
+            const centerX=rect.width/2, centerY=rect.height/2;
+            const rotateX=((y-centerY)/centerY)*-8;
+            const rotateY=((x-centerX)/centerX)*8;
+            const inner=card.querySelector(".tilt-card-inner");
+            if(inner) inner.style.transform=`perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02,1.02,1.02)`;
+        });
+        card.addEventListener("mouseleave",()=>{
+            const inner=card.querySelector(".tilt-card-inner");
+            if(inner){inner.style.transform="perspective(800px) rotateX(0) rotateY(0) scale3d(1,1,1)";inner.style.transition="transform .5s cubic-bezier(.34,1.56,.64,1)";setTimeout(()=>{inner.style.transition="transform .15s ease-out";},500);}
+        });
+    });
+})();
+
+/* ══ Ripple effect ══ */
+document.addEventListener("click",e=>{
+    const btn=e.target.closest(".btn,.btn-ack,.nav-btn");
+    if(!btn) return;
+    const ripple=document.createElement("span");
+    ripple.className="ripple";
+    const rect=btn.getBoundingClientRect();
+    const size=Math.max(rect.width,rect.height);
+    ripple.style.width=ripple.style.height=size+"px";
+    ripple.style.left=(e.clientX-rect.left-size/2)+"px";
+    ripple.style.top=(e.clientY-rect.top-size/2)+"px";
+    btn.appendChild(ripple);
+    ripple.addEventListener("animationend",()=>ripple.remove());
+});
+
+/* ══ Init ══ */
+document.addEventListener("DOMContentLoaded",async()=>{
+    loadTheme();
+    initCharts();
+    const loggedIn=await loadUser();
+    if(!loggedIn) return;
+    setTimeout(async()=>{
+        document.getElementById("welcome-overlay").classList.add("hide");
+        document.getElementById("app").style.opacity="1";
+        await loadInitial();
+        await loadAverages();
+        await loadHistory();
+        renderNodeCards();
+        await loadAlerts();
+        connectSSE();
+        setTimeout(()=>{document.getElementById("welcome-overlay").style.display="none";},700);
+    },2200);
+});
 </script>
 </body>
 </html>
