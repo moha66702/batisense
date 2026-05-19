@@ -1232,6 +1232,14 @@
             display:block!important;
             margin-bottom:22px;
         }
+        .sidebar{
+            position:sticky;
+            top:22px;
+            align-self:start;
+            max-height:calc(100vh - 44px);
+            overflow-y:auto;
+            z-index:100;
+        }
         #overview{
             display:grid!important;
         }
@@ -1252,6 +1260,14 @@
             color:#5d5d55;
             font-size:11px;
             font-weight:700;
+        }
+        @media(max-width:760px){
+            .sidebar{
+                top:12px;
+                max-height:none;
+                overflow-x:auto;
+                overflow-y:hidden;
+            }
         }
     </style>
 </head>
@@ -2115,5 +2131,3 @@ document.addEventListener("DOMContentLoaded",async()=>{
 </script>
 </body>
 </html>
-
-                
