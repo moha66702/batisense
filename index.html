@@ -1211,6 +1211,18 @@
                 grid-template-columns:1fr;
             }
         }
+
+        /* Keep sidebar labels inside their buttons */
+        .nav-btn{
+            overflow:hidden;
+        }
+        .nav-btn > span:not(.nav-badge){
+            min-width:0;
+            max-width:100%;
+            overflow-wrap:anywhere;
+            white-space:normal;
+            line-height:1.08;
+        }
     </style>
 </head>
 <body>
