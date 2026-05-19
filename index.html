@@ -1217,11 +1217,13 @@
             overflow:hidden;
         }
         .nav-btn > span:not(.nav-badge){
+            flex:1;
             min-width:0;
-            max-width:100%;
-            overflow-wrap:anywhere;
-            white-space:normal;
-            line-height:1.08;
+            font-size:11.5px;
+            line-height:1;
+            letter-spacing:0;
+            white-space:nowrap;
+            overflow:hidden;
         }
     </style>
 </head>
@@ -1966,10 +1968,14 @@ document.querySelectorAll(".nav-btn[data-sec]").forEach(btn=>{
         btn.classList.add("active");
         document.getElementById("page-title").textContent=SEC_TITLES[id]||id;
         history.replaceState(null,"","#"+id);
-        window.scrollTo({top:0,left:0,behavior:"smooth"});
+        window.scrollTo({top:0,left:0,behavior:"auto"});
         setTimeout(()=>Object.values(CH).forEach(c=>c?.resize?.()),140);
     });
 });
+const initialSection=location.hash.replace("#","");
+if(initialSection){
+    document.querySelector(`.nav-btn[data-sec="${initialSection}"]`)?.click();
+}
 document.getElementById("temp-tabs").addEventListener("click",async e=>{
     const b=e.target.closest(".btn"); if(!b||!b.dataset.node) return;
     _tempFilter=b.dataset.node;
