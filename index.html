@@ -514,6 +514,56 @@
         .user-badge{border-radius:999px;background:rgba(255,255,255,.52);color:#24231e;border:1px solid var(--b1)}
         .user-av{background:#24231e;color:#fff}
         .user-name{color:#24231e;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .account-wrap{position:relative}
+        .user-badge{
+            cursor:pointer;
+            min-height:38px;
+            transition:transform .2s ease,background .2s ease;
+        }
+        .user-badge:hover{background:rgba(255,255,255,.72);transform:translateY(-1px)}
+        .account-panel{
+            position:absolute;
+            top:calc(100% + 12px);
+            right:0;
+            width:min(360px,calc(100vw - 32px));
+            z-index:80;
+            display:none;
+            padding:16px;
+            border-radius:22px;
+            color:#24231e;
+            background:rgba(248,248,243,.94);
+            border:1px solid rgba(255,255,255,.72);
+            box-shadow:0 24px 70px rgba(0,0,0,.28);
+            backdrop-filter:blur(20px) saturate(140%);
+            -webkit-backdrop-filter:blur(20px) saturate(140%);
+        }
+        .account-panel.open{display:block;animation:accountIn .18s ease}
+        @keyframes accountIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+        .account-head{display:flex;align-items:center;gap:12px;padding-bottom:13px;border-bottom:1px solid rgba(0,0,0,.09)}
+        .account-avatar{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#24231e;color:#fff;font-weight:900}
+        .account-title{font-weight:900;font-size:15px;letter-spacing:-.02em}
+        .account-sub{font-size:12px;color:#69685f;margin-top:2px}
+        .account-row{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.07)}
+        .account-row span:first-child{font-size:11px;font-weight:900;color:#77766d;text-transform:uppercase}
+        .account-row span:last-child{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .password-box{margin-top:14px;padding:13px;border-radius:16px;background:rgba(244,200,77,.16);border:1px solid rgba(151,112,22,.22)}
+        .password-box h3{font-size:13px;margin-bottom:8px}
+        .pi-warning{display:flex;gap:9px;font-size:12px;line-height:1.4;color:#514017;margin-bottom:12px}
+        .pi-warning i{color:#a06d00;margin-top:2px}
+        .password-form{display:grid;gap:8px}
+        .password-form input{
+            width:100%;
+            min-height:36px;
+            border:1px solid rgba(0,0,0,.12);
+            border-radius:12px;
+            padding:8px 11px;
+            background:rgba(255,255,255,.78);
+            color:#24231e;
+            font:13px Inter,sans-serif;
+        }
+        .account-msg{min-height:18px;font-size:12px;color:#69685f}
+        .account-msg.err{color:var(--red);font-weight:800}
+        .account-msg.ok{color:#2f7c36;font-weight:800}
         .content{padding:0}
         .sec.active{animation:secIn .28s ease}
         #overview{
@@ -724,6 +774,8 @@
             .s-footer{display:none}
             .topbar{flex-direction:column;align-items:stretch}
             .topbar-r{flex-wrap:wrap}
+            .account-wrap{position:static}
+            .account-panel{right:12px;left:12px;top:118px;width:auto}
             #overview>.g4,#overview>.g2,#overview>.g2:last-child{grid-template-columns:1fr}
             .g2,.g3,.g4,.gauto{grid-template-columns:1fr}
         }
@@ -820,9 +872,37 @@
         <div class="topbar-r">
             <button class="btn" onclick="exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
             <button class="btn" id="theme-btn" onclick="toggleTheme()"><i class="fas fa-sun"></i></button>
-            <div class="user-badge">
-                <div class="user-av" id="user-avatar">?</div>
-                <span class="user-name" id="user-name">…</span>
+            <div class="account-wrap">
+                <button class="user-badge" id="account-toggle" type="button" aria-expanded="false" aria-controls="account-panel">
+                    <div class="user-av" id="user-avatar">?</div>
+                    <span class="user-name" id="user-name">…</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="account-panel" id="account-panel" role="dialog" aria-label="Compte utilisateur">
+                    <div class="account-head">
+                        <div class="account-avatar" id="account-avatar">?</div>
+                        <div>
+                            <div class="account-title" id="account-fullname">Utilisateur</div>
+                            <div class="account-sub">Compte BatiSense Pro</div>
+                        </div>
+                    </div>
+                    <div class="account-row"><span>Nom</span><span id="account-name">—</span></div>
+                    <div class="account-row"><span>Email</span><span id="account-email">—</span></div>
+                    <div class="password-box">
+                        <h3>Changer le mot de passe</h3>
+                        <div class="pi-warning">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>Important: si vous changez ce mot de passe, mettez aussi à jour la variable <strong>PASSWORD</strong> dans <strong>pi_sender.py</strong> sur le Raspberry Pi. Sinon le Raspberry Pi ne pourra plus se connecter au serveur.</span>
+                        </div>
+                        <form class="password-form" id="password-form">
+                            <input type="password" id="current-password" autocomplete="current-password" placeholder="Mot de passe actuel">
+                            <input type="password" id="new-password" autocomplete="new-password" placeholder="Nouveau mot de passe">
+                            <input type="password" id="confirm-password" autocomplete="new-password" placeholder="Confirmer le nouveau mot de passe">
+                            <div class="account-msg" id="account-msg"></div>
+                            <button class="btn" type="submit"><i class="fas fa-key"></i> Mettre à jour</button>
+                        </form>
+                    </div>
+                </div>
             </div>
             <button class="btn" onclick="doLogout()" title="Se déconnecter" style="color:var(--red);border-color:rgba(255,77,107,.2)">
                 <i class="fas fa-sign-out-alt"></i>
@@ -1029,7 +1109,7 @@ const SENSOR_META = {
     daily_consumption: { icon:"fa-tachometer-alt",   color:"var(--green)", label:"Consomm.", fmt:v=>v.toFixed(2) },
 };
 
-const state = { latest:{}, nodeSeen:{}, alertCount:0, averages:{avg_temperature:null,avg_humidity:null,sources:{}} };
+const state = { latest:{}, nodeSeen:{}, alertCount:0, averages:{avg_temperature:null,avg_humidity:null,sources:{}}, user:null };
 let CH = {};
 
 Chart.defaults.color = "#4a6080";
@@ -1096,11 +1176,63 @@ async function loadUser() {
         if(res.status===401){window.location.href="/login";return false;}
         const data = await res.json();
         const u = data.user;
-        document.getElementById("user-name").textContent = u.first_name+" "+u.last_name;
-        document.getElementById("user-avatar").textContent = (u.first_name[0]+u.last_name[0]).toUpperCase();
-        document.getElementById("wov-user-text").textContent = "Bienvenue, "+u.first_name+" 👋";
+        state.user = u;
+        renderAccount(u);
         return true;
+        document.getElementById("wov-user-text").textContent = "Bienvenue, "+u.first_name+" 👋";
     } catch { window.location.href="/login"; return false; }
+}
+function renderAccount(u) {
+    const first = u.first_name || "";
+    const last = u.last_name || "";
+    const full = `${first} ${last}`.trim() || "Utilisateur";
+    const initials = ((first[0] || "") + (last[0] || "") || "?").toUpperCase();
+    document.getElementById("user-name").textContent = full;
+    document.getElementById("user-avatar").textContent = initials;
+    document.getElementById("account-avatar").textContent = initials;
+    document.getElementById("account-fullname").textContent = full;
+    document.getElementById("account-name").textContent = full;
+    document.getElementById("account-email").textContent = u.email || "Non renseigné";
+    document.getElementById("wov-user-text").textContent = "Bienvenue, "+(first || full);
+}
+function toggleAccountPanel(force) {
+    const panel = document.getElementById("account-panel");
+    const btn = document.getElementById("account-toggle");
+    const open = force ?? !panel.classList.contains("open");
+    panel.classList.toggle("open",open);
+    btn.setAttribute("aria-expanded",String(open));
+}
+function setAccountMessage(text,type="") {
+    const msg = document.getElementById("account-msg");
+    msg.textContent = text;
+    msg.className = "account-msg" + (type ? " "+type : "");
+}
+async function submitPasswordChange(e) {
+    e.preventDefault();
+    const current = document.getElementById("current-password").value.trim();
+    const next = document.getElementById("new-password").value.trim();
+    const confirm = document.getElementById("confirm-password").value.trim();
+    if(!current || !next || !confirm){setAccountMessage("Veuillez remplir les trois champs.","err");return;}
+    if(next.length < 8){setAccountMessage("Le nouveau mot de passe doit contenir au moins 8 caractères.","err");return;}
+    if(next !== confirm){setAccountMessage("La confirmation ne correspond pas au nouveau mot de passe.","err");return;}
+    setAccountMessage("Mise à jour en cours...");
+    try {
+        const res = await fetch(`${API_BASE}/auth/change-password`,{
+            method:"POST",
+            credentials:"include",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({current_password:current,new_password:next})
+        });
+        if(res.ok){
+            e.target.reset();
+            setAccountMessage("Mot de passe mis à jour. Pensez à modifier PASSWORD dans pi_sender.py sur le Raspberry Pi.","ok");
+            return;
+        }
+        const data = await res.json().catch(()=>({}));
+        setAccountMessage(data.error || "Le serveur ne prend pas encore en charge ce changement depuis le dashboard.","err");
+    } catch {
+        setAccountMessage("Impossible de contacter le serveur pour changer le mot de passe.","err");
+    }
 }
 async function doLogout() {
     await fetch(`${API_BASE}/auth/logout`,{method:"POST",credentials:"include"});
@@ -1414,8 +1546,24 @@ document.addEventListener("click",e=>{
 });
 
 /* ══ Init ══ */
+function initAccountMenu() {
+    const toggle = document.getElementById("account-toggle");
+    const panel = document.getElementById("account-panel");
+    const form = document.getElementById("password-form");
+    toggle.addEventListener("click",e=>{
+        e.stopPropagation();
+        toggleAccountPanel();
+    });
+    panel.addEventListener("click",e=>e.stopPropagation());
+    document.addEventListener("click",()=>toggleAccountPanel(false));
+    document.addEventListener("keydown",e=>{
+        if(e.key==="Escape") toggleAccountPanel(false);
+    });
+    form.addEventListener("submit",submitPasswordChange);
+}
 document.addEventListener("DOMContentLoaded",async()=>{
     loadTheme();
+    initAccountMenu();
     initCharts();
     const loggedIn=await loadUser();
     if(!loggedIn) return;
