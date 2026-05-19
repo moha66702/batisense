@@ -1322,6 +1322,99 @@
             font-size:11px;
             font-weight:700;
         }
+        html[data-theme="dark"] body{
+            background:
+                radial-gradient(circle at 14% 12%,rgba(241,200,75,.12),transparent 25%),
+                radial-gradient(circle at 88% 8%,rgba(127,195,110,.08),transparent 24%),
+                linear-gradient(135deg,#0b0b09 0%,#171713 52%,#050505 100%)!important;
+            color:#f7f7f2;
+        }
+        html[data-theme="dark"] .sidebar{
+            background:linear-gradient(180deg,rgba(35,35,30,.94),rgba(13,13,11,.90))!important;
+            border-color:rgba(255,255,255,.12)!important;
+        }
+        html[data-theme="dark"] .topbar{
+            background:rgba(18,18,15,.68)!important;
+            border-color:rgba(255,255,255,.13)!important;
+        }
+        html[data-theme="dark"] .panel,
+        html[data-theme="dark"] .kcard,
+        html[data-theme="dark"] .avg-card,
+        html[data-theme="dark"] .cons-card,
+        html[data-theme="dark"] .ncard,
+        html[data-theme="dark"] .al{
+            background:rgba(28,28,24,.92)!important;
+            border-color:rgba(255,255,255,.13)!important;
+            color:#f7f7f2!important;
+        }
+        html[data-theme="dark"] .s-logo,
+        html[data-theme="dark"] .nav-btn:hover,
+        html[data-theme="dark"] .nav-btn.active,
+        html[data-theme="dark"] .conn,
+        html[data-theme="dark"] .user-badge,
+        html[data-theme="dark"] .topbar-r .btn,
+        html[data-theme="dark"] .theme-toggle{
+            background:rgba(255,255,255,.10)!important;
+            border-color:rgba(255,255,255,.15)!important;
+            color:#f7f7f2!important;
+        }
+        html[data-theme="dark"] .nav-btn,
+        html[data-theme="dark"] .s-logo-name,
+        html[data-theme="dark"] .user-name,
+        html[data-theme="dark"] .pt,
+        html[data-theme="dark"] .kcard-lbl,
+        html[data-theme="dark"] .avg-lbl,
+        html[data-theme="dark"] .cons-num,
+        html[data-theme="dark"] .ns-val{
+            color:#f7f7f2!important;
+            -webkit-text-fill-color:currentColor;
+        }
+        html[data-theme="dark"] .s-nav-sec,
+        html[data-theme="dark"] .kcard-sub,
+        html[data-theme="dark"] .avg-detail,
+        html[data-theme="dark"] .cons-unit,
+        html[data-theme="dark"] .ns-lbl,
+        html[data-theme="dark"] .nc-ts,
+        html[data-theme="dark"] .al-msg,
+        html[data-theme="dark"] .al-ts{
+            color:rgba(247,247,242,.62)!important;
+        }
+        html[data-theme="light"] body{
+            background:
+                radial-gradient(circle at 15% 10%,rgba(255,255,255,.72),transparent 26%),
+                radial-gradient(circle at 86% 8%,rgba(241,200,75,.16),transparent 24%),
+                linear-gradient(135deg,#f7f6ef 0%,#dedccf 62%,#c7c2aa 100%)!important;
+            color:#24231e;
+        }
+        html[data-theme="light"] .sidebar{
+            background:linear-gradient(180deg,rgba(250,250,244,.92),rgba(228,227,214,.84))!important;
+            border-color:rgba(255,255,255,.70)!important;
+        }
+        html[data-theme="light"] .topbar{
+            background:rgba(248,248,242,.18)!important;
+            border-color:rgba(255,255,255,.28)!important;
+        }
+        html[data-theme="light"] .panel,
+        html[data-theme="light"] .kcard,
+        html[data-theme="light"] .avg-card,
+        html[data-theme="light"] .cons-card,
+        html[data-theme="light"] .ncard,
+        html[data-theme="light"] .al{
+            background:rgba(248,248,242,.92)!important;
+            border-color:rgba(255,255,255,.66)!important;
+            color:#24231e!important;
+        }
+        html[data-theme="light"] .nav-btn,
+        html[data-theme="light"] .s-logo-name,
+        html[data-theme="light"] .user-name,
+        html[data-theme="light"] .pt,
+        html[data-theme="light"] .kcard-lbl,
+        html[data-theme="light"] .avg-lbl,
+        html[data-theme="light"] .cons-num,
+        html[data-theme="light"] .ns-val{
+            color:#24231e!important;
+            -webkit-text-fill-color:currentColor;
+        }
         @media(max-width:760px){
             .sidebar{
                 top:12px;
