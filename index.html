@@ -367,8 +367,8 @@
             --t0:#f7f7f2;
             --t1:rgba(255,255,255,.72);
             --t2:rgba(255,255,255,.54);
-            --card-bg:rgba(238,238,231,.60);
-            --card-border:rgba(255,255,255,.36);
+            --card-bg:rgba(244,245,241,.84);
+            --card-border:rgba(255,255,255,.58);
             --card-shadow:0 18px 55px rgba(0,0,0,.22);
             --card-hover-shadow:0 24px 70px rgba(0,0,0,.28);
             --r:20px;
@@ -384,7 +384,7 @@
             --t0:#24231e;
             --t1:rgba(36,35,30,.68);
             --t2:rgba(36,35,30,.48);
-            --card-bg:rgba(255,255,255,.64);
+            --card-bg:rgba(255,255,255,.86);
             --card-border:rgba(255,255,255,.70);
             --topbar-bg:transparent;
         }
@@ -420,16 +420,16 @@
         .wov-bar-fill{background:var(--amber)}
         .app{
             display:grid;
-            grid-template-columns:72px minmax(0,1fr);
+            grid-template-columns:66px minmax(0,1fr);
             gap:18px;
             padding:26px;
         }
         .sidebar{
-            width:72px;
+            width:66px;
             height:calc(100vh - 52px);
             top:26px;
-            border-radius:28px;
-            padding:12px 10px;
+            border-radius:26px;
+            padding:10px 8px;
             align-items:center;
             background:rgba(238,238,231,.55);
             border:1px solid rgba(255,255,255,.42);
@@ -437,8 +437,8 @@
             backdrop-filter:blur(18px);
         }
         .s-logo{
-            width:48px;
-            height:48px;
+            width:46px;
+            height:46px;
             padding:0;
             border:0;
             border-radius:18px;
@@ -450,8 +450,8 @@
         .s-logo-mark::before{content:"\f015";font-family:"Font Awesome 6 Free";font-weight:900;font-size:18px}
         .s-nav{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding:0;flex:1}
         .nav-btn{
-            width:48px;
-            height:48px;
+            width:46px;
+            height:46px;
             padding:0;
             border-radius:50%;
             display:grid;
@@ -467,8 +467,8 @@
         .nav-btn:hover i,.nav-btn.active i{color:#25241f}
         .nav-badge{position:absolute;top:-3px;right:-3px;margin:0}
         .s-footer{border:0;padding:0;display:flex;flex-direction:column;gap:8px}
-        .conn{width:48px;height:28px;padding:0;display:grid;place-items:center;border-radius:999px;background:rgba(255,255,255,.34)}
-        .dot,.live-dot{width:8px;height:8px;border-radius:50%;background:#8d8d82}
+        .conn{width:24px;height:24px;padding:0;display:grid;place-items:center;border-radius:50%;background:transparent}
+        .dot,.live-dot{width:9px;height:9px;border-radius:50%;background:#8d8d82}
         .dot.ok,.live-dot.flash{background:var(--green);box-shadow:0 0 0 6px rgba(142,207,123,.18)}
         .dot.err{background:var(--red);box-shadow:0 0 0 6px rgba(211,91,77,.14)}
         .main{min-width:0}
@@ -570,13 +570,17 @@
             color:#24231e;
         }
         .panel,.kcard,.avg-card,.cons-card{border-radius:var(--r);padding:15px}
+        .kcard{min-height:134px;overflow:hidden}
         .kcard::before,.kcard::after{display:none}
         .kcard:hover,.panel:hover,.avg-card:hover,.cons-card:hover{box-shadow:var(--card-hover-shadow);transform:translateY(-2px)}
         .kcard-top,.ph{margin-bottom:12px}
+        .kcard-top{align-items:center}
         .kcard-lbl,.pt,.avg-lbl{font-size:11px;font-weight:900;color:#24231e;letter-spacing:0;text-transform:none}
+        .kcard-lbl{font-size:13px;line-height:1}
         .pt i{color:var(--amber)}
         .kcard-val,.avg-val,.cons-num{color:#24231e;font-weight:900;letter-spacing:-.05em}
-        .kcard-val{font-size:24px}
+        .kcard-val{font-size:24px;margin-top:8px;min-height:32px;display:flex;align-items:flex-end;gap:3px}
+        .kcard-val sup{margin-bottom:5px;color:#57564f}
         .kcard-sub,.avg-detail,.cons-unit{font-size:11px;color:#67665e}
         .kcard-icon{
             width:34px;
@@ -595,6 +599,8 @@
             content:"";
             display:block;
             position:absolute;
+            top:auto;
+            left:auto;
             right:16px;
             bottom:14px;
             width:34px;
@@ -604,6 +610,11 @@
             box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
         }
         .kcard.g::after,.kcard.t::after,.kcard.b::after,.kcard.a::after,.kcard.r::after,.kcard.v::after{
+            top:auto;
+            left:auto;
+            right:16px;
+            bottom:14px;
+            width:34px;
             background:#fff;
             box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
             height:20px;
@@ -612,6 +623,7 @@
             content:"";
             display:block;
             position:absolute;
+            inset:auto;
             right:19px;
             bottom:17px;
             width:14px;
@@ -621,6 +633,11 @@
             z-index:2;
         }
         .kcard.g::before,.kcard.t::before,.kcard.b::before,.kcard.a::before,.kcard.r::before,.kcard.v::before{
+            inset:auto;
+            right:19px;
+            bottom:17px;
+            width:14px;
+            height:14px;
             background:var(--amber);
         }
         .door-badge{border-radius:999px;border:1px solid var(--b1);background:rgba(255,255,255,.55);color:#24231e;font-weight:900}
