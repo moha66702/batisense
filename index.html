@@ -1055,6 +1055,135 @@
             #overview{grid-template-columns:1fr;padding:112px 16px 16px}
             .avg-row,#overview>.g4,#overview>.g2,#overview>.g2:last-child{grid-template-columns:1fr}
         }
+
+        /* Final layout pass: explicit placement and corrected text flow */
+        html{scroll-behavior:smooth}
+        .sec{scroll-margin-top:20px}
+        .content{display:block}
+        #overview{
+            display:grid!important;
+            grid-template-columns:minmax(320px,1fr) minmax(420px,560px);
+            grid-template-areas:
+                "summary kpis"
+                "summary status"
+                "temp temp"
+                "secondary secondary";
+            gap:16px;
+            align-items:start;
+            padding:132px 26px 26px;
+        }
+        #overview::before{top:34px;left:32px;max-width:min(560px,calc(100% - 64px));line-height:.95}
+        #overview::after{top:86px;left:34px;max-width:min(580px,calc(100% - 68px));line-height:1.45}
+        #overview>.sh{display:none!important}
+        #overview>div.overview-summary:first-of-type{
+            grid-area:summary;
+            display:grid!important;
+            grid-template-columns:1fr!important;
+            gap:14px!important;
+            margin:0!important;
+            width:100%;
+            max-width:560px;
+        }
+        #overview>div.overview-summary:first-of-type>div:first-child{
+            display:block!important;
+        }
+        #overview>.overview-summary .sh{display:none}
+        #overview>.overview-summary>.panel{
+            display:flex!important;
+            min-height:214px!important;
+            margin:0!important;
+        }
+        .avg-row{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:14px;
+            margin:0;
+        }
+        .avg-card{
+            min-height:132px;
+            padding:16px;
+        }
+        .avg-icon{
+            width:42px;
+            height:42px;
+            border-radius:50%;
+            background:rgba(241,200,75,.88)!important;
+            color:#1f211b!important;
+        }
+        #overview>.overview-kpis{
+            grid-area:kpis;
+            width:100%;
+            margin:0!important;
+            display:grid!important;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:14px;
+        }
+        #overview>.overview-status{
+            grid-area:status;
+            width:100%;
+            margin:0!important;
+            display:grid!important;
+            grid-template-columns:1fr 1fr;
+            gap:14px;
+        }
+        #overview>.overview-temp{
+            grid-area:temp;
+            width:100%;
+            margin:0!important;
+        }
+        #overview>.overview-secondary{
+            grid-area:secondary;
+            width:100%;
+            margin:0!important;
+            display:grid!important;
+            grid-template-columns:1fr 1fr;
+            gap:16px;
+        }
+        .panel,.kcard,.avg-card,.cons-card,.ncard,.al{
+            background:rgba(248,248,242,.90);
+        }
+        .kcard{
+            min-height:150px;
+            padding:17px;
+        }
+        .kcard-val[style]{
+            font-size:22px!important;
+            margin-top:8px!important;
+        }
+        .kcard-sub{font-size:12px}
+        .ph{gap:12px;align-items:center}
+        .pt{font-size:13px;line-height:1.25}
+        #nodes,#consumption,#alerts{
+            min-height:620px;
+        }
+        @media(max-width:1180px){
+            #overview{
+                grid-template-columns:1fr;
+                grid-template-areas:
+                    "summary"
+                    "kpis"
+                    "status"
+                    "temp"
+                    "secondary";
+                padding-top:128px;
+            }
+            #overview>.overview-summary{max-width:none}
+            .avg-row,#overview>.overview-kpis,#overview>.overview-status,#overview>.overview-secondary{
+                grid-template-columns:1fr 1fr;
+            }
+        }
+        @media(max-width:760px){
+            .topbar{position:relative}
+            #overview{
+                padding:118px 16px 16px;
+                border-radius:24px;
+            }
+            #overview::before{font-size:30px;left:20px;top:26px}
+            #overview::after{left:21px;top:66px;font-size:13px}
+            .avg-row,#overview>.overview-kpis,#overview>.overview-status,#overview>.overview-secondary{
+                grid-template-columns:1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1190,7 +1319,7 @@
 
         <!-- ═══ OVERVIEW ═══ -->
         <section id="overview" class="sec active">
-            <div style="display:grid;grid-template-columns:1fr 320px;gap:18px;margin-bottom:18px">
+            <div class="overview-summary" style="display:grid;grid-template-columns:1fr 320px;gap:18px;margin-bottom:18px">
                 <div>
                     <div class="sh" style="margin-bottom:12px"><h2>🏠 Maison — Moyennes</h2></div>
                     <div class="avg-row">
@@ -1256,7 +1385,7 @@
                 </div>
             </div>
 
-            <div class="g4" style="margin-bottom:18px">
+            <div class="g4 overview-kpis" style="margin-bottom:18px">
                 <div class="kcard g tilt-card" id="kpi-kitchen"><div class="tilt-card-inner">
                     <div class="kcard-top"><span class="kcard-lbl">Cuisine</span><i class="fas fa-utensils kcard-icon g"></i></div>
                     <div class="kcard-val"><span id="k-kitchen-temp">—</span><sup>°C</sup></div>
@@ -1279,7 +1408,7 @@
                 </div></div>
             </div>
 
-            <div class="g2" style="margin-bottom:18px">
+            <div class="g2 overview-status" style="margin-bottom:18px">
                 <div class="panel">
                     <div class="ph"><div class="pt"><i class="fas fa-door-open"></i> État de la porte</div></div>
                     <div style="display:flex;align-items:center;gap:14px">
@@ -1296,7 +1425,7 @@
                 </div>
             </div>
 
-            <div class="panel">
+            <div class="panel overview-temp">
                 <div class="ph">
                     <div class="pt"><i class="fas fa-chart-line"></i> Températures – 24h</div>
                     <div style="display:flex;gap:6px" id="temp-tabs">
@@ -1307,7 +1436,7 @@
                 </div>
                 <div class="cbox h220"><canvas id="chartTemp"></canvas></div>
             </div>
-            <div class="g2">
+            <div class="g2 overview-secondary">
                 <div class="panel">
                     <div class="ph"><div class="pt"><i class="fas fa-tint"></i> Humidité – 24h</div></div>
                     <div class="cbox h180"><canvas id="chartHum"></canvas></div>
@@ -1455,7 +1584,6 @@ async function loadUser() {
         state.user = u;
         renderAccount(u);
         return true;
-        document.getElementById("wov-user-text").textContent = "Bienvenue, "+u.first_name+" 👋";
     } catch { window.location.href="/login"; return false; }
 }
 function renderAccount(u) {
@@ -1745,12 +1873,18 @@ const SEC_TITLES={overview:"Vue d'ensemble",nodes:"Nœuds capteurs",consumption:
 document.querySelectorAll(".nav-btn[data-sec]").forEach(btn=>{
     btn.addEventListener("click",()=>{
         const id=btn.dataset.sec;
+        const target=document.getElementById(id);
         document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active"));
         document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
-        document.getElementById(id).classList.add("active");
+        target.classList.add("active");
         btn.classList.add("active");
         document.getElementById("page-title").textContent=SEC_TITLES[id]||id;
-        setTimeout(()=>Object.values(CH).forEach(c=>c?.resize?.()),80);
+        history.replaceState(null,"","#"+id);
+        requestAnimationFrame(()=>{
+            target.scrollIntoView({behavior:"smooth",block:"start"});
+            window.scrollBy({top:-14,left:0,behavior:"smooth"});
+        });
+        setTimeout(()=>Object.values(CH).forEach(c=>c?.resize?.()),140);
     });
 });
 document.getElementById("temp-tabs").addEventListener("click",async e=>{
