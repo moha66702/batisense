@@ -420,54 +420,70 @@
         .wov-bar-fill{background:var(--amber)}
         .app{
             display:grid;
-            grid-template-columns:66px minmax(0,1fr);
+            grid-template-columns:84px minmax(0,1fr);
             gap:18px;
             padding:26px;
+            align-items:start;
         }
         .sidebar{
-            width:66px;
-            height:calc(100vh - 52px);
+            width:72px;
+            height:auto;
+            min-height:0;
             top:26px;
-            border-radius:26px;
-            padding:10px 8px;
+            border-radius:30px;
+            padding:12px 10px;
             align-items:center;
-            background:rgba(238,238,231,.55);
-            border:1px solid rgba(255,255,255,.42);
-            box-shadow:0 20px 60px rgba(0,0,0,.25);
-            backdrop-filter:blur(18px);
+            gap:14px;
+            background:linear-gradient(180deg,rgba(246,246,239,.72),rgba(222,221,210,.56));
+            border:1px solid rgba(255,255,255,.62);
+            box-shadow:0 22px 55px rgba(0,0,0,.28);
+            backdrop-filter:blur(20px) saturate(140%);
+            -webkit-backdrop-filter:blur(20px) saturate(140%);
         }
         .s-logo{
-            width:46px;
-            height:46px;
+            width:50px;
+            height:50px;
             padding:0;
             border:0;
-            border-radius:18px;
+            border-radius:50%;
             justify-content:center;
             background:#f3f1e7;
             color:#25241f;
+            box-shadow:inset 0 0 0 6px rgba(142,207,123,.26),0 12px 24px rgba(0,0,0,.12);
         }
         .s-logo-mark svg,.s-logo-name,.s-logo-sub,.s-nav-sec,.nav-btn span,.conn span{display:none}
         .s-logo-mark::before{content:"\f015";font-family:"Font Awesome 6 Free";font-weight:900;font-size:18px}
-        .s-nav{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding:0;flex:1}
+        .s-nav{display:flex;flex-direction:column;align-items:center;gap:11px;width:100%;padding:0;flex:0 0 auto}
         .nav-btn{
-            width:46px;
-            height:46px;
+            width:50px;
+            height:50px;
             padding:0;
             border-radius:50%;
             display:grid;
             place-items:center;
-            background:rgba(255,255,255,.46);
+            background:rgba(255,255,255,.62);
             color:#24231e;
             margin:0;
-            box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 10px 22px rgba(0,0,0,.10);
+            border:1px solid rgba(255,255,255,.66);
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 10px 22px rgba(0,0,0,.10);
         }
         .nav-btn::before{display:none}
         .nav-btn i{width:auto;font-size:16px;opacity:1;color:#24231e}
-        .nav-btn:hover,.nav-btn.active{background:var(--amber);color:#25241f;transform:translateY(-2px)}
+        .nav-btn:hover,.nav-btn.active{background:var(--amber);color:#25241f;transform:translateY(-2px);box-shadow:0 14px 24px rgba(0,0,0,.18)}
         .nav-btn:hover i,.nav-btn.active i{color:#25241f}
         .nav-badge{position:absolute;top:-3px;right:-3px;margin:0}
-        .s-footer{border:0;padding:0;display:flex;flex-direction:column;gap:8px}
-        .conn{width:24px;height:24px;padding:0;display:grid;place-items:center;border-radius:50%;background:transparent}
+        .s-footer{
+            border:0;
+            padding:10px 0 0;
+            margin-top:2px;
+            display:flex;
+            flex-direction:row;
+            justify-content:center;
+            gap:8px;
+            width:100%;
+            border-top:1px solid rgba(255,255,255,.42);
+        }
+        .conn{width:16px;height:16px;padding:0;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.36)}
         .dot,.live-dot{width:9px;height:9px;border-radius:50%;background:#8d8d82}
         .dot.ok,.live-dot.flash{background:var(--green);box-shadow:0 0 0 6px rgba(142,207,123,.18)}
         .dot.err{background:var(--red);box-shadow:0 0 0 6px rgba(211,91,77,.14)}
@@ -695,7 +711,15 @@
         }
         @media(max-width:760px){
             .app{padding:12px;grid-template-columns:1fr}
-            .sidebar{position:static;height:auto;width:100%;flex-direction:row;border-radius:22px}
+            .sidebar{
+                position:static;
+                height:auto;
+                width:100%;
+                flex-direction:row;
+                justify-content:center;
+                border-radius:24px;
+                padding:10px;
+            }
             .s-nav{flex-direction:row;justify-content:center}
             .s-footer{display:none}
             .topbar{flex-direction:column;align-items:stretch}
