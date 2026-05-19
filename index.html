@@ -324,13 +324,22 @@
 
         /* ═══════════════ 3D HOUSE WIDGET ═══════════════ */
         .house-widget{display:flex;align-items:center;justify-content:center;perspective:700px;padding:12px 0;position:relative}
-        .house-3d-dash{transform-style:preserve-3d;animation:dashFloat 5.5s ease-in-out infinite;cursor:grab;user-select:none;transition:transform .1s ease-out}
+        .house-3d-dash{transform-style:preserve-3d;animation:dashFloat 5.5s ease-in-out infinite;cursor:grab;user-select:none;transition:transform .1s ease-out;position:relative;z-index:3}
         .house-3d-dash:active{cursor:grabbing}
         @keyframes dashFloat{0%,100%{transform:rotateY(-6deg) rotateX(4deg) translateY(0)}50%{transform:rotateY(6deg) rotateX(-4deg) translateY(-12px)}}
         .house-orbit-ring{position:absolute;border-radius:50%;border:1.5px solid rgba(0,245,160,.25);pointer-events:none;animation:orbitSpin 8s linear infinite}
         .house-orbit-ring:nth-child(1){width:150px;height:150px;animation-duration:8s}
         .house-orbit-ring:nth-child(2){width:190px;height:190px;animation-duration:13s;animation-delay:-4s;border-color:rgba(0,212,224,.2)}
         @keyframes orbitSpin{from{transform:rotateX(65deg) rotateZ(0deg)}to{transform:rotateX(65deg) rotateZ(360deg)}}
+        .house-scan{position:absolute;width:150px;height:150px;border-radius:50%;background:conic-gradient(from 0deg,rgba(241,200,75,.42),transparent 34%,transparent);filter:blur(.2px);opacity:.68;animation:scanSpin 4.8s linear infinite;z-index:1;pointer-events:none}
+        .house-core-glow{position:absolute;width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(241,200,75,.34),rgba(0,245,160,.14) 48%,transparent 72%);filter:blur(8px);animation:corePulse 2.4s ease-in-out infinite;z-index:0;pointer-events:none}
+        .house-sensor-dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--amber);box-shadow:0 0 18px rgba(241,200,75,.95);z-index:4;animation:sensorBlink 1.8s ease-in-out infinite;pointer-events:none}
+        .house-sensor-dot:nth-of-type(1){top:22px;left:48%;animation-delay:.1s}
+        .house-sensor-dot:nth-of-type(2){right:28px;top:78px;background:var(--green);box-shadow:0 0 18px rgba(142,207,123,.95);animation-delay:.55s}
+        .house-sensor-dot:nth-of-type(3){left:32px;bottom:42px;background:var(--teal);box-shadow:0 0 18px rgba(116,191,194,.95);animation-delay:1s}
+        @keyframes scanSpin{to{transform:rotate(360deg)}}
+        @keyframes corePulse{0%,100%{transform:scale(.82);opacity:.45}50%{transform:scale(1.22);opacity:.9}}
+        @keyframes sensorBlink{0%,100%{transform:scale(.75);opacity:.55}50%{transform:scale(1.35);opacity:1}}
 
         /* ═══════════════ RIPPLE EFFECT ═══════════════ */
         .ripple{position:absolute;border-radius:50%;background:rgba(0,245,160,.3);transform:scale(0);animation:rippleAnim .6s ease-out;pointer-events:none}
@@ -1438,8 +1447,13 @@
                 <div class="panel" style="margin-bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:170px;position:relative;">
                     <div class="pt" style="margin-bottom:0;font-size:10px;color:var(--t2);position:absolute;top:12px;left:16px;"><i class="fas fa-cube"></i> Modèle 3D interactif</div>
                     <div class="house-widget" style="position:relative;">
+                        <div class="house-core-glow"></div>
+                        <div class="house-scan"></div>
                         <div class="house-orbit-ring" style="width:150px;height:150px;"></div>
                         <div class="house-orbit-ring" style="width:190px;height:190px;"></div>
+                        <span class="house-sensor-dot"></span>
+                        <span class="house-sensor-dot"></span>
+                        <span class="house-sensor-dot"></span>
                         <div class="house-3d-dash" id="house3d">
                             <svg width="115" height="115" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
                                 <defs>
@@ -1606,6 +1620,9 @@ const SENSOR_META = {
 
 const state = { latest:{}, nodeSeen:{}, alertCount:0, averages:{avg_temperature:null,avg_humidity:null,sources:{}}, user:null };
 let CH = {};
+let voiceWelcomeDone = false;
+let voiceWelcomeQueued = false;
+let pendingWelcomeName = "";
 
 Chart.defaults.color = "#4a6080";
 Chart.defaults.borderColor = "rgba(255,255,255,0.05)";
@@ -1673,6 +1690,9 @@ async function loadUser() {
         const u = data.user;
         state.user = u;
         renderAccount(u);
+        const first = u.first_name || "";
+        const last = u.last_name || "";
+        speakWelcome(`${first} ${last}`.trim() || "Utilisateur");
         return true;
     } catch { window.location.href="/login"; return false; }
 }
@@ -1690,6 +1710,32 @@ function renderAccount(u) {
     document.getElementById("wov-user-text").textContent = "Bienvenue, "+(first || full);
     applyAccountAvatar(localStorage.getItem("bs_account_avatar"));
 }
+function speakWelcome(name) {
+    if(voiceWelcomeDone || voiceWelcomeQueued || !("speechSynthesis" in window)) return;
+    const cleanName = (name || "Utilisateur").replace(/\s+/g," ").trim();
+    pendingWelcomeName = cleanName;
+    const say = () => {
+        if(voiceWelcomeDone || voiceWelcomeQueued) return;
+        voiceWelcomeQueued = true;
+        const msg = new SpeechSynthesisUtterance(`Welcome ${cleanName}. BatiSense Pro dashboard is ready.`);
+        msg.rate = .92;
+        msg.pitch = 1.02;
+        msg.volume = .9;
+        const voices = speechSynthesis.getVoices();
+        msg.voice = voices.find(v=>/^en/i.test(v.lang) && /female|zira|samantha|google/i.test(v.name)) || voices.find(v=>/^en/i.test(v.lang)) || voices[0] || null;
+        msg.onstart = () => { voiceWelcomeDone = true; };
+        msg.onend = () => { voiceWelcomeQueued = false; };
+        msg.onerror = () => { voiceWelcomeQueued = false; };
+        speechSynthesis.cancel();
+        speechSynthesis.speak(msg);
+        setTimeout(()=>{ if(!voiceWelcomeDone) voiceWelcomeQueued = false; },1400);
+    };
+    if(speechSynthesis.getVoices().length) say();
+    else speechSynthesis.addEventListener("voiceschanged",say,{once:true});
+}
+document.addEventListener("pointerdown",()=> {
+    if(!voiceWelcomeDone && pendingWelcomeName) speakWelcome(pendingWelcomeName);
+});
 function applyAccountAvatar(src) {
     const avatarEls = [document.getElementById("user-avatar"),document.getElementById("account-avatar")];
     avatarEls.forEach(el=>{
