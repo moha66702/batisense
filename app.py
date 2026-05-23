@@ -35,10 +35,11 @@ login_manager = LoginManager(app)
 login_manager.login_view    = "login_page"
 login_manager.login_message = None
 
-# Database stored in /data folder (Railway volume) or local
-DATA_DIR = os.getenv("DATA_DIR", ".")
+# Database stored in a persistent volume when deployed on Railway.
+# DATA_DIR should point to a mounted volume such as /data.
+DATA_DIR = os.getenv("DATA_DIR") or ("/data" if os.name != "nt" else ".")
 os.makedirs(DATA_DIR, exist_ok=True)
-DB_PATH = os.path.join(DATA_DIR, "batisense.db")
+DB_PATH = os.path.abspath(os.path.join(DATA_DIR, "batisense.db"))
 
 # ============================================================
 #  User Model
@@ -89,6 +90,8 @@ def load_user(user_id):
 # ============================================================
 def init_db():
     with sqlite3.connect(DB_PATH) as con:
+        con.execute("PRAGMA journal_mode=WAL")
+        con.execute("PRAGMA foreign_keys=ON")
         con.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,6 +143,10 @@ def init_db():
         con.execute("CREATE INDEX IF NOT EXISTS idx_tokens        ON api_tokens (token)")
         con.commit()
     print("Database ready at:", DB_PATH)
+
+
+def normalize_email(email):
+    return str(email or "").strip().lower()
 
 
 # ============================================================
@@ -241,7 +248,7 @@ def register():
     for field in ["first_name", "last_name", "email", "password", "street", "city", "zip_code"]:
         if not str(data.get(field, "")).strip():
             return jsonify({"error": f"Le champ '{field}' est obligatoire."}), 400
-    email = data["email"].strip().lower()
+    email = normalize_email(data["email"])
     if len(data["password"]) < 8:
         return jsonify({"error": "Le mot de passe doit contenir au moins 8 caracteres."}), 400
     if User.get_by_email(email):
@@ -263,7 +270,7 @@ def register():
 @app.route("/auth/login", methods=["POST"])
 def login():
     data     = request.get_json(silent=True) or {}
-    email    = str(data.get("email", "")).strip().lower()
+    email    = normalize_email(data.get("email", ""))
     password = str(data.get("password", ""))
     user     = User.get_by_email(email)
     if not user or not bcrypt.check_password_hash(user.password, password):
@@ -341,7 +348,7 @@ def delete_token(token_id):
 @app.route("/api/pi/login", methods=["POST"])
 def pi_login():
     data     = request.get_json(silent=True) or {}
-    email    = str(data.get("email", "")).strip().lower()
+    email    = normalize_email(data.get("email", ""))
     password = str(data.get("password", ""))
     label    = str(data.get("label", "Raspberry Pi"))
     user     = User.get_by_email(email)
@@ -419,7 +426,7 @@ def login_page():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return send_file("index.html")
+    return send_file("dashboard.html")
 
 
 # ============================================================
