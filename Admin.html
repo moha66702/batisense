@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BatiSense Pro — Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f1117;
+      --surface:  #1a1d27;
+      --border:   #2a2d3a;
+      --accent:   #4f8ef7;
+      --danger:   #ef4444;
+      --warning:  #f59e0b;
+      --success:  #22c55e;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --radius:   10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-right span { color: var(--muted); font-size: 13px; }
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: border-color .2s;
+    }
+    .btn-logout:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* MAIN */
+    main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); margin-bottom: 28px; font-size: 13px; }
+
+    /* STATS CARDS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .stat-card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; }
+    .stat-card.accent .value { color: var(--accent); }
+    .stat-card.success .value { color: var(--success); }
+    .stat-card.warning .value { color: var(--warning); }
+    .stat-card.danger  .value  { color: var(--danger); }
+
+    /* SEARCH */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .search-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+
+    .btn-refresh {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: opacity .2s;
+    }
+    .btn-refresh:hover { opacity: 0.85; }
+
+    /* TABLE */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #12151f; }
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(79, 142, 247, 0.04); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-admin   { background: rgba(79,142,247,.15); color: var(--accent); }
+    .badge-user    { background: rgba(100,116,139,.12); color: var(--muted); }
+    .badge-alert   { background: rgba(239,68,68,.15);  color: var(--danger); }
+    .badge-ok      { background: rgba(34,197,94,.12);  color: var(--success); }
+
+    .user-name { font-weight: 600; }
+    .user-email { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    .meta { color: var(--muted); font-size: 12px; }
+
+    .btn-delete {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--danger);
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background .2s, border-color .2s;
+    }
+    .btn-delete:hover { background: rgba(239,68,68,.1); border-color: var(--danger); }
+    .btn-delete:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* EMPTY / LOADING */
+    .state-row td {
+      text-align: center;
+      padding: 48px;
+      color: var(--muted);
+    }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* TOAST */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .3s, transform .3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.error { border-color: var(--danger); color: var(--danger); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">⚙️ BatiSense Admin</span>
+  <div class="nav-right">
+    <span id="adminEmail"></span>
+    <a href="/dashboard" style="color:var(--accent);text-decoration:none;font-size:13px;">← Dashboard</a>
+    <button class="btn-logout" onclick="logout()">Déconnexion</button>
+  </div>
+</nav>
+
+<main>
+  <h1>Panneau d'administration</h1>
+  <p class="subtitle">Gestion des utilisateurs BatiSense Pro</p>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card accent">
+      <div class="label">Utilisateurs</div>
+      <div class="value" id="statUsers">—</div>
+    </div>
+    <div class="stat-card success">
+      <div class="label">Lectures totales</div>
+      <div class="value" id="statReadings">—</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="label">Alertes actives</div>
+      <div class="value" id="statAlerts">—</div>
+    </div>
+    <div class="stat-card warning">
+      <div class="label">Tokens Pi</div>
+      <div class="value" id="statTokens">—</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input class="search-input" id="searchInput" type="text" placeholder="Rechercher par nom, email, ville…" oninput="filterTable()"/>
+    <button class="btn-refresh" onclick="loadAll()">↻ Actualiser</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Utilisateur</th>
+          <th>Ville / Adresse</th>
+          <th>Inscrit le</th>
+          <th>Lectures</th>
+          <th>Alertes</th>
+          <th>Tokens</th>
+          <th>Dernière activité</th>
+          <th>Rôle</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr class="state-row"><td colspan="10"><span class="spinner"></span>Chargement…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+  let allUsers = [];
+
+  async function loadAll() {
+    await Promise.all([loadStats(), loadUsers()]);
+  }
+
+  async function loadStats() {
+    try {
+      const r = await fetch("/api/admin/stats", { credentials: "include" });
+      if (!r.ok) return;
+      const d = await r.json();
+      document.getElementById("statUsers").textContent    = d.total_users;
+      document.getElementById("statReadings").textContent = d.total_readings.toLocaleString();
+      document.getElementById("statAlerts").textContent   = d.active_alerts;
+      document.getElementById("statTokens").textContent   = d.total_tokens;
+    } catch(e) {}
+  }
+
+  async function loadUsers() {
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = `<tr class="state-row"><td colspan="10"><span class="spinner"></span>Chargement…</td></tr>`;
+    try {
+      const r = await fetch("/api/admin/users", { credentials: "include" });
+      if (r.status === 403) {
+        window.location.href = "/dashboard";
+        return;
+      }
+      allUsers = await r.json();
+      renderTable(allUsers);
+    } catch(e) {
+      tbody.innerHTML = `<tr class="state-row"><td colspan="10">Erreur de chargement.</td></tr>`;
+    }
+  }
+
+  function renderTable(users) {
+    const tbody = document.getElementById("tbody");
+    if (!users.length) {
+      tbody.innerHTML = `<tr class="state-row"><td colspan="10">Aucun utilisateur trouvé.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = users.map(u => {
+      const name     = `${u.first_name} ${u.last_name}`;
+      const addr     = [u.street, u.city, u.zip_code].filter(Boolean).join(", ");
+      const date     = u.created_at ? u.created_at.slice(0,10) : "—";
+      const lastSeen = u.last_seen  ? u.last_seen.slice(0,16).replace("T"," ") : "Jamais";
+      const alertBadge = u.alerts_count > 0
+        ? `<span class="badge badge-alert">${u.alerts_count} alerte${u.alerts_count>1?"s":""}</span>`
+        : `<span class="badge badge-ok">0</span>`;
+      const roleBadge = u.is_admin
+        ? `<span class="badge badge-admin">Admin</span>`
+        : `<span class="badge badge-user">User</span>`;
+      const deleteBtn = u.is_admin
+        ? `<button class="btn-delete" disabled title="Impossible de supprimer l'admin">🗑</button>`
+        : `<button class="btn-delete" onclick="deleteUser(${u.id}, '${name.replace(/'/g,"\\'")}')">🗑</button>`;
+      return `
+        <tr data-search="${name.toLowerCase()} ${u.email.toLowerCase()} ${(u.city||"").toLowerCase()}">
+          <td class="meta">${u.id}</td>
+          <td>
+            <div class="user-name">${name}</div>
+            <div class="user-email">${u.email}</div>
+          </td>
+          <td class="meta">${addr || "—"}</td>
+          <td class="meta">${date}</td>
+          <td>${u.readings_count.toLocaleString()}</td>
+          <td>${alertBadge}</td>
+          <td class="meta">${u.tokens_count}</td>
+          <td class="meta">${lastSeen}</td>
+          <td>${roleBadge}</td>
+          <td>${deleteBtn}</td>
+        </tr>`;
+    }).join("");
+  }
+
+  function filterTable() {
+    const q = document.getElementById("searchInput").value.toLowerCase().trim();
+    if (!q) { renderTable(allUsers); return; }
+    renderTable(allUsers.filter(u => {
+      const hay = `${u.first_name} ${u.last_name} ${u.email} ${u.city||""} ${u.street||""}`.toLowerCase();
+      return hay.includes(q);
+    }));
+  }
+
+  async function deleteUser(id, name) {
+    if (!confirm(`Supprimer l'utilisateur "${name}" et toutes ses données ? Cette action est irréversible.`)) return;
+    try {
+      const r = await fetch(`/api/admin/users/${id}`, { method: "DELETE", credentials: "include" });
+      const d = await r.json();
+      if (d.ok) {
+        toast(`Utilisateur "${name}" supprimé.`);
+        loadAll();
+      } else {
+        toast(d.error || "Erreur.", true);
+      }
+    } catch(e) {
+      toast("Erreur réseau.", true);
+    }
+  }
+
+  async function logout() {
+    await fetch("/auth/logout", { method: "POST", credentials: "include" });
+    window.location.href = "/login";
+  }
+
+  function toast(msg, isError=false) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.className = "show" + (isError ? " error" : "");
+    setTimeout(() => el.className = "", 3000);
+  }
+
+  // Load admin email
+  fetch("/auth/me", { credentials: "include" })
+    .then(r => r.json())
+    .then(d => {
+      if (d.user) document.getElementById("adminEmail").textContent = d.user.email;
+      if (!d.user?.is_admin) window.location.href = "/dashboard";
+    })
+    .catch(() => window.location.href = "/login");
+
+  loadAll();
+</script>
+</body>
+</html>
