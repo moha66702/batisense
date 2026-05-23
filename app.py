@@ -11,6 +11,7 @@ import time
 import threading
 import secrets
 import os
+import re
 from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify, Response, send_file, stream_with_context, redirect
 from flask_cors import CORS
@@ -23,12 +24,18 @@ from flask import send_from_directory
 # ============================================================
 app = Flask(__name__)
 
-CORS(app, supports_credentials=True, origins="*")
+def _cors_origins():
+    raw = os.getenv("CORS_ORIGINS", "").strip()
+    if raw:
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return re.compile(r".*")
+
+CORS(app, supports_credentials=True, origins=_cors_origins())
 
 app.config["SECRET_KEY"]              = os.getenv("SECRET_KEY", "batisense_secret_key_123456")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"]   = os.getenv("SESSION_COOKIE_SECURE", "False") == "True"
+app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE", "None")
+app.config["SESSION_COOKIE_SECURE"]   = os.getenv("SESSION_COOKIE_SECURE", "True") == "True"
 
 bcrypt        = Bcrypt(app)
 login_manager = LoginManager(app)
