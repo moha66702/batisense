@@ -1364,6 +1364,10 @@
         html[data-theme="dark"] .pt,
         html[data-theme="dark"] .kcard-lbl,
         html[data-theme="dark"] .avg-lbl,
+        html[data-theme="dark"] .kcard-val,
+        html[data-theme="dark"] .kcard-val sup,
+        html[data-theme="dark"] .avg-val,
+        html[data-theme="dark"] .avg-unit,
         html[data-theme="dark"] .cons-num,
         html[data-theme="dark"] .ns-val{
             color:#f7f7f2!important;
@@ -1759,6 +1763,7 @@
 <script>
 "use strict";
 const API_BASE = "https://batisense-production.up.railway.app";
+const LOGIN_URL = location.protocol === "file:" || location.pathname.endsWith(".html") ? "auth.html" : "/login";
 const HISTORY_HOURS = 24;
 
 const NODES = {
@@ -1845,13 +1850,13 @@ function setApiDot(ok) {
 async function loadUser() {
     try {
         const res = await fetch(`${API_BASE}/auth/me`,{credentials:"include"});
-        if(res.status===401){window.location.href="/login";return false;}
+        if(res.status===401){window.location.href=LOGIN_URL;return false;}
         const data = await res.json();
         const u = data.user;
         state.user = u;
         renderAccount(u);
         return true;
-    } catch { window.location.href="/login"; return false; }
+    } catch { window.location.href=LOGIN_URL; return false; }
 }
 function renderAccount(u) {
     const first = u.first_name || "";
@@ -1949,7 +1954,7 @@ async function submitPasswordChange(e) {
 }
 async function doLogout() {
     await fetch(`${API_BASE}/auth/logout`,{method:"POST",credentials:"include"});
-    window.location.href="/login";
+    window.location.href=LOGIN_URL;
 }
 
 async function loadInitial() {
