@@ -1,5 +1,5 @@
 """
-BatiSense Pro — Flask Backend with Authentication + Pi Token Auth
+BatiSense Pro — Flask Backend with Authentication + Pi Token Auth + Admin
 pip install flask flask-cors flask-login flask-bcrypt gunicorn
 """
 
@@ -18,13 +18,13 @@ from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
 from flask_bcrypt import Bcrypt
 from flask import send_from_directory
+from functools import wraps
 
 # ============================================================
 #  App & extensions
 # ============================================================
 app = Flask(__name__)
 
-# Absolute path to the directory containing this file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def _cors_origins():
@@ -46,13 +46,24 @@ login_manager.login_view    = "login_page"
 login_manager.login_message = None
 
 # ============================================================
+#  Admin — set ADMIN_EMAIL in Railway environment variables
+# ============================================================
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@batisense.com").strip().lower()
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect("/login")
+        if current_user.email.lower() != ADMIN_EMAIL:
+            return jsonify({"error": "Acces interdit."}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+# ============================================================
 #  Database path — robust against volume mount
 # ============================================================
 def _resolve_data_dir():
-    """
-    Try /data (Railway persistent volume) first.
-    If it is not writable, fall back to the directory containing app.py.
-    """
     candidate = os.getenv("DATA_DIR", "/data")
     try:
         os.makedirs(candidate, exist_ok=True)
@@ -79,6 +90,10 @@ class User(UserMixin):
         (self.id, self.first_name, self.last_name, self.email,
          self.password, self.street, self.city, self.zip_code, self.created_at) = row
 
+    @property
+    def is_admin(self):
+        return self.email.lower() == ADMIN_EMAIL
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -89,6 +104,7 @@ class User(UserMixin):
             "city": self.city,
             "zip_code": self.zip_code,
             "created_at": self.created_at,
+            "is_admin": self.is_admin,
         }
 
     @staticmethod
@@ -116,7 +132,7 @@ def load_user(user_id):
 
 
 # ============================================================
-#  Database init — called at startup
+#  Database init
 # ============================================================
 def init_db():
     with sqlite3.connect(DB_PATH) as con:
@@ -193,7 +209,6 @@ def get_user_by_token(token):
 
 
 def require_token(f):
-    from functools import wraps
     @wraps(f)
     def decorated(*args, **kwargs):
         auth  = request.headers.get("Authorization", "")
@@ -373,7 +388,7 @@ def delete_token(token_id):
 
 
 # ============================================================
-#  Pi LOGIN — Pi calls this once at startup
+#  Pi LOGIN
 # ============================================================
 @app.route("/api/pi/login", methods=["POST"])
 def pi_login():
@@ -401,7 +416,7 @@ def pi_login():
 
 
 # ============================================================
-#  Pi DATA — Pi sends sensor readings
+#  Pi DATA
 # ============================================================
 @app.route("/api/pi/data", methods=["POST"])
 @require_token
@@ -437,7 +452,7 @@ def pi_receive_data():
 
 
 # ============================================================
-#  PAGE ROUTES — use BASE_DIR for reliable file resolution
+#  PAGE ROUTES
 # ============================================================
 @app.route("/")
 def index():
@@ -457,6 +472,91 @@ def login_page():
 @login_required
 def dashboard():
     return send_file(os.path.join(BASE_DIR, "index.html"))
+
+
+@app.route("/admin")
+@admin_required
+def admin_page():
+    return send_file(os.path.join(BASE_DIR, "admin.html"))
+
+
+# ============================================================
+#  ADMIN API ROUTES
+# ============================================================
+@app.route("/api/admin/users")
+@admin_required
+def admin_list_users():
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+    users = db.execute(
+        "SELECT id, first_name, last_name, email, street, city, zip_code, created_at FROM users ORDER BY created_at DESC"
+    ).fetchall()
+    result = []
+    for u in users:
+        uid = u["id"]
+        readings_count = db.execute(
+            "SELECT COUNT(*) FROM readings WHERE user_id=?", (uid,)
+        ).fetchone()[0]
+        alerts_count = db.execute(
+            "SELECT COUNT(*) FROM alerts WHERE user_id=? AND acked=0", (uid,)
+        ).fetchone()[0]
+        last_seen_row = db.execute(
+            "SELECT MAX(timestamp) FROM readings WHERE user_id=?", (uid,)
+        ).fetchone()[0]
+        tokens_count = db.execute(
+            "SELECT COUNT(*) FROM api_tokens WHERE user_id=?", (uid,)
+        ).fetchone()[0]
+        result.append({
+            "id":             uid,
+            "first_name":     u["first_name"],
+            "last_name":      u["last_name"],
+            "email":          u["email"],
+            "street":         u["street"],
+            "city":           u["city"],
+            "zip_code":       u["zip_code"],
+            "created_at":     u["created_at"],
+            "is_admin":       u["email"].lower() == ADMIN_EMAIL,
+            "readings_count": readings_count,
+            "alerts_count":   alerts_count,
+            "tokens_count":   tokens_count,
+            "last_seen":      last_seen_row,
+        })
+    db.close()
+    return jsonify(result)
+
+
+@app.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
+@admin_required
+def admin_delete_user(user_id):
+    target = User.get_by_id(user_id)
+    if not target:
+        return jsonify({"error": "Utilisateur introuvable."}), 404
+    if target.email.lower() == ADMIN_EMAIL:
+        return jsonify({"error": "Impossible de supprimer le compte admin."}), 403
+    with sqlite3.connect(DB_PATH) as con:
+        con.execute("DELETE FROM readings   WHERE user_id=?", (user_id,))
+        con.execute("DELETE FROM alerts     WHERE user_id=?", (user_id,))
+        con.execute("DELETE FROM api_tokens WHERE user_id=?", (user_id,))
+        con.execute("DELETE FROM users      WHERE id=?",      (user_id,))
+        con.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/stats")
+@admin_required
+def admin_stats():
+    db = sqlite3.connect(DB_PATH)
+    total_users    = db.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    total_readings = db.execute("SELECT COUNT(*) FROM readings").fetchone()[0]
+    total_alerts   = db.execute("SELECT COUNT(*) FROM alerts WHERE acked=0").fetchone()[0]
+    total_tokens   = db.execute("SELECT COUNT(*) FROM api_tokens").fetchone()[0]
+    db.close()
+    return jsonify({
+        "total_users":    total_users,
+        "total_readings": total_readings,
+        "active_alerts":  total_alerts,
+        "total_tokens":   total_tokens,
+    })
 
 
 # ============================================================
@@ -635,7 +735,7 @@ def water_meter_latest():
 
 
 # ============================================================
-#  BOOT — init DB then start server
+#  BOOT
 # ============================================================
 init_db()
 
@@ -644,5 +744,6 @@ if __name__ == "__main__":
     print("=" * 52)
     print("  BatiSense Pro")
     print(f"  http://0.0.0.0:{port}")
+    print(f"  Admin email: {ADMIN_EMAIL}")
     print("=" * 52)
     app.run(host="0.0.0.0", port=port, threaded=True, debug=False)
