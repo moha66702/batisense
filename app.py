@@ -1,5 +1,5 @@
 """
-BatiSense Pro — Flask Backend with Authentication + Pi Token Auth + Admin
+BatiSense Pro — Flask Backend with Authentication + Pi Token Auth + Separate Admin Auth
 pip install flask flask-cors flask-login flask-bcrypt gunicorn
 """
 
@@ -13,7 +13,7 @@ import secrets
 import os
 import re
 from datetime import datetime, timezone, timedelta
-from flask import Flask, request, jsonify, Response, send_file, stream_with_context, redirect
+from flask import Flask, request, jsonify, Response, send_file, stream_with_context, redirect, session
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
 from flask_bcrypt import Bcrypt
@@ -46,17 +46,16 @@ login_manager.login_view    = "login_page"
 login_manager.login_message = None
 
 # ============================================================
-#  Admin — set ADMIN_EMAIL in Railway environment variables
+#  Admin credentials — set in Railway environment variables
 # ============================================================
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@batisense.com").strip().lower()
+ADMIN_EMAIL    = os.getenv("ADMIN_EMAIL",    "admin@batisense.com").strip().lower()
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin1234").strip()
 
-def admin_required(f):
+def admin_session_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if not current_user.is_authenticated:
-            return redirect("/login")
-        if current_user.email.lower() != ADMIN_EMAIL:
-            return jsonify({"error": "Acces interdit."}), 403
+        if not session.get("admin_logged_in"):
+            return redirect("/admin/login")
         return f(*args, **kwargs)
     return decorated
 
@@ -90,10 +89,6 @@ class User(UserMixin):
         (self.id, self.first_name, self.last_name, self.email,
          self.password, self.street, self.city, self.zip_code, self.created_at) = row
 
-    @property
-    def is_admin(self):
-        return self.email.lower() == ADMIN_EMAIL
-
     def to_dict(self):
         return {
             "id": self.id,
@@ -104,7 +99,6 @@ class User(UserMixin):
             "city": self.city,
             "zip_code": self.zip_code,
             "created_at": self.created_at,
-            "is_admin": self.is_admin,
         }
 
     @staticmethod
@@ -452,7 +446,7 @@ def pi_receive_data():
 
 
 # ============================================================
-#  PAGE ROUTES
+#  USER PAGE ROUTES
 # ============================================================
 @app.route("/")
 def index():
@@ -474,8 +468,37 @@ def dashboard():
     return send_file(os.path.join(BASE_DIR, "index.html"))
 
 
+# ============================================================
+#  ADMIN PAGE ROUTES — separate session, separate login
+# ============================================================
+@app.route("/admin/login")
+def admin_login_page():
+    if session.get("admin_logged_in"):
+        return redirect("/admin")
+    return send_file(os.path.join(BASE_DIR, "admin_login.html"))
+
+
+@app.route("/admin/login", methods=["POST"])
+def admin_login():
+    data     = request.get_json(silent=True) or {}
+    email    = normalize_email(data.get("email", ""))
+    password = str(data.get("password", ""))
+    if email != ADMIN_EMAIL or password != ADMIN_PASSWORD:
+        return jsonify({"error": "Identifiants admin incorrects."}), 401
+    session["admin_logged_in"] = True
+    session["admin_email"]     = email
+    return jsonify({"ok": True}), 200
+
+
+@app.route("/admin/logout", methods=["POST"])
+def admin_logout():
+    session.pop("admin_logged_in", None)
+    session.pop("admin_email", None)
+    return jsonify({"ok": True})
+
+
 @app.route("/admin")
-@admin_required
+@admin_session_required
 def admin_page():
     return send_file(os.path.join(BASE_DIR, "admin.html"))
 
@@ -483,67 +506,14 @@ def admin_page():
 # ============================================================
 #  ADMIN API ROUTES
 # ============================================================
-@app.route("/api/admin/users")
-@admin_required
-def admin_list_users():
-    db = sqlite3.connect(DB_PATH)
-    db.row_factory = sqlite3.Row
-    users = db.execute(
-        "SELECT id, first_name, last_name, email, street, city, zip_code, created_at FROM users ORDER BY created_at DESC"
-    ).fetchall()
-    result = []
-    for u in users:
-        uid = u["id"]
-        readings_count = db.execute(
-            "SELECT COUNT(*) FROM readings WHERE user_id=?", (uid,)
-        ).fetchone()[0]
-        alerts_count = db.execute(
-            "SELECT COUNT(*) FROM alerts WHERE user_id=? AND acked=0", (uid,)
-        ).fetchone()[0]
-        last_seen_row = db.execute(
-            "SELECT MAX(timestamp) FROM readings WHERE user_id=?", (uid,)
-        ).fetchone()[0]
-        tokens_count = db.execute(
-            "SELECT COUNT(*) FROM api_tokens WHERE user_id=?", (uid,)
-        ).fetchone()[0]
-        result.append({
-            "id":             uid,
-            "first_name":     u["first_name"],
-            "last_name":      u["last_name"],
-            "email":          u["email"],
-            "street":         u["street"],
-            "city":           u["city"],
-            "zip_code":       u["zip_code"],
-            "created_at":     u["created_at"],
-            "is_admin":       u["email"].lower() == ADMIN_EMAIL,
-            "readings_count": readings_count,
-            "alerts_count":   alerts_count,
-            "tokens_count":   tokens_count,
-            "last_seen":      last_seen_row,
-        })
-    db.close()
-    return jsonify(result)
-
-
-@app.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
-@admin_required
-def admin_delete_user(user_id):
-    target = User.get_by_id(user_id)
-    if not target:
-        return jsonify({"error": "Utilisateur introuvable."}), 404
-    if target.email.lower() == ADMIN_EMAIL:
-        return jsonify({"error": "Impossible de supprimer le compte admin."}), 403
-    with sqlite3.connect(DB_PATH) as con:
-        con.execute("DELETE FROM readings   WHERE user_id=?", (user_id,))
-        con.execute("DELETE FROM alerts     WHERE user_id=?", (user_id,))
-        con.execute("DELETE FROM api_tokens WHERE user_id=?", (user_id,))
-        con.execute("DELETE FROM users      WHERE id=?",      (user_id,))
-        con.commit()
-    return jsonify({"ok": True})
+@app.route("/api/admin/me")
+@admin_session_required
+def admin_me():
+    return jsonify({"email": session.get("admin_email"), "ok": True})
 
 
 @app.route("/api/admin/stats")
-@admin_required
+@admin_session_required
 def admin_stats():
     db = sqlite3.connect(DB_PATH)
     total_users    = db.execute("SELECT COUNT(*) FROM users").fetchone()[0]
@@ -557,6 +527,54 @@ def admin_stats():
         "active_alerts":  total_alerts,
         "total_tokens":   total_tokens,
     })
+
+
+@app.route("/api/admin/users")
+@admin_session_required
+def admin_list_users():
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+    users = db.execute(
+        "SELECT id, first_name, last_name, email, street, city, zip_code, created_at FROM users ORDER BY created_at DESC"
+    ).fetchall()
+    result = []
+    for u in users:
+        uid = u["id"]
+        readings_count = db.execute("SELECT COUNT(*) FROM readings   WHERE user_id=?", (uid,)).fetchone()[0]
+        alerts_count   = db.execute("SELECT COUNT(*) FROM alerts     WHERE user_id=? AND acked=0", (uid,)).fetchone()[0]
+        last_seen      = db.execute("SELECT MAX(timestamp) FROM readings WHERE user_id=?", (uid,)).fetchone()[0]
+        tokens_count   = db.execute("SELECT COUNT(*) FROM api_tokens WHERE user_id=?", (uid,)).fetchone()[0]
+        result.append({
+            "id":             uid,
+            "first_name":     u["first_name"],
+            "last_name":      u["last_name"],
+            "email":          u["email"],
+            "street":         u["street"],
+            "city":           u["city"],
+            "zip_code":       u["zip_code"],
+            "created_at":     u["created_at"],
+            "readings_count": readings_count,
+            "alerts_count":   alerts_count,
+            "tokens_count":   tokens_count,
+            "last_seen":      last_seen,
+        })
+    db.close()
+    return jsonify(result)
+
+
+@app.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
+@admin_session_required
+def admin_delete_user(user_id):
+    target = User.get_by_id(user_id)
+    if not target:
+        return jsonify({"error": "Utilisateur introuvable."}), 404
+    with sqlite3.connect(DB_PATH) as con:
+        con.execute("DELETE FROM readings   WHERE user_id=?", (user_id,))
+        con.execute("DELETE FROM alerts     WHERE user_id=?", (user_id,))
+        con.execute("DELETE FROM api_tokens WHERE user_id=?", (user_id,))
+        con.execute("DELETE FROM users      WHERE id=?",      (user_id,))
+        con.commit()
+    return jsonify({"ok": True})
 
 
 # ============================================================
@@ -744,6 +762,6 @@ if __name__ == "__main__":
     print("=" * 52)
     print("  BatiSense Pro")
     print(f"  http://0.0.0.0:{port}")
-    print(f"  Admin email: {ADMIN_EMAIL}")
+    print(f"  Admin: {ADMIN_EMAIL}")
     print("=" * 52)
     app.run(host="0.0.0.0", port=port, threaded=True, debug=False)
