@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BatiSense Pro — Admin Login</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f1117;
+      --surface: #1a1d27;
+      --border:  #2a2d3a;
+      --accent:  #4f8ef7;
+      --danger:  #ef4444;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+      --radius:  12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .logo-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #4f8ef7, #7c5ff5);
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 12px;
+    }
+
+    .logo-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .logo-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .field { margin-bottom: 18px; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      background: #12151f;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    .btn {
+      width: 100%;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .error-box {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      color: var(--danger);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 16px;
+      display: none;
+    }
+    .error-box.show { display: block; }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    .btn.loading .spinner { display: block; }
+    .btn.loading .btn-text { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">⚙️</div>
+    <div class="logo-title">BatiSense Pro</div>
+    <div class="logo-sub">Administration</div>
+  </div>
+
+  <div class="field">
+    <label>Email admin</label>
+    <input type="email" id="email" placeholder="admin@batisense.com" autocomplete="username"/>
+  </div>
+
+  <div class="field">
+    <label>Mot de passe</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+  </div>
+
+  <button class="btn" id="btn" onclick="doLogin()">
+    <span class="spinner"></span>
+    <span class="btn-text">Connexion Admin</span>
+  </button>
+
+  <div class="error-box" id="err"></div>
+
+  <a class="back-link" href="/login">← Retour au login utilisateur</a>
+</div>
+
+<script>
+  document.getElementById("password").addEventListener("keydown", e => {
+    if (e.key === "Enter") doLogin();
+  });
+
+  async function doLogin() {
+    const email    = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const btn      = document.getElementById("btn");
+    const err      = document.getElementById("err");
+
+    if (!email || !password) {
+      showError("Veuillez remplir tous les champs.");
+      return;
+    }
+
+    btn.classList.add("loading");
+    btn.disabled = true;
+    err.classList.remove("show");
+
+    try {
+      const r = await fetch("/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password })
+      });
+      const d = await r.json();
+      if (d.ok) {
+        window.location.href = "/admin";
+      } else {
+        showError(d.error || "Identifiants incorrects.");
+      }
+    } catch(e) {
+      showError("Erreur réseau. Réessayez.");
+    } finally {
+      btn.classList.remove("loading");
+      btn.disabled = false;
+    }
+  }
+
+  function showError(msg) {
+    const err = document.getElementById("err");
+    err.textContent = msg;
+    err.classList.add("show");
+  }
+</script>
+</body>
+</html>
