@@ -24,6 +24,9 @@ from flask import send_from_directory
 # ============================================================
 app = Flask(__name__)
 
+# Absolute path to the directory containing this file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def _cors_origins():
     raw = os.getenv("CORS_ORIGINS", "").strip()
     if raw:
@@ -42,11 +45,31 @@ login_manager = LoginManager(app)
 login_manager.login_view    = "login_page"
 login_manager.login_message = None
 
-# Database stored in a persistent volume when deployed on Railway.
-# DATA_DIR should point to a mounted volume such as /data.
-DATA_DIR = os.getenv("DATA_DIR") or ("/data" if os.name != "nt" else ".")
-os.makedirs(DATA_DIR, exist_ok=True)
-DB_PATH = os.path.abspath(os.path.join(DATA_DIR, "batisense.db"))
+# ============================================================
+#  Database path — robust against volume mount
+# ============================================================
+def _resolve_data_dir():
+    """
+    Try /data (Railway persistent volume) first.
+    If it is not writable, fall back to the directory containing app.py.
+    """
+    candidate = os.getenv("DATA_DIR", "/data")
+    try:
+        os.makedirs(candidate, exist_ok=True)
+        test_path = os.path.join(candidate, ".write_test")
+        with open(test_path, "w") as f:
+            f.write("ok")
+        os.remove(test_path)
+        print(f"[BatiSense] Using data dir: {candidate}")
+        return candidate
+    except (PermissionError, OSError) as e:
+        fallback = BASE_DIR
+        print(f"[BatiSense] WARNING: '{candidate}' not writable ({e}). Falling back to {fallback}")
+        return fallback
+
+DATA_DIR = _resolve_data_dir()
+DB_PATH  = os.path.abspath(os.path.join(DATA_DIR, "batisense.db"))
+print(f"[BatiSense] DB path: {DB_PATH}")
 
 # ============================================================
 #  User Model
@@ -149,7 +172,7 @@ def init_db():
         con.execute("CREATE INDEX IF NOT EXISTS idx_alerts_user   ON alerts     (user_id, acked)")
         con.execute("CREATE INDEX IF NOT EXISTS idx_tokens        ON api_tokens (token)")
         con.commit()
-    print("Database ready at:", DB_PATH)
+    print(f"[BatiSense] Database ready at: {DB_PATH}")
 
 
 def normalize_email(email):
@@ -192,7 +215,7 @@ THRESHOLDS = {
     "gas_detected":    {"eq": 1,                "level": "danger"},
     "structure_alert": {"eq": 1,                "level": "danger"},
     "door_open":       {"eq": 1,                "level": "info"},
-    "water_meter":     {"min": 0, "max": 99999, "level": "info"},   # accepts any positive reading
+    "water_meter":     {"min": 0, "max": 99999, "level": "info"},
 }
 
 
@@ -301,11 +324,11 @@ def me():
 
 @app.route('/batisense-logo.svg')
 def serve_logo():
-    return send_from_directory('.', 'batisense-logo.svg')
+    return send_from_directory(BASE_DIR, 'batisense-logo.svg')
 
 @app.route('/batisense-icon.svg')
 def serve_icon():
-    return send_from_directory('.', 'batisense-icon.svg')
+    return send_from_directory(BASE_DIR, 'batisense-icon.svg')
 
 
 # ============================================================
@@ -414,7 +437,7 @@ def pi_receive_data():
 
 
 # ============================================================
-#  PAGE ROUTES
+#  PAGE ROUTES — use BASE_DIR for reliable file resolution
 # ============================================================
 @app.route("/")
 def index():
@@ -427,13 +450,13 @@ def index():
 def login_page():
     if current_user.is_authenticated:
         return redirect("/dashboard")
-    return send_file("auth.html")
+    return send_file(os.path.join(BASE_DIR, "auth.html"))
 
 
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return send_file("dashboard.html")
+    return send_file(os.path.join(BASE_DIR, "dashboard.html"))
 
 
 # ============================================================
@@ -587,7 +610,7 @@ def health():
 
 
 # ============================================================
-#  WATER METER — dedicated read endpoint (public for quick check)
+#  WATER METER
 # ============================================================
 @app.route("/api/water_meter/latest")
 @login_required
