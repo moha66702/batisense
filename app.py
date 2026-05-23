@@ -456,7 +456,7 @@ def login_page():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return send_file(os.path.join(BASE_DIR, "dashboard.html"))
+    return send_file(os.path.join(BASE_DIR, "index.html"))
 
 
 # ============================================================
