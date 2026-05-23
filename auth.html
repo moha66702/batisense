@@ -546,6 +546,8 @@ input:focus{border-color:rgba(244,200,77,.88);box-shadow:0 0 0 4px rgba(244,200,
 "use strict";
 const API_BASE = "https://batisense-production.up.railway.app";
 const DASHBOARD_URL = location.protocol === "file:" || location.pathname.endsWith(".html") ? "dashboard.html" : "/dashboard";
+const LOCAL_ACCOUNT_KEY = "bs_local_account";
+const LOCAL_SESSION_KEY = "bs_local_session";
 
 document.addEventListener("DOMContentLoaded", () => {
   loadTheme();
@@ -595,6 +597,7 @@ async function doLogin() {
   try {
     const first = await postAuthJson("/auth/login", { email, password });
     if (first.ok) {
+      await cacheLocalAuthFromServer(email, password);
       showMsg("login-msg","Connexion reussie. Redirection...","success");
       setTimeout(() => window.location.href = DASHBOARD_URL, 800);
     } else {
@@ -602,18 +605,37 @@ async function doLogin() {
       if (shouldRetry && rawEmail && rawEmail !== email) {
         const retry = await postAuthJson("/auth/login", { email: rawEmail, password });
         if (retry.ok) {
+          await cacheLocalAuthFromServer(rawEmail, password);
           showMsg("login-msg","Connexion reussie. Redirection...","success");
           setTimeout(() => window.location.href = DASHBOARD_URL, 800);
           return;
         }
-        showMsg("login-msg", retry.error || first.error || "Erreur de connexion.", "error");
+        const local = await tryLocalLogin(rawEmail, password);
+        if (local.ok) {
+          showMsg("login-msg","Connexion locale reussie. Redirection...","success");
+          setTimeout(() => window.location.href = DASHBOARD_URL, 800);
+          return;
+        }
+        showMsg("login-msg", retry.error || first.error || local.error || "Erreur de connexion.", "error");
       } else {
-        showMsg("login-msg", first.error || "Erreur de connexion.", "error");
+        const local = await tryLocalLogin(email, password);
+        if (local.ok) {
+          showMsg("login-msg","Connexion locale reussie. Redirection...","success");
+          setTimeout(() => window.location.href = DASHBOARD_URL, 800);
+          return;
+        }
+        showMsg("login-msg", first.error || local.error || "Erreur de connexion.", "error");
       }
       setLoading("login-btn", false);
     }
   } catch {
-    showMsg("login-msg","Impossible de joindre le serveur.","error");
+    const local = await tryLocalLogin(email, password);
+    if (local.ok) {
+      showMsg("login-msg","Connexion locale reussie. Redirection...","success");
+      setTimeout(() => window.location.href = DASHBOARD_URL, 800);
+      return;
+    }
+    showMsg("login-msg", local.error || "Impossible de joindre le serveur.","error");
     setLoading("login-btn", false);
   }
 }
@@ -642,6 +664,7 @@ async function doRegister() {
   try {
     const result = await postAuthJson("/auth/register", payload);
     if (result.ok) {
+      await storeLocalAccount(payload);
       showMsg("register-msg","Compte cree. Redirection...","success");
       setTimeout(() => window.location.href = DASHBOARD_URL, 900);
     } else {
@@ -663,6 +686,80 @@ function loadTheme() {
 }
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
+}
+async function hashPassword(password) {
+  const bytes = new TextEncoder().encode(String(password || ""));
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, "0")).join("");
+}
+async function storeLocalAccount(payload) {
+  const record = {
+    email: normalizeEmail(payload.email),
+    first_name: payload.first_name || "",
+    last_name: payload.last_name || "",
+    street: payload.street || "",
+    city: payload.city || "",
+    zip_code: payload.zip_code || "",
+    password_hash: await hashPassword(payload.password)
+  };
+  localStorage.setItem(LOCAL_ACCOUNT_KEY, JSON.stringify(record));
+  localStorage.setItem(LOCAL_SESSION_KEY, record.email);
+}
+async function storeLocalSession(email) {
+  const account = getLocalAccount();
+  localStorage.setItem(LOCAL_SESSION_KEY, normalizeEmail(email));
+  if (account && account.email === normalizeEmail(email)) return;
+  if (account) return;
+}
+async function cacheLocalAuthFromServer(email, password) {
+  const normalized = normalizeEmail(email);
+  const account = getLocalAccount() || {};
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, { credentials:"include" });
+    const data = await safeJson(res);
+    const user = data.user || {};
+    localStorage.setItem(LOCAL_ACCOUNT_KEY, JSON.stringify({
+      email: normalized,
+      first_name: user.first_name ?? account.first_name ?? "",
+      last_name: user.last_name ?? account.last_name ?? "",
+      street: user.street ?? account.street ?? "",
+      city: user.city ?? account.city ?? "",
+      zip_code: user.zip_code ?? account.zip_code ?? "",
+      password_hash: await hashPassword(password)
+    }));
+  } catch {
+    localStorage.setItem(LOCAL_ACCOUNT_KEY, JSON.stringify({
+      email: normalized,
+      first_name: account.first_name ?? "",
+      last_name: account.last_name ?? "",
+      street: account.street ?? "",
+      city: account.city ?? "",
+      zip_code: account.zip_code ?? "",
+      password_hash: await hashPassword(password)
+    }));
+  }
+  localStorage.setItem(LOCAL_SESSION_KEY, normalized);
+}
+function getLocalAccount() {
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_ACCOUNT_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+async function tryLocalLogin(email, password) {
+  const account = getLocalAccount();
+  if (!account) return { ok:false, error:"Aucun compte local enregistre." };
+  const normalized = normalizeEmail(email);
+  if (account.email !== normalized) {
+    return { ok:false, error:"Compte introuvable sur ce navigateur." };
+  }
+  const hash = await hashPassword(password);
+  if (hash !== account.password_hash) {
+    return { ok:false, error:"E-mail ou mot de passe incorrect." };
+  }
+  localStorage.setItem(LOCAL_SESSION_KEY, normalized);
+  return { ok:true };
 }
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
