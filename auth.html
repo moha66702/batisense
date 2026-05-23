@@ -583,7 +583,8 @@ function setLoading(btnId, loading) {
   btn.disabled = loading;
 }
 async function doLogin() {
-  const email = document.getElementById("login-email").value.trim();
+  const rawEmail = document.getElementById("login-email").value.trim();
+  const email = normalizeEmail(rawEmail);
   const password = document.getElementById("login-password").value;
   if (!email || !password) {
     showMsg("login-msg","Veuillez remplir tous les champs.","error");
@@ -592,18 +593,23 @@ async function doLogin() {
   setLoading("login-btn", true);
   clearMsgs();
   try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method:"POST",
-      credentials:"include",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({email,password})
-    });
-    const data = await safeJson(res);
-    if (res.ok) {
+    const first = await postAuthJson("/auth/login", { email, password });
+    if (first.ok) {
       showMsg("login-msg","Connexion reussie. Redirection...","success");
       setTimeout(() => window.location.href = DASHBOARD_URL, 800);
     } else {
-      showMsg("login-msg", data.error || "Erreur de connexion.", "error");
+      const shouldRetry = /exist|not found|unknown|introuvable/i.test(first.error || "");
+      if (shouldRetry && rawEmail && rawEmail !== email) {
+        const retry = await postAuthJson("/auth/login", { email: rawEmail, password });
+        if (retry.ok) {
+          showMsg("login-msg","Connexion reussie. Redirection...","success");
+          setTimeout(() => window.location.href = DASHBOARD_URL, 800);
+          return;
+        }
+        showMsg("login-msg", retry.error || first.error || "Erreur de connexion.", "error");
+      } else {
+        showMsg("login-msg", first.error || "Erreur de connexion.", "error");
+      }
       setLoading("login-btn", false);
     }
   } catch {
@@ -615,7 +621,7 @@ async function doRegister() {
   const payload = {
     first_name: document.getElementById("reg-firstname").value.trim(),
     last_name: document.getElementById("reg-lastname").value.trim(),
-    email: document.getElementById("reg-email").value.trim(),
+    email: normalizeEmail(document.getElementById("reg-email").value),
     password: document.getElementById("reg-password").value,
     street: document.getElementById("reg-street").value.trim(),
     city: document.getElementById("reg-city").value.trim(),
@@ -634,18 +640,12 @@ async function doRegister() {
   setLoading("register-btn", true);
   clearMsgs();
   try {
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method:"POST",
-      credentials:"include",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload)
-    });
-    const data = await safeJson(res);
-    if (res.ok) {
+    const result = await postAuthJson("/auth/register", payload);
+    if (result.ok) {
       showMsg("register-msg","Compte cree. Redirection...","success");
       setTimeout(() => window.location.href = DASHBOARD_URL, 900);
     } else {
-      showMsg("register-msg", data.error || "Erreur lors de la creation.", "error");
+      showMsg("register-msg", result.error || "Erreur lors de la creation.", "error");
       setLoading("register-btn", false);
     }
   } catch {
@@ -661,6 +661,9 @@ function toggleTheme() {
 function loadTheme() {
   applyTheme(localStorage.getItem("bs_theme") || "dark");
 }
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   const btn = document.getElementById("theme-btn");
@@ -675,6 +678,16 @@ async function safeJson(res) {
   } catch {
     return {};
   }
+}
+async function postAuthJson(path, payload) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method:"POST",
+    credentials:"include",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload)
+  });
+  const data = await safeJson(res);
+  return { ok: res.ok, status: res.status, error: data.error || data.message || "" };
 }
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, char => ({
