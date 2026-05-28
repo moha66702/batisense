@@ -1764,6 +1764,8 @@
 "use strict";
 const API_BASE = "https://batisense-production.up.railway.app";
 const LOGIN_URL = location.protocol === "file:" || location.pathname.endsWith(".html") ? "auth.html" : "/login";
+const LOCAL_ACCOUNT_KEY = "bs_local_account";
+const LOCAL_SESSION_KEY = "bs_local_session";
 const HISTORY_HOURS = 24;
 
 const NODES = {
@@ -1850,13 +1852,31 @@ function setApiDot(ok) {
 async function loadUser() {
     try {
         const res = await fetch(`${API_BASE}/auth/me`,{credentials:"include"});
-        if(res.status===401){window.location.href=LOGIN_URL;return false;}
+        if(res.status===401){
+            const local = getLocalSessionUser();
+            if(local){
+                state.user = local;
+                renderAccount(local);
+                return true;
+            }
+            window.location.href=LOGIN_URL;
+            return false;
+        }
         const data = await res.json();
         const u = data.user;
         state.user = u;
         renderAccount(u);
         return true;
-    } catch { window.location.href=LOGIN_URL; return false; }
+    } catch {
+        const local = getLocalSessionUser();
+        if(local){
+            state.user = local;
+            renderAccount(local);
+            return true;
+        }
+        window.location.href=LOGIN_URL;
+        return false;
+    }
 }
 function renderAccount(u) {
     const first = u.first_name || "";
@@ -1954,7 +1974,26 @@ async function submitPasswordChange(e) {
 }
 async function doLogout() {
     await fetch(`${API_BASE}/auth/logout`,{method:"POST",credentials:"include"});
+    localStorage.removeItem(LOCAL_SESSION_KEY);
     window.location.href=LOGIN_URL;
+}
+function getLocalSessionUser() {
+    try {
+        const email = localStorage.getItem(LOCAL_SESSION_KEY);
+        if(!email) return null;
+        const account = JSON.parse(localStorage.getItem(LOCAL_ACCOUNT_KEY) || "null");
+        if(!account || account.email !== email) return null;
+        return {
+            first_name: account.first_name || "",
+            last_name: account.last_name || "",
+            email: account.email || email,
+            street: account.street || "",
+            city: account.city || "",
+            zip_code: account.zip_code || ""
+        };
+    } catch {
+        return null;
+    }
 }
 
 async function loadInitial() {
