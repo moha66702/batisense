@@ -1762,7 +1762,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
 "use strict";
-const API_BASE = "https://batisense-production.up.railway.app";
+const API_BASE = location.protocol === "file:" ? "https://batisense-production.up.railway.app" : location.origin;
 const LOGIN_URL = location.protocol === "file:" || location.pathname.endsWith(".html") ? "auth.html" : "/login";
 const LOCAL_ACCOUNT_KEY = "bs_local_account";
 const LOCAL_SESSION_KEY = "bs_local_session";
