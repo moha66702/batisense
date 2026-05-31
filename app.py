@@ -198,7 +198,7 @@ THRESHOLDS = {
 
 SENSOR_ALIASES = {
     "electricity": {
-        "daily_consumption", "consumption", "consommation",
+        "daily_consumption", "consumption", "consommation", "total",
         "energy", "kwh", "power", "watt", "watts", "current", "amp", "amps", "ampere", "ampereh"
     },
     "water": {
