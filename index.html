@@ -2174,7 +2174,10 @@ function setSseDot(s) {
 }
 
 function onSensorEvent(d) {
-    const {node_id:nid,sensor_type,value,timestamp}=d;
+    let {node_id:nid,sensor_type,value,timestamp}=d;
+    if((nid==="electricity"||nid==="water"||nid==="gas_node") && sensor_type!=="daily_consumption"){
+        sensor_type = "daily_consumption";
+    }
     if(!state.latest[nid]) state.latest[nid]={};
     state.latest[nid][sensor_type]=value; state.nodeSeen[nid]=timestamp;
     flashLiveDot(nid,timestamp); updateCardForNode(nid,sensor_type,value); updateNodeCard(nid);
