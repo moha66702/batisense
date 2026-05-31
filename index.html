@@ -1289,9 +1289,18 @@
             white-space:nowrap;
             overflow:hidden;
         }
-        .sec{
+        .content>.sec{
+            display:none!important;
+            margin-bottom:0;
+        }
+        .content>.sec.active{
             display:block!important;
-            margin-bottom:22px;
+        }
+        .content>#overview.sec.active{
+            display:grid!important;
+        }
+        .content>#overview:not(.active){
+            display:none!important;
         }
         .sidebar{
             position:sticky;
@@ -1300,9 +1309,6 @@
             max-height:calc(100vh - 44px);
             overflow-y:auto;
             z-index:100;
-        }
-        #overview{
-            display:grid!important;
         }
         #consumption .sh h2,
         #consumption .pt{
@@ -1430,6 +1436,105 @@
         html[data-theme="light"] #overview::after{
             color:rgba(36,35,30,.72)!important;
             text-shadow:none!important;
+        }
+        /* Sensor card readability pass */
+        #nodes-container{
+            grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+            gap:14px;
+            align-items:stretch;
+        }
+        #nodes .ncard{
+            min-width:0;
+            padding:15px;
+            border-radius:20px;
+            overflow:hidden;
+        }
+        #nodes .nc-head{
+            gap:10px;
+            margin-bottom:12px;
+            padding-bottom:11px;
+        }
+        #nodes .nc-name{
+            min-width:0;
+            flex:1;
+            font-family:Inter,sans-serif;
+            font-size:15px;
+            font-weight:850;
+            line-height:1.1;
+            letter-spacing:0;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+        #nodes .nc-status{
+            flex:0 0 auto;
+            font-family:Inter,sans-serif;
+            font-size:9px;
+            line-height:1;
+            letter-spacing:0;
+            padding:6px 8px;
+        }
+        #nodes .nc-sensors{
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:8px;
+        }
+        #nodes .ns{
+            min-width:0;
+            min-height:48px;
+            padding:9px 10px;
+            gap:8px;
+            align-items:center;
+            border-radius:12px;
+        }
+        #nodes .ns-icon{
+            width:25px;
+            height:25px;
+            flex:0 0 25px;
+            font-size:12px;
+        }
+        #nodes .ns-body{
+            min-width:0;
+            flex:1;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            gap:2px;
+        }
+        #nodes .ns-val{
+            font-family:Inter,sans-serif!important;
+            font-size:15px;
+            font-weight:850;
+            line-height:1.05;
+            letter-spacing:0;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            font-variant-numeric:tabular-nums;
+        }
+        #nodes .ns-lbl{
+            font-family:Inter,sans-serif;
+            font-size:9px;
+            font-weight:800;
+            line-height:1;
+            letter-spacing:0;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+        #nodes .nc-ts{
+            margin-top:8px;
+            font-family:Inter,sans-serif;
+            font-size:10px;
+            line-height:1;
+            letter-spacing:0;
+            display:flex;
+            align-items:center;
+            gap:5px;
+        }
+        @media(max-width:620px){
+            #nodes-container{grid-template-columns:1fr}
+            #nodes .nc-sensors{grid-template-columns:1fr}
+            #nodes .ns-val{font-size:16px}
         }
         @media(max-width:760px){
             .sidebar{
@@ -2231,26 +2336,29 @@ function updateAlertBadge() {
 
 /* ══ Navigation ══ */
 const SEC_TITLES={overview:"Vue d'ensemble",nodes:"Nœuds capteurs",consumption:"Consommation",alerts:"Alertes"};
-function setActiveNav(id){
-    const target=document.getElementById(id);
+function setActiveNav(id,updateHash=false){
+    const target=document.getElementById(id) || document.getElementById("overview");
+    id=target.id;
     const nav=document.querySelector(`.nav-btn[data-sec="${id}"]`);
     if(!target || !nav) return;
+    document.querySelectorAll(".sec").forEach(sec=>sec.classList.toggle("active",sec.id===id));
     document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
     nav.classList.add("active");
     document.getElementById("page-title").textContent=SEC_TITLES[id]||id;
+    if(updateHash && location.hash!==`#${id}`) history.pushState(null,"",`#${id}`);
+    window.scrollTo({top:0,behavior:"smooth"});
     setTimeout(()=>Object.values(CH).forEach(c=>c?.resize?.()),140);
 }
 document.querySelector(".s-nav").addEventListener("click",e=>{
     const nav=e.target.closest(".nav-btn[data-sec]");
     if(!nav) return;
-    setActiveNav(nav.dataset.sec);
+    e.preventDefault();
+    setActiveNav(nav.dataset.sec,true);
 },true);
 window.addEventListener("hashchange",()=>setActiveNav(location.hash.replace("#","") || "overview"));
 window.addEventListener("popstate",()=>setActiveNav(location.hash.replace("#","") || "overview"));
 const initialSection=location.hash.replace("#","");
-if(initialSection){
-    setActiveNav(initialSection);
-}
+setActiveNav(initialSection || "overview");
 document.getElementById("temp-tabs").addEventListener("click",async e=>{
     const b=e.target.closest(".btn"); if(!b||!b.dataset.node) return;
     _tempFilter=b.dataset.node;
