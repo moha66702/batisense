@@ -1,2470 +1,685 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BatiSense Pro — Dashboard</title>
+"""
+BatiSense Pro — Flask Backend with Authentication + Pi Token Auth
+pip install flask flask-cors flask-login flask-bcrypt gunicorn
+"""
 
-    <!-- ═══════════════ FAVICON (SVG dans la barre d'onglet) ═══════════════ -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'>
-        <rect width='48' height='48' rx='10' fill='%23050810'/>
-        <polygon points='24,6 40,22 40,40 8,40 8,22' fill='none' stroke='%2300f5a0' stroke-width='3' stroke-linejoin='round'/>
-        <circle cx='24' cy='30' r='4' fill='%2300f5a0'/>
-        <circle cx='24' cy='10' r='3' fill='%2300d4e0'/>
-        <path d='M20,30 L24,24 L28,30' fill='none' stroke='%2300f5a0' stroke-width='2' stroke-linecap='round'/>
-    </svg>">
+import json
+import sqlite3
+import csv
+import io
+import time
+import threading
+import queue
+import secrets
+import os
+import re
+from datetime import datetime, timezone, timedelta
+from flask import Flask, request, jsonify, Response, send_file, stream_with_context, redirect
+from flask_cors import CORS
+from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
+from flask_bcrypt import Bcrypt
+from flask import send_from_directory
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        :root {
-            --bg0: #040711;
-            --bg1: #070c17;
-            --bg2: #0b1120;
-            --bg3: #101828;
-            --bg4: #162034;
-            --b0: rgba(255,255,255,.03);
-            --b1: rgba(255,255,255,.07);
-            --b2: rgba(255,255,255,.12);
-            --green: #00f5a0;
-            --teal: #00d4e0;
-            --blue: #4d8dff;
-            --amber: #ffc233;
-            --red: #ff4d6b;
-            --violet: #a06bff;
-            --t0: #dce8ff;
-            --t1: #7d95bc;
-            --t2: #3d5070;
-            --t3: #253550;
-            --r: 16px;
-            --rsm: 9px;
-            --rxs: 6px;
-            --fui: 'Syne', sans-serif;
-            --fmono: 'DM Mono', monospace;
-            --fbody: 'Inter', sans-serif;
-            --glow-g: 0 0 40px rgba(0,245,160,.15);
-            --glow-b: 0 0 30px rgba(77,141,255,.08);
-            --sidebar-w: 240px;
-            --topbar-h: 56px;
-            --topbar-bg: rgba(7,12,23,.8);
-            --topbar-border: rgba(255,255,255,.05);
-            --sidebar-bg: linear-gradient(180deg, #070c17 0%, #040711 100%);
-            --card-bg: #0b1120;
-            --card-border: rgba(255,255,255,.07);
-            --card-shadow: 0 4px 24px rgba(0,0,0,.3);
-            --card-hover-shadow: 0 12px 40px rgba(0,0,0,.5);
-            --noise-opacity: .03;
-        }
+# ============================================================
+#  App & extensions
+# ============================================================
+app = Flask(__name__)
 
-        [data-theme="light"] {
-            --bg0: #f0f3fa;
-            --bg1: #f5f7fd;
-            --bg2: #ffffff;
-            --bg3: #f0f4ff;
-            --bg4: #e4ebf8;
-            --b0: rgba(0,0,0,.04);
-            --b1: rgba(0,0,0,.07);
-            --b2: rgba(0,0,0,.11);
-            --t0: #0c1732;
-            --t1: #3a4f72;
-            --t2: #8898bb;
-            --t3: #b8c7dd;
-            --topbar-bg: rgba(255,255,255,.85);
-            --topbar-border: rgba(0,0,0,.06);
-            --sidebar-bg: linear-gradient(180deg, #f5f7fd 0%, #f0f3fa 100%);
-            --card-bg: #ffffff;
-            --card-border: rgba(0,0,0,.07);
-            --card-shadow: 0 2px 16px rgba(0,0,0,.06);
-            --card-hover-shadow: 0 8px 30px rgba(0,0,0,.1);
-            --glow-g: 0 0 20px rgba(0,200,130,.1);
-            --glow-b: 0 0 20px rgba(77,141,255,.08);
-            --noise-opacity: .015;
-        }
+def _cors_origins():
+    raw = os.getenv("CORS_ORIGINS", "").strip()
+    if raw:
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return re.compile(r".*")
 
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        html{font-size:14px;-webkit-font-smoothing:antialiased}
-        body{
-            font-family:var(--fbody);
-            background:var(--bg0);
-            color:var(--t0);
-            min-height:100vh;
-            overflow-x:hidden;
-            position: relative;
-        }
-        /* ═══════════════ NOISE TEXTURE ═══════════════ */
-        body::after {
-            content:'';
-            position:fixed;
-            inset:0;
-            pointer-events:none;
-            z-index:9999;
-            opacity:var(--noise-opacity);
-            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
-            background-size:180px 180px;
-            transition:opacity .4s;
-        }
-        button{cursor:pointer;font-family:var(--fui)}
-        ::-webkit-scrollbar{width:5px;height:5px}
-        ::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+CORS(app, supports_credentials=True, origins=_cors_origins())
 
-        /* ═══════════════ WELCOME OVERLAY ═══════════════ */
-        #welcome-overlay{
-            position:fixed;inset:0;z-index:1000;
-            background:var(--bg0);
-            display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
-        }
-        #welcome-overlay.hide{animation:overlayOut .7s cubic-bezier(.76,0,.24,1) forwards;pointer-events:none}
-        @keyframes overlayOut{0%{opacity:1;transform:scale(1)}30%{opacity:1;transform:scale(1.02)}100%{opacity:0;transform:scale(.95);display:none}}
-        .wov-logo{animation:wovLogoIn .9s cubic-bezier(.34,1.56,.64,1) both;filter:drop-shadow(0 0 40px rgba(0,245,160,.3))}
-        @keyframes wovLogoIn{from{opacity:0;transform:scale(.3) rotateY(-180deg)}to{opacity:1;transform:scale(1) rotateY(0deg)}}
-        .wov-text{font-family:var(--fui);font-size:34px;font-weight:800;letter-spacing:-1px;background:linear-gradient(90deg,var(--green),var(--teal),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:wovTextIn .6s ease both .3s}
-        @keyframes wovTextIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-        .wov-user{font-size:16px;color:var(--t1);animation:wovTextIn .6s ease both .5s}
-        .wov-bar-wrap{width:240px;animation:wovTextIn .6s ease both .6s}
-        .wov-bar{height:3px;background:var(--bg3);border-radius:3px;overflow:hidden}
-        .wov-bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--teal),var(--blue));animation:wovFill 1.4s cubic-bezier(.4,0,.2,1) forwards;animation-delay:.4s;box-shadow:0 0 12px rgba(0,245,160,.5)}
-        @keyframes wovFill{to{width:100%}}
-        .wov-hint{font-family:var(--fmono);font-size:10px;color:var(--t2);letter-spacing:2px;text-align:center;animation:wovTextIn .6s ease both .7s;margin-top:8px}
+app.config["SECRET_KEY"]              = os.getenv("SECRET_KEY", "batisense_secret_key_123456")
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE", "None")
+app.config["SESSION_COOKIE_SECURE"]   = os.getenv("SESSION_COOKIE_SECURE", "True") == "True"
 
-        /* ═══════════════ APP LAYOUT ═══════════════ */
-        .app{display:flex;min-height:100vh}
-        .sidebar{
-            width:var(--sidebar-w);
-            flex-shrink:0;
-            background:var(--sidebar-bg);
-            border-right:1px solid var(--b0);
-            display:flex;flex-direction:column;
-            position:sticky;top:0;height:100vh;overflow-y:auto;
-            transition:background .4s,border-color .4s;
-            z-index:50;
-        }
-        .s-logo{padding:20px 18px 16px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:12px;transition:border-color .4s}
-        .s-logo-mark{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg3);box-shadow:0 0 20px rgba(0,245,160,.2);overflow:hidden}
-        .s-logo-mark svg{width:38px;height:38px;border-radius:10px}
-        .s-logo-name{font-family:var(--fui);font-size:16px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(90deg,var(--t0),var(--t1));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .s-logo-sub{font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:2px;font-family:var(--fmono);opacity:.85}
-        .s-nav{padding:10px 8px;flex:1}
-        .s-nav-sec{font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:14px 12px 5px;font-family:var(--fui)}
-        .nav-btn{
-            display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;
-            border:none;background:none;color:var(--t1);font-size:13px;font-weight:500;
-            width:100%;text-align:left;margin-bottom:3px;
-            transition:all .25s cubic-bezier(.4,0,.2,1);position:relative;
-        }
-        .nav-btn::before{
-            content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
-            width:3px;height:0;background:var(--green);border-radius:3px;
-            transition:height .3s cubic-bezier(.34,1.56,.64,1);
-        }
-        .nav-btn i{width:18px;font-size:14px;opacity:.55;flex-shrink:0;transition:all .25s}
-        .nav-btn:hover{background:var(--bg3);color:var(--t0);transform:translateX(3px)}
-        .nav-btn:hover i{opacity:.9;color:var(--green)}
-        .nav-btn.active{
-            background:rgba(0,245,160,.1);color:var(--green);font-weight:600;
-            box-shadow:0 0 20px rgba(0,245,160,.08);
-        }
-        .nav-btn.active::before{height:65%}
-        .nav-btn.active i{opacity:1;color:var(--green)}
-        .nav-badge{
-            margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;
-            padding:2px 7px;border-radius:12px;min-width:20px;text-align:center;
-            animation:badgePop .35s cubic-bezier(.34,1.56,.64,1);
-        }
-        @keyframes badgePop{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0deg)}}
-        .s-footer{padding:12px 8px;border-top:1px solid var(--b0)}
-        .conn{
-            display:flex;align-items:center;gap:8px;padding:8px 12px;
-            border-radius:var(--rxs);background:var(--b0);
-            font-size:11px;color:var(--t1);margin-bottom:4px;
-            font-family:var(--fmono);
-        }
-        .dot{width:7px;height:7px;border-radius:50%;background:var(--t2);flex-shrink:0;transition:all .3s}
-        .dot.ok{background:var(--green);box-shadow:0 0 12px var(--green);animation:dotBlink 2.5s infinite}
-        .dot.err{background:var(--red);box-shadow:0 0 8px var(--red);animation:dotBlinkFast 1s infinite}
-        @keyframes dotBlink{0%,100%{opacity:1}50%{opacity:.3}}
-        @keyframes dotBlinkFast{0%,100%{opacity:1}50%{opacity:.4}}
+bcrypt        = Bcrypt(app)
+login_manager = LoginManager(app)
+login_manager.login_view    = "login_page"
+login_manager.login_message = None
 
-        .main{flex:1;display:flex;flex-direction:column;min-width:0}
-        .topbar{
-            padding:0 28px;height:var(--topbar-h);
-            border-bottom:1px solid var(--topbar-border);
-            background:var(--topbar-bg);
-            backdrop-filter:blur(20px);
-            -webkit-backdrop-filter:blur(20px);
-            display:flex;align-items:center;justify-content:space-between;
-            gap:12px;
-            position:sticky;top:0;z-index:40;
-            transition:background .4s,border-color .4s;
-        }
-        .topbar-l h1{font-family:var(--fui);font-size:18px;font-weight:700;letter-spacing:-.5px}
-        .topbar-l p{font-size:10.5px;color:var(--t2);margin-top:2px;font-family:var(--fmono);display:flex;align-items:center;gap:7px}
-        .topbar-r{display:flex;gap:8px;align-items:center}
-        .live-dot{width:9px;height:9px;border-radius:50%;background:var(--t2);flex-shrink:0;transition:all .3s}
-        .live-dot.flash{background:var(--green);box-shadow:0 0 18px var(--green);animation:livePing .5s ease}
-        @keyframes livePing{0%{transform:scale(1)}50%{transform:scale(1.8)}100%{transform:scale(1)}}
-        .btn{
-            display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
-            border-radius:var(--rxs);border:1px solid var(--b1);
-            background:var(--card-bg);color:var(--t0);font-size:12px;font-weight:500;
-            transition:all .25s cubic-bezier(.4,0,.2,1);
-            position:relative;overflow:hidden;
-        }
-        .btn:hover{background:var(--bg3);border-color:rgba(0,245,160,.35);color:var(--green);box-shadow:0 0 20px rgba(0,245,160,.1)}
-        .btn.sm{padding:5px 11px;font-size:11px}
-        .content{padding:22px 28px;flex:1}
-        .sec{display:none}
-        .sec.active{display:block;animation:secIn .35s cubic-bezier(.4,0,.2,1)}
-        @keyframes secIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-        .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-        .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-        .gauto{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-        .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-        .sh h2{font-family:var(--fui);font-size:16px;font-weight:700;letter-spacing:-.4px}
+# Database stored in a persistent volume when deployed on Railway.
+# DATA_DIR should point to a mounted volume such as /data.
+DATA_DIR = os.getenv("DATA_DIR") or ("/data" if os.name != "nt" else ".")
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.path.abspath(os.path.join(DATA_DIR, "batisense.db"))
 
-        /* ═══════════════ TILT CARD (effet 3D) ═══════════════ */
-        .tilt-card{perspective:800px}
-        .tilt-card-inner{transition:transform .15s ease-out;transform-style:preserve-3d;position:relative}
+# ============================================================
+#  User Model
+# ============================================================
+class User(UserMixin):
+    def __init__(self, row):
+        (self.id, self.first_name, self.last_name, self.email,
+         self.password, self.street, self.city, self.zip_code, self.created_at) = row
 
-        /* ═══════════════ KPI CARDS ═══════════════ */
-        .kcard{
-            background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);
-            padding:18px 20px;position:relative;overflow:hidden;
-            transition:all .35s cubic-bezier(.4,0,.2,1);
-            box-shadow:var(--card-shadow);
-        }
-        .kcard::before{
-            content:'';position:absolute;inset:0;
-            background:linear-gradient(135deg,rgba(255,255,255,.03) 0%,transparent 60%);
-            pointer-events:none;border-radius:var(--r);z-index:1;
-        }
-        .kcard::after{
-            content:'';position:absolute;top:0;left:0;right:0;height:3px;
-            border-radius:var(--r) var(--r) 0 0;z-index:2;
-            transition:box-shadow .4s;
-        }
-        .kcard.g::after{background:linear-gradient(90deg,var(--green),var(--teal));box-shadow:0 0 20px rgba(0,245,160,.3)}
-        .kcard.t::after{background:linear-gradient(90deg,var(--teal),var(--blue));box-shadow:0 0 20px rgba(0,212,224,.3)}
-        .kcard.b::after{background:linear-gradient(90deg,var(--blue),var(--violet));box-shadow:0 0 20px rgba(77,141,255,.3)}
-        .kcard.a::after{background:linear-gradient(90deg,var(--amber),var(--red));box-shadow:0 0 20px rgba(255,194,51,.3)}
-        .kcard.r::after{background:var(--red);box-shadow:0 0 20px rgba(255,77,107,.3)}
-        .kcard.v::after{background:linear-gradient(90deg,var(--violet),var(--blue));box-shadow:0 0 20px rgba(160,107,255,.3)}
-        .kcard:hover{transform:translateY(-4px);border-color:rgba(0,245,160,.2);box-shadow:var(--card-hover-shadow),var(--glow-g)}
-        .kcard.updated{animation:cardFlash .6s ease}
-        @keyframes cardFlash{0%{border-color:var(--green);box-shadow:0 0 40px rgba(0,245,160,.35)}100%{border-color:var(--card-border);box-shadow:var(--card-shadow)}}
-        .kcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;z-index:3;position:relative}
-        .kcard-lbl{font-size:10.5px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;font-weight:700;font-family:var(--fui)}
-        .kcard-icon{font-size:17px;opacity:.85;transition:all .3s}
-        .kcard:hover .kcard-icon{opacity:1;transform:scale(1.1)}
-        .kcard-icon.g{color:var(--green)}.kcard-icon.t{color:var(--teal)}.kcard-icon.b{color:var(--blue)}.kcard-icon.a{color:var(--amber)}.kcard-icon.r{color:var(--red)}.kcard-icon.v{color:var(--violet)}
-        .kcard-val{font-family:var(--fui);font-size:30px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:6px;z-index:3;position:relative}
-        .kcard-val sup{font-size:13px;font-weight:500;margin-left:3px;opacity:.7}
-        .kcard-sub{font-size:11px;color:var(--t1);z-index:3;position:relative}
-
-        /* ═══════════════ PANEL ═══════════════ */
-        .panel{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);padding:20px 22px;margin-bottom:18px;box-shadow:var(--card-shadow);position:relative}
-        .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-        .pt{font-family:var(--fui);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--t0)}
-        .pt i{color:var(--green);opacity:.85}
-        .cbox{position:relative}
-        .cbox.h180{height:180px}.cbox.h220{height:220px}.cbox.h260{height:260px}
-
-        /* ═══════════════ DOOR/GAS BADGES ═══════════════ */
-        .door-badge{display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border-radius:var(--r);font-size:13px;font-weight:700;border:2px solid;transition:all .35s;font-family:var(--fui)}
-        .door-badge.open{background:rgba(255,77,107,.1);border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,77,107,.15)}
-        .door-badge.closed{background:rgba(0,245,160,.07);border-color:var(--green);color:var(--green);box-shadow:var(--glow-g)}
-
-        /* ═══════════════ AVG CARDS ═══════════════ */
-        .avg-row{display:flex;gap:18px;margin-bottom:18px}
-        .avg-card{flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;gap:16px;box-shadow:var(--card-shadow);transition:all .35s}
-        .avg-card:hover{transform:translateY(-3px);box-shadow:var(--card-hover-shadow)}
-        .avg-icon{width:50px;height:50px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:23px}
-        .avg-icon.temp{background:rgba(0,212,224,.1);color:var(--teal)}.avg-icon.hum{background:rgba(77,141,255,.1);color:var(--blue)}
-        .avg-lbl{font-size:10.5px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;font-weight:700;font-family:var(--fui)}
-        .avg-val{font-family:var(--fui);font-size:32px;font-weight:800;letter-spacing:-2.5px;line-height:1.1}
-        .avg-unit{font-size:15px;font-weight:500;margin-left:3px;opacity:.65}
-        .avg-detail{font-size:10.5px;color:var(--t1)}
-
-        /* ═══════════════ CONSUMPTION CARDS ═══════════════ */
-        .cons-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);padding:22px;text-align:center;box-shadow:var(--card-shadow);transition:all .35s}
-        .cons-card:hover{transform:translateY(-4px);box-shadow:var(--card-hover-shadow)}
-        .cons-ico{font-size:34px;margin-bottom:10px}
-        .cons-card.water .cons-ico{color:var(--teal)}.cons-card.elec .cons-ico{color:var(--violet)}.cons-card.gas .cons-ico{color:var(--amber)}
-        .cons-num{font-family:var(--fui);font-size:34px;font-weight:800;letter-spacing:-2.5px}
-        .cons-unit{font-size:11px;color:var(--t2);margin-top:5px}
-
-        /* ═══════════════ NODE CARDS ═══════════════ */
-        .ncard{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--r);padding:18px;box-shadow:var(--card-shadow);transition:all .35s}
-        .ncard:hover{transform:translateY(-3px);box-shadow:var(--card-hover-shadow)}
-        .nc-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--b0)}
-        .nc-name{font-family:var(--fui);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
-        .nc-status{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px}
-        .nc-status.online{background:rgba(0,245,160,.12);color:var(--green)}.nc-status.offline{background:rgba(255,77,107,.1);color:var(--red)}
-        .nc-sensors{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-        .ns{background:var(--bg3);border:1px solid var(--b0);border-radius:var(--rxs);padding:11px 12px;display:flex;align-items:center;gap:10px}
-        .ns-val{font-family:var(--fui);font-size:14px;font-weight:700;white-space:nowrap}
-        .ns-lbl{font-size:10px;color:var(--t2)}
-
-        /* ═══════════════ ALERTS ═══════════════ */
-        .alert-list{display:flex;flex-direction:column;gap:12px}
-        .al{display:flex;align-items:flex-start;gap:14px;background:var(--card-bg);border:1px solid var(--card-border);border-left:4px solid;border-radius:var(--r);padding:15px 18px;box-shadow:var(--card-shadow)}
-        .al.danger{border-left-color:var(--red)}.al.warning{border-left-color:var(--amber)}.al.info{border-left-color:var(--blue)}
-        .al-icon{font-size:18px;margin-top:2px}
-        .al.danger .al-icon{color:var(--red)}.al.warning .al-icon{color:var(--amber)}.al.info .al-icon{color:var(--blue)}
-        .btn-ack{padding:5px 13px;border-radius:var(--rxs);border:1px solid var(--b1);background:var(--bg3);color:var(--t1);font-size:11px}
-        .btn-ack:hover{background:rgba(0,245,160,.12);color:var(--green);border-color:var(--green)}
-
-        /* ═══════════════ USER BADGE ═══════════════ */
-        .user-badge{display:flex;align-items:center;gap:9px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--rxs);padding:6px 14px;font-size:12px}
-        .user-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;box-shadow:0 0 16px rgba(0,245,160,.35)}
-        .user-name{color:var(--t1);font-weight:600}
-
-        /* ═══════════════ 3D HOUSE WIDGET ═══════════════ */
-        .house-widget{display:flex;align-items:center;justify-content:center;perspective:700px;padding:12px 0;position:relative}
-        .house-3d-dash{transform-style:preserve-3d;animation:dashFloat 5.5s ease-in-out infinite;cursor:grab;user-select:none;transition:transform .1s ease-out;position:relative;z-index:3}
-        .house-3d-dash:active{cursor:grabbing}
-        @keyframes dashFloat{0%,100%{transform:rotateY(-6deg) rotateX(4deg) translateY(0)}50%{transform:rotateY(6deg) rotateX(-4deg) translateY(-12px)}}
-        .house-orbit-ring{position:absolute;border-radius:50%;border:1.5px solid rgba(0,245,160,.25);pointer-events:none;animation:orbitSpin 8s linear infinite}
-        .house-orbit-ring:nth-child(1){width:150px;height:150px;animation-duration:8s}
-        .house-orbit-ring:nth-child(2){width:190px;height:190px;animation-duration:13s;animation-delay:-4s;border-color:rgba(0,212,224,.2)}
-        @keyframes orbitSpin{from{transform:rotateX(65deg) rotateZ(0deg)}to{transform:rotateX(65deg) rotateZ(360deg)}}
-        .house-scan{position:absolute;width:150px;height:150px;border-radius:50%;background:conic-gradient(from 0deg,rgba(241,200,75,.42),transparent 34%,transparent);filter:blur(.2px);opacity:.68;animation:scanSpin 4.8s linear infinite;z-index:1;pointer-events:none}
-        .house-core-glow{position:absolute;width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(241,200,75,.34),rgba(0,245,160,.14) 48%,transparent 72%);filter:blur(8px);animation:corePulse 2.4s ease-in-out infinite;z-index:0;pointer-events:none}
-        .house-sensor-dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--amber);box-shadow:0 0 18px rgba(241,200,75,.95);z-index:4;animation:sensorBlink 1.8s ease-in-out infinite;pointer-events:none}
-        .house-sensor-dot:nth-of-type(1){top:22px;left:48%;animation-delay:.1s}
-        .house-sensor-dot:nth-of-type(2){right:28px;top:78px;background:var(--green);box-shadow:0 0 18px rgba(142,207,123,.95);animation-delay:.55s}
-        .house-sensor-dot:nth-of-type(3){left:32px;bottom:42px;background:var(--teal);box-shadow:0 0 18px rgba(116,191,194,.95);animation-delay:1s}
-        @keyframes scanSpin{to{transform:rotate(360deg)}}
-        @keyframes corePulse{0%,100%{transform:scale(.82);opacity:.45}50%{transform:scale(1.22);opacity:.9}}
-        @keyframes sensorBlink{0%,100%{transform:scale(.75);opacity:.55}50%{transform:scale(1.35);opacity:1}}
-
-        /* ═══════════════ RIPPLE EFFECT ═══════════════ */
-        .ripple{position:absolute;border-radius:50%;background:rgba(0,245,160,.3);transform:scale(0);animation:rippleAnim .6s ease-out;pointer-events:none}
-        @keyframes rippleAnim{to{transform:scale(4);opacity:0}}
-
-        /* ═══════════════ RESPONSIVE ═══════════════ */
-        @media(max-width:900px){
-            .sidebar{width:54px}
-            .s-logo-name,.s-logo-sub,.nav-btn span,.conn span,.nav-badge,.s-nav-sec{display:none}
-            .s-logo{justify-content:center;padding:16px 0}
-            .nav-btn{justify-content:center}
-            .topbar,.content{padding-left:14px;padding-right:14px}
-            .g2,.g3,.g4,.gauto{grid-template-columns:1fr}
-            .avg-row{flex-direction:column}
-            .topbar{height:auto;padding-top:10px;padding-bottom:10px;flex-wrap:wrap}
-        }
-
-        /* Reference dashboard restyle */
-        :root{
-            --bg0:#2f2a18;
-            --bg1:#16140e;
-            --bg2:rgba(238,238,231,.58);
-            --bg3:rgba(255,255,255,.34);
-            --bg4:rgba(255,255,255,.22);
-            --b0:rgba(255,255,255,.30);
-            --b1:rgba(255,255,255,.44);
-            --b2:rgba(0,0,0,.12);
-            --green:#8ecf7b;
-            --teal:#74bfc2;
-            --blue:#8ea8d8;
-            --amber:#f4c84d;
-            --red:#d35b4d;
-            --violet:#a995c8;
-            --t0:#f7f7f2;
-            --t1:rgba(255,255,255,.72);
-            --t2:rgba(255,255,255,.54);
-            --card-bg:rgba(244,245,241,.84);
-            --card-border:rgba(255,255,255,.58);
-            --card-shadow:0 18px 55px rgba(0,0,0,.22);
-            --card-hover-shadow:0 24px 70px rgba(0,0,0,.28);
-            --r:20px;
-            --rsm:14px;
-            --rxs:10px;
-            --topbar-bg:transparent;
-            --topbar-border:transparent;
-            --sidebar-w:72px;
-        }
-        [data-theme="light"]{
-            --bg0:#c7c2aa;
-            --bg1:#eeeadd;
-            --t0:#24231e;
-            --t1:rgba(36,35,30,.68);
-            --t2:rgba(36,35,30,.48);
-            --card-bg:rgba(255,255,255,.86);
-            --card-border:rgba(255,255,255,.70);
-            --topbar-bg:transparent;
-        }
-        body{
-            background:
-                radial-gradient(circle at 20% 10%,rgba(255,255,255,.10),transparent 28%),
-                linear-gradient(135deg,var(--bg0),var(--bg1) 72%);
-        }
-        body::before{
-            content:"";
-            position:fixed;
-            inset:0;
-            pointer-events:none;
-            opacity:.14;
-            background-image:linear-gradient(135deg,rgba(255,255,255,.13) 1px,transparent 1px);
-            background-size:24px 24px;
-        }
-        body::after{display:none}
-        #welcome-overlay{background:#2f2a18}
-        .wov-logo{
-            width:76px;
-            height:76px;
-            border-radius:24px;
-            display:grid;
-            place-items:center;
-            background:var(--amber);
-            color:#24231e;
-            box-shadow:0 22px 55px rgba(0,0,0,.30);
-        }
-        .wov-logo svg{display:none}
-        .wov-logo::before{content:"\f015";font-family:"Font Awesome 6 Free";font-weight:900;font-size:30px}
-        .wov-text{-webkit-text-fill-color:currentColor;background:none;color:#fff;font-family:Inter,sans-serif;letter-spacing:-.04em}
-        .wov-bar-fill{background:var(--amber)}
-        .app{
-            display:grid;
-            grid-template-columns:84px minmax(0,1fr);
-            gap:18px;
-            padding:26px;
-            align-items:start;
-        }
-        .sidebar{
-            width:72px;
-            height:auto;
-            min-height:0;
-            top:26px;
-            border-radius:30px;
-            padding:12px 10px;
-            align-items:center;
-            gap:14px;
-            background:linear-gradient(180deg,rgba(246,246,239,.72),rgba(222,221,210,.56));
-            border:1px solid rgba(255,255,255,.62);
-            box-shadow:0 22px 55px rgba(0,0,0,.28);
-            backdrop-filter:blur(20px) saturate(140%);
-            -webkit-backdrop-filter:blur(20px) saturate(140%);
-        }
-        .s-logo{
-            width:50px;
-            height:50px;
-            padding:0;
-            border:0;
-            border-radius:50%;
-            display:grid;
-            place-items:center;
-            background:#f3f1e7;
-            color:#25241f;
-            box-shadow:inset 0 0 0 6px rgba(142,207,123,.26),0 12px 24px rgba(0,0,0,.12);
-        }
-        .s-logo-mark{
-            width:100%;
-            height:100%;
-            display:grid;
-            place-items:center;
-            background:transparent;
-            box-shadow:none;
-            border-radius:50%;
-        }
-        .s-logo-mark svg,.s-logo-name,.s-logo-sub,.s-nav-sec,.nav-btn span,.conn span{display:none}
-        .s-logo-mark::before{
-            content:"\f015";
-            font-family:"Font Awesome 6 Free";
-            font-weight:900;
-            font-size:18px;
-            line-height:1;
-            display:block;
-        }
-        .s-nav{display:flex;flex-direction:column;align-items:center;gap:11px;width:100%;padding:0;flex:0 0 auto}
-        .nav-btn{
-            width:50px;
-            height:50px;
-            padding:0;
-            border-radius:50%;
-            display:grid;
-            place-items:center;
-            background:rgba(255,255,255,.62);
-            color:#24231e;
-            margin:0;
-            border:1px solid rgba(255,255,255,.66);
-            box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 10px 22px rgba(0,0,0,.10);
-        }
-        .nav-btn::before{display:none}
-        .nav-btn i{width:auto;font-size:16px;opacity:1;color:#24231e}
-        .nav-btn:hover,.nav-btn.active{background:var(--amber);color:#25241f;transform:translateY(-2px);box-shadow:0 14px 24px rgba(0,0,0,.18)}
-        .nav-btn:hover i,.nav-btn.active i{color:#25241f}
-        .nav-badge{position:absolute;top:-3px;right:-3px;margin:0}
-        .s-footer{
-            border:0;
-            padding:10px 0 0;
-            margin-top:2px;
-            display:flex;
-            flex-direction:row;
-            justify-content:center;
-            gap:8px;
-            width:100%;
-            border-top:1px solid rgba(255,255,255,.42);
-        }
-        .conn{width:16px;height:16px;padding:0;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.36)}
-        .dot,.live-dot{width:9px;height:9px;border-radius:50%;background:#8d8d82}
-        .dot.ok,.live-dot.flash{background:var(--green);box-shadow:0 0 0 6px rgba(142,207,123,.18)}
-        .dot.err{background:var(--red);box-shadow:0 0 0 6px rgba(211,91,77,.14)}
-        .main{min-width:0}
-        .topbar{
-            min-height:58px;
-            height:auto;
-            padding:0;
-            margin-bottom:16px;
-            background:transparent;
-            border:0;
-            position:relative;
-        }
-        .topbar-l h1{font-size:16px;font-weight:800;letter-spacing:-.03em}
-        .topbar-l p{color:var(--t1);font-family:Inter,sans-serif}
-        .btn,.btn-ack{
-            min-height:34px;
-            border:1px solid var(--b1);
-            border-radius:999px;
-            padding:8px 13px;
-            color:#24231e;
-            background:rgba(255,255,255,.58);
-            font-size:12px;
-            font-weight:800;
-            box-shadow:none;
-        }
-        .btn:hover,.btn.active,.btn-ack:hover{background:var(--amber);color:#24231e;transform:translateY(-1px);border-color:rgba(255,255,255,.62)}
-        .theme-toggle{
-            width:74px;
-            height:38px;
-            padding:0;
-            border:1px solid rgba(255,255,255,.54);
-            border-radius:999px;
-            background:rgba(255,255,255,.52);
-            color:#24231e;
-            box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 10px 24px rgba(0,0,0,.12);
-            position:relative;
-            overflow:hidden;
-        }
-        .theme-track{
-            position:absolute;
-            inset:0;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            padding:0 10px;
-        }
-        .theme-icon{
-            width:18px;
-            height:18px;
-            display:grid;
-            place-items:center;
-            font-size:13px;
-            opacity:.55;
-            z-index:1;
-        }
-        .theme-icon.sun{color:#b87a00}
-        .theme-icon.moon{color:#28304d}
-        .theme-thumb{
-            position:absolute;
-            left:4px;
-            top:4px;
-            width:30px;
-            height:30px;
-            border-radius:50%;
-            display:grid;
-            place-items:center;
-            background:linear-gradient(135deg,#2b2a25,#11100d);
-            color:#f4c84d;
-            box-shadow:0 8px 18px rgba(0,0,0,.24);
-            transition:transform .28s cubic-bezier(.34,1.56,.64,1),background .28s,color .28s;
-            z-index:2;
-        }
-        .theme-toggle.light .theme-thumb{
-            transform:translateX(36px);
-            background:linear-gradient(135deg,#ffd96a,#f4b63d);
-            color:#24231e;
-        }
-        .theme-toggle:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.82)}
-        .user-badge{border-radius:999px;background:rgba(255,255,255,.52);color:#24231e;border:1px solid var(--b1)}
-        .user-av{background:#24231e;color:#fff}
-        .user-name{color:#24231e;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .account-wrap{position:relative}
-        .user-badge{
-            cursor:pointer;
-            min-height:38px;
-            transition:transform .2s ease,background .2s ease;
-        }
-        .user-badge:hover{background:rgba(255,255,255,.72);transform:translateY(-1px)}
-        .account-panel{
-            position:absolute;
-            top:calc(100% + 12px);
-            right:0;
-            width:min(360px,calc(100vw - 32px));
-            z-index:80;
-            display:none;
-            padding:16px;
-            border-radius:22px;
-            color:#24231e;
-            background:rgba(248,248,243,.94);
-            border:1px solid rgba(255,255,255,.72);
-            box-shadow:0 24px 70px rgba(0,0,0,.28);
-            backdrop-filter:blur(20px) saturate(140%);
-            -webkit-backdrop-filter:blur(20px) saturate(140%);
-        }
-        .account-panel.open{display:block;animation:accountIn .18s ease}
-        @keyframes accountIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-        .account-head{display:flex;align-items:center;gap:12px;padding-bottom:13px;border-bottom:1px solid rgba(0,0,0,.09)}
-        .account-avatar,.user-av{
-            background-size:cover!important;
-            background-position:center!important;
-            overflow:hidden;
-        }
-        .account-avatar{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#24231e;color:#fff;font-weight:900}
-        .avatar-actions{
-            margin:12px 0 2px;
-            display:flex;
-            gap:8px;
-            flex-wrap:wrap;
-        }
-        .avatar-input{display:none}
-        .avatar-btn{
-            min-height:32px;
-            border:1px solid rgba(0,0,0,.10);
-            border-radius:999px;
-            padding:7px 11px;
-            background:rgba(255,255,255,.76);
-            color:#24231e;
-            font-size:12px;
-            font-weight:850;
-            display:inline-flex;
-            align-items:center;
-            gap:7px;
-            cursor:pointer;
-        }
-        .avatar-btn:hover{background:var(--client-gold)}
-        .account-title{font-weight:900;font-size:15px;letter-spacing:-.02em}
-        .account-sub{font-size:12px;color:#69685f;margin-top:2px}
-        .account-row{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.07)}
-        .account-row span:first-child{font-size:11px;font-weight:900;color:#77766d;text-transform:uppercase}
-        .account-row span:last-child{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .password-box{margin-top:14px;padding:13px;border-radius:16px;background:rgba(244,200,77,.16);border:1px solid rgba(151,112,22,.22)}
-        .password-box h3{font-size:13px;margin-bottom:8px}
-        .pi-warning{display:flex;gap:9px;font-size:12px;line-height:1.4;color:#514017;margin-bottom:12px}
-        .pi-warning i{color:#a06d00;margin-top:2px}
-        .password-form{display:grid;gap:8px}
-        .password-form input{
-            width:100%;
-            min-height:36px;
-            border:1px solid rgba(0,0,0,.12);
-            border-radius:12px;
-            padding:8px 11px;
-            background:rgba(255,255,255,.78);
-            color:#24231e;
-            font:13px Inter,sans-serif;
-        }
-        .account-msg{min-height:18px;font-size:12px;color:#69685f}
-        .account-msg.err{color:var(--red);font-weight:800}
-        .account-msg.ok{color:#2f7c36;font-weight:800}
-        .content{padding:0}
-        .sec.active{animation:secIn .28s ease}
-        #overview{
-            min-height:620px;
-            border-radius:30px;
-            overflow:hidden;
-            position:relative;
-            padding:24px;
-            background:
-                linear-gradient(90deg,rgba(0,0,0,.64),rgba(0,0,0,.10) 46%,rgba(0,0,0,.42)),
-                url("https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=80") center/cover;
-            box-shadow:0 30px 80px rgba(0,0,0,.35);
-        }
-        #overview::before{
-            content:"BatiSense Home";
-            position:absolute;
-            left:28px;
-            top:28px;
-            color:#fff;
-            font-size:31px;
-            font-weight:900;
-            letter-spacing:-.06em;
-            z-index:1;
-        }
-        #overview::after{
-            content:"Ready to control your smart home?";
-            position:absolute;
-            left:28px;
-            top:66px;
-            color:rgba(255,255,255,.82);
-            font-size:13px;
-            z-index:1;
-        }
-        #overview>.sh,#overview>div:first-of-type{display:none!important}
-        #overview>.g4{
-            position:relative;
-            z-index:2;
-            margin-left:auto!important;
-            margin-top:4px;
-            width:min(500px,100%);
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:12px;
-        }
-        #overview>.g2{
-            position:relative;
-            z-index:2;
-            margin-left:auto!important;
-            width:min(500px,100%);
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:12px;
-        }
-        #overview>.panel{
-            position:relative;
-            z-index:2;
-            margin-left:auto!important;
-            width:min(500px,100%);
-        }
-        #overview>.g2:last-child{
-            width:min(760px,100%);
-            grid-template-columns:1fr 1fr;
-        }
-        .panel,.kcard,.avg-card,.cons-card,.ncard,.al{
-            background:var(--card-bg);
-            border:1px solid var(--card-border);
-            box-shadow:var(--card-shadow);
-            backdrop-filter:blur(18px) saturate(130%);
-            -webkit-backdrop-filter:blur(18px) saturate(130%);
-            color:#24231e;
-        }
-        .panel,.kcard,.avg-card,.cons-card{border-radius:var(--r);padding:15px}
-        .kcard{min-height:134px;overflow:hidden}
-        .kcard::before,.kcard::after{display:none}
-        .kcard:hover,.panel:hover,.avg-card:hover,.cons-card:hover{box-shadow:var(--card-hover-shadow);transform:translateY(-2px)}
-        .kcard-top,.ph{margin-bottom:12px}
-        .kcard-top{align-items:center}
-        .kcard-lbl,.pt,.avg-lbl{font-size:11px;font-weight:900;color:#24231e;letter-spacing:0;text-transform:none}
-        .kcard-lbl{font-size:13px;line-height:1}
-        .pt i{color:var(--amber)}
-        .kcard-val,.avg-val,.cons-num{color:#24231e;font-weight:900;letter-spacing:-.05em}
-        .kcard-val{font-size:24px;margin-top:8px;min-height:32px;display:flex;align-items:flex-end;gap:3px}
-        .kcard-val sup{margin-bottom:5px;color:#57564f}
-        .kcard-sub,.avg-detail,.cons-unit{font-size:11px;color:#67665e}
-        .kcard-icon{
-            width:34px;
-            height:34px;
-            border-radius:50%;
-            display:grid;
-            place-items:center;
-            background:rgba(255,255,255,.72);
-            color:#111!important;
-            box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 8px 18px rgba(0,0,0,.10);
-        }
-        .kcard-icon::after{display:none}
-        .kcard .tilt-card-inner{min-height:116px;display:flex;flex-direction:column}
-        .kcard .kcard-sub{margin-top:auto;padding-top:10px}
-        .kcard::after{
-            content:"";
-            display:block;
-            position:absolute;
-            top:auto;
-            left:auto;
-            right:16px;
-            bottom:14px;
-            width:34px;
-            height:20px;
-            border-radius:999px;
-            background:#fff;
-            box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
-        }
-        .kcard.g::after,.kcard.t::after,.kcard.b::after,.kcard.a::after,.kcard.r::after,.kcard.v::after{
-            top:auto;
-            left:auto;
-            right:16px;
-            bottom:14px;
-            width:34px;
-            background:#fff;
-            box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
-            height:20px;
-        }
-        .kcard::before{
-            content:"";
-            display:block;
-            position:absolute;
-            inset:auto;
-            right:19px;
-            bottom:17px;
-            width:14px;
-            height:14px;
-            border-radius:50%;
-            background:var(--amber);
-            z-index:2;
-        }
-        .kcard.g::before,.kcard.t::before,.kcard.b::before,.kcard.a::before,.kcard.r::before,.kcard.v::before{
-            inset:auto;
-            right:19px;
-            bottom:17px;
-            width:14px;
-            height:14px;
-            background:var(--amber);
-        }
-        .door-badge{border-radius:999px;border:1px solid var(--b1);background:rgba(255,255,255,.55);color:#24231e;font-weight:900}
-        .door-badge.open{background:rgba(211,91,77,.88);color:#fff;border-color:rgba(255,255,255,.35)}
-        .door-badge.closed{background:rgba(142,207,123,.82);color:#1d2c18;border-color:rgba(255,255,255,.35)}
-        .cbox.h180{height:180px}.cbox.h220{height:220px}
-        #overview .cbox.h220{height:150px}
-        #overview .cbox.h180{height:135px}
-        #nodes,#consumption,#alerts{
-            border-radius:28px;
-            padding:18px;
-            background:rgba(255,255,255,.15);
-            border:1px solid rgba(255,255,255,.22);
-            backdrop-filter:blur(12px);
-        }
-        .sh h2{font-size:18px;letter-spacing:-.04em}
-        .cons-card{text-align:center}
-        .cons-ico{font-size:25px;color:#24231e!important;margin-bottom:8px}
-        .ncard{border-radius:20px;padding:16px}
-        .nc-name{font-weight:900}
-        .nc-name i,.ns-icon{color:#111!important}
-        .nc-name i{
-            width:28px;
-            height:28px;
-            border-radius:50%;
-            display:inline-grid;
-            place-items:center;
-            background:rgba(255,255,255,.68);
-            margin-right:2px;
-        }
-        .ns-icon{
-            width:26px;
-            height:26px;
-            border-radius:50%;
-            display:grid;
-            place-items:center;
-            background:rgba(255,255,255,.64);
-            flex:0 0 auto;
-        }
-        .nc-status{font-size:10px;font-weight:900;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.64)}
-        .nc-status.online{color:#2f7c36}.nc-status.offline{color:var(--red)}
-        .nc-sensors{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-        .ns{border-radius:14px;background:rgba(255,255,255,.52);border:0}
-        .ns-val{font-weight:900;color:#24231e}
-        .ns-lbl,.nc-ts{font-size:10px;color:#77766d}
-        .al{border-radius:18px;color:#24231e}
-        .al-body{flex:1}
-        .al-title{font-weight:900}
-        .al-msg,.al-ts{font-size:12px;color:#69685f;margin-top:3px}
-        .ripple{background:rgba(244,200,77,.35)}
-        @media(max-width:1100px){
-            #overview>.g4,#overview>.g2,#overview>.panel{width:100%}
-            #overview{padding-top:110px}
-            #overview>.g4{margin-top:0}
-        }
-        @media(max-width:760px){
-            .app{padding:12px;grid-template-columns:1fr}
-            .sidebar{
-                position:static;
-                height:auto;
-                width:100%;
-                flex-direction:row;
-                justify-content:center;
-                border-radius:24px;
-                padding:10px;
-            }
-            .s-nav{flex-direction:row;justify-content:center}
-            .s-footer{display:none}
-            .topbar{flex-direction:column;align-items:stretch}
-            .topbar-r{flex-wrap:wrap}
-            .account-wrap{position:static}
-            .account-panel{right:12px;left:12px;top:118px;width:auto}
-            #overview>.g4,#overview>.g2,#overview>.g2:last-child{grid-template-columns:1fr}
-            .g2,.g3,.g4,.gauto{grid-template-columns:1fr}
-        }
-
-        /* Client dashboard polish */
-        :root{
-            --client-bg:#191814;
-            --client-panel:rgba(248,248,242,.88);
-            --client-panel-soft:rgba(248,248,242,.72);
-            --client-ink:#1f211b;
-            --client-muted:#6c6c62;
-            --client-border:rgba(255,255,255,.62);
-            --client-gold:#f1c84b;
-            --client-green:#7fc36e;
-            --client-danger:#c94f43;
-        }
-        body{
-            background:
-                radial-gradient(circle at 14% 12%,rgba(241,200,75,.18),transparent 26%),
-                radial-gradient(circle at 88% 8%,rgba(127,195,110,.12),transparent 24%),
-                linear-gradient(135deg,#33301f 0%,#191814 60%,#11100d 100%);
-        }
-        .app{
-            grid-template-columns:236px minmax(0,1fr);
-            gap:22px;
-            padding:22px;
-            max-width:1640px;
-            margin:0 auto;
-        }
-        .sidebar{
-            width:100%;
-            min-height:calc(100vh - 44px);
-            padding:16px;
-            align-items:stretch;
-            border-radius:28px;
-            background:linear-gradient(180deg,rgba(250,250,244,.86),rgba(228,227,214,.74));
-            box-shadow:0 28px 80px rgba(0,0,0,.32);
-        }
-        .s-logo{
-            width:100%;
-            height:auto;
-            min-height:64px;
-            display:flex;
-            justify-content:flex-start;
-            gap:12px;
-            padding:10px;
-            border-radius:22px;
-            background:rgba(255,255,255,.68);
-            box-shadow:inset 0 1px 0 rgba(255,255,255,.62),0 14px 28px rgba(0,0,0,.10);
-        }
-        .s-logo-mark{
-            width:42px;
-            height:42px;
-            flex:0 0 42px;
-            background:rgba(127,195,110,.22);
-            box-shadow:none;
-        }
-        .s-logo-name{
-            display:block;
-            font:900 17px/1.05 Inter,sans-serif;
-            letter-spacing:-.04em;
-            color:var(--client-ink);
-            -webkit-text-fill-color:currentColor;
-            background:none;
-        }
-        .s-logo-sub{
-            display:block;
-            margin-top:3px;
-            font:800 10px/1 Inter,sans-serif;
-            letter-spacing:.16em;
-            color:#7a6a19;
-        }
-        .s-nav{
-            align-items:stretch;
-            gap:8px;
-            margin-top:8px;
-            flex:1;
-        }
-        .s-nav-sec{
-            display:block;
-            padding:16px 8px 6px;
-            color:#7d7b70;
-            font:900 10px/1 Inter,sans-serif;
-            letter-spacing:.13em;
-            text-transform:uppercase;
-        }
-        .nav-btn{
-            width:100%;
-            height:48px;
-            display:flex;
-            justify-content:flex-start;
-            gap:11px;
-            padding:7px 10px;
-            border-radius:17px;
-            background:transparent;
-            border:1px solid transparent;
-            box-shadow:none;
-            color:var(--client-ink);
-        }
-        .nav-btn i{
-            width:32px;
-            height:32px;
-            border-radius:50%;
-            display:grid;
-            place-items:center;
-            background:rgba(255,255,255,.72);
-            box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
-            font-size:14px;
-        }
-        .nav-btn span{
-            display:inline;
-            font-size:13px;
-            font-weight:850;
-        }
-        .nav-btn:hover,.nav-btn.active{
-            background:rgba(255,255,255,.62);
-            border-color:rgba(255,255,255,.62);
-            transform:none;
-            box-shadow:0 12px 28px rgba(0,0,0,.10);
-        }
-        .nav-btn.active i{background:var(--client-gold)}
-        .s-footer{
-            margin-top:14px;
-            padding-top:12px;
-            flex-direction:column;
-            align-items:stretch;
-            gap:8px;
-        }
-        .conn{
-            width:100%;
-            height:34px;
-            display:flex;
-            justify-content:flex-start;
-            gap:9px;
-            padding:0 10px;
-            border-radius:14px;
-            background:rgba(255,255,255,.48);
-        }
-        .conn span{display:inline;color:#5d5d55;font-size:11px;font-weight:800}
-        .topbar{
-            min-height:68px;
-            padding:12px 14px 12px 18px;
-            border-radius:26px;
-            background:rgba(248,248,242,.16);
-            border:1px solid rgba(255,255,255,.22);
-            backdrop-filter:blur(18px);
-            -webkit-backdrop-filter:blur(18px);
-            box-shadow:0 18px 52px rgba(0,0,0,.18);
-        }
-        .topbar-l h1{font-size:20px;color:#fff}
-        .topbar-l p{color:rgba(255,255,255,.72)}
-        .topbar-r .btn,.user-badge{
-            min-height:40px;
-            background:rgba(248,248,242,.86);
-            border-color:rgba(255,255,255,.58);
-        }
-        #overview{
-            min-height:680px;
-            padding:26px;
-            display:grid!important;
-            grid-template-columns:minmax(320px,1fr) minmax(440px,540px);
-            grid-auto-rows:min-content;
-            gap:16px;
-            align-content:start;
-            background:
-                linear-gradient(90deg,rgba(0,0,0,.70),rgba(0,0,0,.18) 46%,rgba(0,0,0,.46)),
-                url("https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=82") center/cover;
-        }
-        #overview::before{
-            content:"BatiSense Pro";
-            left:30px;
-            top:30px;
-            font-size:38px;
-        }
-        #overview::after{
-            content:"Surveillance temps reel, securite et consommation du batiment";
-            left:31px;
-            top:78px;
-            font-size:14px;
-            max-width:460px;
-        }
-        #overview>.sh{display:none!important}
-        #overview>div:first-of-type{
-            display:block!important;
-            grid-column:1;
-            grid-row:1 / span 2;
-            margin-top:132px;
-            align-self:start;
-            max-width:520px;
-        }
-        #overview>div:first-of-type>div:first-child{display:none}
-        #overview>div:first-of-type .panel{display:none!important}
-        .avg-row{
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:14px;
-        }
-        .avg-card{
-            min-height:126px;
-            background:rgba(248,248,242,.82);
-        }
-        #overview>.g4{
-            grid-column:2;
-            grid-row:1;
-            width:100%;
-            margin:0!important;
-            grid-template-columns:1fr 1fr;
-        }
-        #overview>.g2{
-            grid-column:2;
-            width:100%;
-            margin:0!important;
-        }
-        #overview>.g2:nth-of-type(3){grid-row:2}
-        #overview>.panel{
-            grid-column:2;
-            width:100%;
-            margin:0!important;
-        }
-        #overview>.panel:nth-of-type(1){grid-row:3}
-        #overview>.g2:last-child{
-            grid-column:1 / -1;
-            width:100%;
-            grid-template-columns:1fr 1fr;
-        }
-        .panel,.kcard,.avg-card,.cons-card,.ncard,.al{
-            background:var(--client-panel);
-            border-color:var(--client-border);
-        }
-        .panel{padding:18px}
-        .kcard{
-            min-height:146px;
-            border-radius:24px;
-            background:rgba(248,248,242,.86);
-        }
-        .kcard-lbl,.pt,.avg-lbl{color:var(--client-ink)}
-        .kcard-sub,.avg-detail,.cons-unit{color:var(--client-muted)}
-        .kcard-val{font-size:28px}
-        #nodes,#consumption,#alerts{
-            padding:22px;
-            background:rgba(248,248,242,.15);
-        }
-        #nodes .sh h2,#consumption .sh h2,#alerts .sh h2{color:#fff}
-        @media(max-width:1180px){
-            .app{grid-template-columns:92px minmax(0,1fr)}
-            .sidebar{padding:12px}
-            .s-logo{justify-content:center}
-            .s-logo-name,.s-logo-sub,.s-nav-sec,.nav-btn span,.conn span{display:none}
-            .nav-btn{justify-content:center;padding:7px;width:52px;margin:0 auto}
-            .s-footer{align-items:center}.conn{width:18px;height:18px;padding:0;justify-content:center}
-            #overview{grid-template-columns:1fr;padding-top:126px}
-            #overview>div:first-of-type,#overview>.g4,#overview>.g2,#overview>.panel,#overview>.g2:last-child{grid-column:1;width:100%;max-width:none}
-        }
-        @media(max-width:760px){
-            .app{grid-template-columns:1fr;padding:12px}
-            .sidebar{width:100%;min-height:0;flex-direction:row}
-            .s-logo{width:52px;height:52px;min-height:52px;flex:0 0 52px;padding:5px}
-            .s-nav{flex-direction:row;margin-top:0}
-            .nav-btn{width:48px;height:48px}
-            #overview{grid-template-columns:1fr;padding:112px 16px 16px}
-            .avg-row,#overview>.g4,#overview>.g2,#overview>.g2:last-child{grid-template-columns:1fr}
-        }
-
-        /* Final layout pass: explicit placement and corrected text flow */
-        html{scroll-behavior:smooth}
-        .sec{scroll-margin-top:20px}
-        .content{display:block}
-        #overview{
-            display:grid!important;
-            grid-template-columns:minmax(320px,1fr) minmax(420px,560px);
-            grid-template-areas:
-                "summary kpis"
-                "summary status"
-                "temp temp"
-                "secondary secondary";
-            gap:16px;
-            align-items:start;
-            padding:132px 26px 26px;
-        }
-        #overview::before{top:34px;left:32px;max-width:min(560px,calc(100% - 64px));line-height:.95}
-        #overview::after{top:86px;left:34px;max-width:min(580px,calc(100% - 68px));line-height:1.45}
-        #overview>.sh{display:none!important}
-        #overview>div.overview-summary:first-of-type{
-            grid-area:summary;
-            display:grid!important;
-            grid-template-columns:1fr!important;
-            gap:14px!important;
-            margin:0!important;
-            width:100%;
-            max-width:560px;
-        }
-        #overview>div.overview-summary:first-of-type>div:first-child{
-            display:block!important;
-        }
-        #overview>.overview-summary .sh{display:none}
-        #overview>.overview-summary>.panel{
-            display:flex!important;
-            min-height:214px!important;
-            margin:0!important;
-        }
-        .avg-row{
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:14px;
-            margin:0;
-        }
-        .avg-card{
-            min-height:132px;
-            padding:16px;
-        }
-        .avg-icon{
-            width:42px;
-            height:42px;
-            border-radius:50%;
-            background:rgba(241,200,75,.88)!important;
-            color:#1f211b!important;
-        }
-        #overview>.overview-kpis{
-            grid-area:kpis;
-            width:100%;
-            margin:0!important;
-            display:grid!important;
-            grid-template-columns:repeat(2,minmax(0,1fr));
-            gap:14px;
-        }
-        #overview>.overview-status{
-            grid-area:status;
-            width:100%;
-            margin:0!important;
-            display:grid!important;
-            grid-template-columns:1fr 1fr;
-            gap:14px;
-        }
-        #overview>.overview-temp{
-            grid-area:temp;
-            width:100%;
-            margin:0!important;
-        }
-        #overview>.overview-secondary{
-            grid-area:secondary;
-            width:100%;
-            margin:0!important;
-            display:grid!important;
-            grid-template-columns:1fr 1fr;
-            gap:16px;
-        }
-        .panel,.kcard,.avg-card,.cons-card,.ncard,.al{
-            background:rgba(248,248,242,.90);
-        }
-        .kcard{
-            min-height:150px;
-            padding:17px;
-        }
-        .kcard-val[style]{
-            font-size:22px!important;
-            margin-top:8px!important;
-        }
-        .kcard-sub{font-size:12px}
-        .ph{gap:12px;align-items:center}
-        .pt{font-size:13px;line-height:1.25}
-        #nodes,#consumption,#alerts{
-            min-height:620px;
-        }
-        @media(max-width:1180px){
-            #overview{
-                grid-template-columns:1fr;
-                grid-template-areas:
-                    "summary"
-                    "kpis"
-                    "status"
-                    "temp"
-                    "secondary";
-                padding-top:128px;
-            }
-            #overview>.overview-summary{max-width:none}
-            .avg-row,#overview>.overview-kpis,#overview>.overview-status,#overview>.overview-secondary{
-                grid-template-columns:1fr 1fr;
-            }
-        }
-        @media(max-width:760px){
-            .topbar{position:relative}
-            #overview{
-                padding:118px 16px 16px;
-                border-radius:24px;
-            }
-            #overview::before{font-size:30px;left:20px;top:26px}
-            #overview::after{left:21px;top:66px;font-size:13px}
-            .avg-row,#overview>.overview-kpis,#overview>.overview-status,#overview>.overview-secondary{
-                grid-template-columns:1fr;
-            }
-        }
-
-        /* Keep sidebar labels inside their buttons */
-        .nav-btn{
-            overflow:hidden;
-            text-decoration:none;
-            font-family:Inter,sans-serif;
-            cursor:pointer;
-        }
-        .nav-btn > span:not(.nav-badge){
-            flex:1;
-            min-width:0;
-            font-size:10.5px;
-            line-height:1;
-            letter-spacing:0;
-            white-space:nowrap;
-            overflow:hidden;
-        }
-        .content>.sec{
-            display:none!important;
-            margin-bottom:0;
-        }
-        .content>.sec.active{
-            display:block!important;
-        }
-        .content>#overview.sec.active{
-            display:grid!important;
-        }
-        .content>#overview:not(.active){
-            display:none!important;
-        }
-        .sidebar{
-            position:sticky;
-            top:22px;
-            align-self:start;
-            max-height:calc(100vh - 44px);
-            overflow-y:auto;
-            z-index:100;
-        }
-        #consumption .sh h2,
-        #consumption .pt{
-            color:#fff;
-            font-family:Inter,sans-serif;
-            font-weight:900;
-            letter-spacing:0;
-            line-height:1.2;
-        }
-        #consumption .cons-num{
-            color:#24231e;
-            font-size:30px;
-            letter-spacing:0;
-        }
-        #consumption .cons-unit{
-            color:#5d5d55;
-            font-size:11px;
-            font-weight:700;
-        }
-        html[data-theme="dark"] body{
-            background:
-                radial-gradient(circle at 14% 12%,rgba(241,200,75,.12),transparent 25%),
-                radial-gradient(circle at 88% 8%,rgba(127,195,110,.08),transparent 24%),
-                linear-gradient(135deg,#0b0b09 0%,#171713 52%,#050505 100%)!important;
-            color:#f7f7f2;
-        }
-        html[data-theme="dark"] .sidebar{
-            background:linear-gradient(180deg,rgba(35,35,30,.94),rgba(13,13,11,.90))!important;
-            border-color:rgba(255,255,255,.12)!important;
-        }
-        html[data-theme="dark"] .topbar{
-            background:rgba(18,18,15,.68)!important;
-            border-color:rgba(255,255,255,.13)!important;
-        }
-        html[data-theme="dark"] .panel,
-        html[data-theme="dark"] .kcard,
-        html[data-theme="dark"] .avg-card,
-        html[data-theme="dark"] .cons-card,
-        html[data-theme="dark"] .ncard,
-        html[data-theme="dark"] .al{
-            background:rgba(28,28,24,.92)!important;
-            border-color:rgba(255,255,255,.13)!important;
-            color:#f7f7f2!important;
-        }
-        html[data-theme="dark"] .s-logo,
-        html[data-theme="dark"] .nav-btn:hover,
-        html[data-theme="dark"] .nav-btn.active,
-        html[data-theme="dark"] .conn,
-        html[data-theme="dark"] .user-badge,
-        html[data-theme="dark"] .topbar-r .btn,
-        html[data-theme="dark"] .theme-toggle{
-            background:rgba(255,255,255,.10)!important;
-            border-color:rgba(255,255,255,.15)!important;
-            color:#f7f7f2!important;
-        }
-        html[data-theme="dark"] .nav-btn,
-        html[data-theme="dark"] .s-logo-name,
-        html[data-theme="dark"] .user-name,
-        html[data-theme="dark"] .pt,
-        html[data-theme="dark"] .kcard-lbl,
-        html[data-theme="dark"] .avg-lbl,
-        html[data-theme="dark"] .kcard-val,
-        html[data-theme="dark"] .kcard-val sup,
-        html[data-theme="dark"] .avg-val,
-        html[data-theme="dark"] .avg-unit,
-        html[data-theme="dark"] .cons-num,
-        html[data-theme="dark"] .ns-val{
-            color:#f7f7f2!important;
-            -webkit-text-fill-color:currentColor;
-        }
-        html[data-theme="dark"] .s-nav-sec,
-        html[data-theme="dark"] .kcard-sub,
-        html[data-theme="dark"] .avg-detail,
-        html[data-theme="dark"] .cons-unit,
-        html[data-theme="dark"] .ns-lbl,
-        html[data-theme="dark"] .nc-ts,
-        html[data-theme="dark"] .al-msg,
-        html[data-theme="dark"] .al-ts{
-            color:rgba(247,247,242,.62)!important;
-        }
-        html[data-theme="light"] body{
-            background:
-                radial-gradient(circle at 15% 10%,rgba(255,255,255,.72),transparent 26%),
-                radial-gradient(circle at 86% 8%,rgba(241,200,75,.16),transparent 24%),
-                linear-gradient(135deg,#f7f6ef 0%,#dedccf 62%,#c7c2aa 100%)!important;
-            color:#24231e;
-        }
-        html[data-theme="light"] .sidebar{
-            background:linear-gradient(180deg,rgba(250,250,244,.92),rgba(228,227,214,.84))!important;
-            border-color:rgba(255,255,255,.70)!important;
-        }
-        html[data-theme="light"] .topbar{
-            background:rgba(248,248,242,.18)!important;
-            border-color:rgba(255,255,255,.28)!important;
-        }
-        html[data-theme="light"] .panel,
-        html[data-theme="light"] .kcard,
-        html[data-theme="light"] .avg-card,
-        html[data-theme="light"] .cons-card,
-        html[data-theme="light"] .ncard,
-        html[data-theme="light"] .al{
-            background:rgba(248,248,242,.92)!important;
-            border-color:rgba(255,255,255,.66)!important;
-            color:#24231e!important;
-        }
-        html[data-theme="light"] .nav-btn,
-        html[data-theme="light"] .s-logo-name,
-        html[data-theme="light"] .user-name,
-        html[data-theme="light"] .topbar-l h1,
-        html[data-theme="light"] .pt,
-        html[data-theme="light"] .kcard-lbl,
-        html[data-theme="light"] .avg-lbl,
-        html[data-theme="light"] .cons-num,
-        html[data-theme="light"] .ns-val{
-            color:#24231e!important;
-            -webkit-text-fill-color:currentColor;
-        }
-        html[data-theme="light"] .topbar-l p{
-            color:rgba(36,35,30,.68)!important;
-        }
-        html[data-theme="light"] #overview::before{
-            color:#24231e!important;
-            text-shadow:none!important;
-        }
-        html[data-theme="light"] #overview::after{
-            color:rgba(36,35,30,.72)!important;
-            text-shadow:none!important;
-        }
-        /* Sensor card readability pass */
-        #nodes-container{
-            grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-            gap:14px;
-            align-items:stretch;
-        }
-        #nodes .ncard{
-            min-width:0;
-            padding:15px;
-            border-radius:20px;
-            overflow:hidden;
-        }
-        #nodes .nc-head{
-            gap:10px;
-            margin-bottom:12px;
-            padding-bottom:11px;
-        }
-        #nodes .nc-name{
-            min-width:0;
-            flex:1;
-            font-family:Inter,sans-serif;
-            font-size:15px;
-            font-weight:850;
-            line-height:1.1;
-            letter-spacing:0;
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-        }
-        #nodes .nc-status{
-            flex:0 0 auto;
-            font-family:Inter,sans-serif;
-            font-size:9px;
-            line-height:1;
-            letter-spacing:0;
-            padding:6px 8px;
-        }
-        #nodes .nc-sensors{
-            grid-template-columns:repeat(2,minmax(0,1fr));
-            gap:8px;
-        }
-        #nodes .ns{
-            min-width:0;
-            min-height:48px;
-            padding:9px 10px;
-            gap:8px;
-            align-items:center;
-            border-radius:12px;
-        }
-        #nodes .ns-icon{
-            width:25px;
-            height:25px;
-            flex:0 0 25px;
-            font-size:12px;
-        }
-        #nodes .ns-body{
-            min-width:0;
-            flex:1;
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            gap:2px;
-        }
-        #nodes .ns-val{
-            font-family:Inter,sans-serif!important;
-            font-size:15px;
-            font-weight:850;
-            line-height:1.05;
-            letter-spacing:0;
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            font-variant-numeric:tabular-nums;
-        }
-        #nodes .ns-lbl{
-            font-family:Inter,sans-serif;
-            font-size:9px;
-            font-weight:800;
-            line-height:1;
-            letter-spacing:0;
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-        }
-        #nodes .nc-ts{
-            margin-top:8px;
-            font-family:Inter,sans-serif;
-            font-size:10px;
-            line-height:1;
-            letter-spacing:0;
-            display:flex;
-            align-items:center;
-            gap:5px;
-        }
-        @media(max-width:620px){
-            #nodes-container{grid-template-columns:1fr}
-            #nodes .nc-sensors{grid-template-columns:1fr}
-            #nodes .ns-val{font-size:16px}
-        }
-        @media(max-width:760px){
-            .sidebar{
-                top:12px;
-                max-height:none;
-                overflow-x:auto;
-                overflow-y:hidden;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<!-- ═══════════════ WELCOME OVERLAY ═══════════════ -->
-<div id="welcome-overlay">
-    <div class="wov-logo">
-        <svg width="90" height="90" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="wgMark" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#00f5a0"/><stop offset="60%" stop-color="#00d4e0"/><stop offset="100%" stop-color="#4d8dff"/>
-                </linearGradient>
-                <filter id="wglow"><feGaussianBlur stdDeviation="4" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                <filter id="wsglow"><feGaussianBlur stdDeviation="12" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            </defs>
-            <rect width="120" height="120" rx="24" fill="rgba(13,20,36,.85)"/>
-            <rect width="120" height="120" rx="24" fill="none" stroke="rgba(0,245,160,0.2)" stroke-width="2"/>
-            <ellipse cx="60" cy="60" rx="48" ry="45" fill="rgba(0,245,160,0.08)" filter="url(#wsglow)"/>
-            <polygon points="60,14 100,48 100,98 20,98 20,48" fill="none" stroke="url(#wgMark)" stroke-width="3.5" stroke-linejoin="round" filter="url(#wglow)"/>
-            <circle cx="60" cy="14" r="5" fill="url(#wgMark)" filter="url(#wglow)"/>
-            <rect x="44" y="66" width="32" height="32" rx="16" fill="none" stroke="url(#wgMark)" stroke-width="3" opacity="0.95"/>
-            <circle cx="60" cy="50" r="6" fill="url(#wgMark)" filter="url(#wglow)"/>
-            <path d="M 45,40 Q 60,26 75,40" fill="none" stroke="url(#wgMark)" stroke-width="3" stroke-linecap="round" opacity="0.8" filter="url(#wglow)"/>
-            <path d="M 35,31 Q 60,13 85,31" fill="none" stroke="url(#wgMark)" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>
-            <path d="M 25,22 Q 60,0 95,22" fill="none" stroke="url(#wgMark)" stroke-width="2" stroke-linecap="round" opacity="0.22"/>
-        </svg>
-    </div>
-    <div class="wov-text">BatiSense Pro</div>
-    <div class="wov-user" id="wov-user-text">Chargement…</div>
-    <div class="wov-bar-wrap">
-        <div class="wov-bar"><div class="wov-bar-fill"></div></div>
-        <div class="wov-hint">CHARGEMENT DU TABLEAU DE BORD</div>
-    </div>
-</div>
-
-<!-- ═══════════════ APP ═══════════════ -->
-<div class="app" id="app" style="opacity:0;transition:opacity .6s ease">
-
-<aside class="sidebar">
-    <div class="s-logo">
-        <div class="s-logo-mark">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="38" height="38">
-                <defs>
-                    <linearGradient id="gMark" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#00f5a0"/><stop offset="60%" stop-color="#00d4e0"/><stop offset="100%" stop-color="#4d8dff"/>
-                    </linearGradient>
-                    <filter id="glow2"><feGaussianBlur stdDeviation="3" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                </defs>
-                <rect width="120" height="120" rx="24" fill="var(--bg3)"/>
-                <rect width="120" height="120" rx="24" fill="none" stroke="rgba(0,245,160,0.22)" stroke-width="2"/>
-                <ellipse cx="60" cy="60" rx="44" ry="40" fill="rgba(0,245,160,0.06)"/>
-                <polygon points="60,16 98,48 98,98 22,98 22,48" fill="none" stroke="url(#gMark)" stroke-width="3.5" stroke-linejoin="round" filter="url(#glow2)"/>
-                <circle cx="60" cy="16" r="4.5" fill="url(#gMark)" filter="url(#glow2)"/>
-                <rect x="44" y="66" width="32" height="32" rx="16" fill="none" stroke="url(#gMark)" stroke-width="3" opacity="0.95"/>
-                <circle cx="60" cy="52" r="5.5" fill="url(#gMark)" filter="url(#glow2)"/>
-                <path d="M 46,42 Q 60,28 74,42" fill="none" stroke="url(#gMark)" stroke-width="2.8" stroke-linecap="round" opacity="0.8" filter="url(#glow2)"/>
-                <path d="M 37,34 Q 60,15 83,34" fill="none" stroke="url(#gMark)" stroke-width="2.2" stroke-linecap="round" opacity="0.5"/>
-                <path d="M14,98 L14,110 L26,110" fill="none" stroke="rgba(0,245,160,0.45)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M106,98 L106,110 L94,110" fill="none" stroke="rgba(0,245,160,0.45)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>
-        <div><div class="s-logo-name">BatiSense</div><div class="s-logo-sub">Pro</div></div>
-    </div>
-    <nav class="s-nav">
-        <div class="s-nav-sec">Tableau de bord</div>
-        <a class="nav-btn active" href="#overview" data-sec="overview"><i class="fas fa-compass"></i><span>Vue d'ensemble</span></a>
-        <a class="nav-btn" href="#nodes" data-sec="nodes"><i class="fas fa-microchip"></i><span>Nœuds</span></a>
-        <div class="s-nav-sec">Consommation</div>
-        <a class="nav-btn" href="#consumption" data-sec="consumption"><i class="fas fa-chart-pie"></i><span>Consommation</span></a>
-        <div class="s-nav-sec">Système</div>
-        <a class="nav-btn" href="#alerts" data-sec="alerts"><i class="fas fa-bell"></i><span>Alertes</span>
-            <span class="nav-badge" id="alert-badge" style="display:none">0</span>
-        </a>
-    </nav>
-    <div class="s-footer">
-        <div class="conn"><span class="dot" id="dot-sse"></span><span id="lbl-sse">Connexion…</span></div>
-        <div class="conn"><span class="dot" id="dot-api"></span><span id="lbl-api">API…</span></div>
-    </div>
-</aside>
-
-<div class="main">
-    <header class="topbar">
-        <div class="topbar-l">
-            <h1 id="page-title">Vue d'ensemble</h1>
-            <p>
-                <span class="live-dot" id="live-dot"></span>
-                Dernière donnée: <span id="last-update">—</span>
-                · <span id="last-node">—</span>
-            </p>
-        </div>
-        <div class="topbar-r">
-            <button class="btn" onclick="exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
-            <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" type="button" aria-label="Changer le theme" aria-pressed="false">
-                <span class="theme-track">
-                    <span class="theme-icon sun"><i class="fas fa-sun"></i></span>
-                    <span class="theme-thumb"><i class="fas fa-moon"></i></span>
-                    <span class="theme-icon moon"><i class="fas fa-moon"></i></span>
-                </span>
-            </button>
-            <div class="account-wrap">
-                <button class="user-badge" id="account-toggle" type="button" aria-expanded="false" aria-controls="account-panel">
-                    <div class="user-av" id="user-avatar">?</div>
-                    <span class="user-name" id="user-name">…</span>
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                <div class="account-panel" id="account-panel" role="dialog" aria-label="Compte utilisateur">
-                    <div class="account-head">
-                        <div class="account-avatar" id="account-avatar">?</div>
-                        <div>
-                            <div class="account-title" id="account-fullname">Utilisateur</div>
-                            <div class="account-sub">Compte BatiSense Pro</div>
-                        </div>
-                    </div>
-                    <div class="avatar-actions">
-                        <label class="avatar-btn" for="avatar-input"><i class="fas fa-camera"></i> Ajouter une image</label>
-                        <button class="avatar-btn" type="button" id="avatar-remove"><i class="fas fa-trash"></i> Supprimer</button>
-                        <input class="avatar-input" type="file" id="avatar-input" accept="image/png,image/jpeg,image/webp">
-                    </div>
-                    <div class="account-row"><span>Nom</span><span id="account-name">—</span></div>
-                    <div class="account-row"><span>Email</span><span id="account-email">—</span></div>
-                    <div class="password-box">
-                        <h3>Changer le mot de passe</h3>
-                        <div class="pi-warning">
-                            <i class="fas fa-triangle-exclamation"></i>
-                            <span>Important: si vous changez ce mot de passe, mettez aussi à jour la variable <strong>PASSWORD</strong> dans <strong>pi_sender.py</strong> sur le Raspberry Pi. Sinon le Raspberry Pi ne pourra plus se connecter au serveur.</span>
-                        </div>
-                        <form class="password-form" id="password-form">
-                            <input type="password" id="current-password" autocomplete="current-password" placeholder="Mot de passe actuel">
-                            <input type="password" id="new-password" autocomplete="new-password" placeholder="Nouveau mot de passe">
-                            <input type="password" id="confirm-password" autocomplete="new-password" placeholder="Confirmer le nouveau mot de passe">
-                            <div class="account-msg" id="account-msg"></div>
-                            <button class="btn" type="submit"><i class="fas fa-key"></i> Mettre à jour</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <button class="btn" onclick="doLogout()" title="Se déconnecter" style="color:var(--red);border-color:rgba(255,77,107,.2)">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
-        </div>
-    </header>
-
-    <div class="content">
-
-        <!-- ═══ OVERVIEW ═══ -->
-        <section id="overview" class="sec active">
-            <div class="overview-summary" style="display:grid;grid-template-columns:1fr 320px;gap:18px;margin-bottom:18px">
-                <div>
-                    <div class="sh" style="margin-bottom:12px"><h2>🏠 Maison — Moyennes</h2></div>
-                    <div class="avg-row">
-                        <div class="avg-card tilt-card" id="avg-temp-card">
-                            <div class="tilt-card-inner" style="display:flex;align-items:center;gap:16px;width:100%">
-                                <div class="avg-icon temp"><i class="fas fa-thermometer-half"></i></div>
-                                <div>
-                                    <div class="avg-lbl">Température moyenne</div>
-                                    <div class="avg-val"><span id="avg-temp">—</span><span class="avg-unit">°C</span></div>
-                                    <div class="avg-detail" id="avg-temp-detail">Cuisine + Salon</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="avg-card tilt-card" id="avg-hum-card">
-                            <div class="tilt-card-inner" style="display:flex;align-items:center;gap:16px;width:100%">
-                                <div class="avg-icon hum"><i class="fas fa-tint"></i></div>
-                                <div>
-                                    <div class="avg-lbl">Humidité moyenne</div>
-                                    <div class="avg-val"><span id="avg-hum">—</span><span class="avg-unit">%</span></div>
-                                    <div class="avg-detail" id="avg-hum-detail">Cuisine + Salon</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="panel" style="margin-bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:170px;position:relative;">
-                    <div class="pt" style="margin-bottom:0;font-size:10px;color:var(--t2);position:absolute;top:12px;left:16px;"><i class="fas fa-cube"></i> Modèle 3D interactif</div>
-                    <div class="house-widget" style="position:relative;">
-                        <div class="house-core-glow"></div>
-                        <div class="house-scan"></div>
-                        <div class="house-orbit-ring" style="width:150px;height:150px;"></div>
-                        <div class="house-orbit-ring" style="width:190px;height:190px;"></div>
-                        <span class="house-sensor-dot"></span>
-                        <span class="house-sensor-dot"></span>
-                        <span class="house-sensor-dot"></span>
-                        <div class="house-3d-dash" id="house3d">
-                            <svg width="115" height="115" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <linearGradient id="h3gMark" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#00f5a0"/><stop offset="60%" stop-color="#00d4e0"/><stop offset="100%" stop-color="#4d8dff"/>
-                                    </linearGradient>
-                                    <filter id="h3glow"><feGaussianBlur stdDeviation="3.5" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                                    <filter id="h3sglow"><feGaussianBlur stdDeviation="12" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                                </defs>
-                                <rect width="120" height="120" rx="22" fill="rgba(13,20,36,.7)"/>
-                                <rect width="120" height="120" rx="22" fill="none" stroke="rgba(0,245,160,0.18)" stroke-width="1.5"/>
-                                <ellipse cx="60" cy="68" rx="52" ry="22" fill="rgba(0,245,160,0.07)" filter="url(#h3sglow)"/>
-                                <polygon points="98,48 108,54 108,102 98,96" fill="rgba(0,245,160,0.05)" stroke="url(#h3gMark)" stroke-width="1" opacity="0.5"/>
-                                <polygon points="22,96 22,48 12,54 12,102" fill="rgba(0,212,224,0.04)" opacity="0.4"/>
-                                <polygon points="60,14 100,48 100,96 20,96 20,48" fill="rgba(0,245,160,0.06)" stroke="url(#h3gMark)" stroke-width="3.5" stroke-linejoin="round" filter="url(#h3glow)"/>
-                                <circle cx="60" cy="14" r="5.5" fill="url(#h3gMark)" filter="url(#h3glow)"/>
-                                <rect x="28" y="56" width="18" height="16" rx="4" fill="none" stroke="url(#h3gMark)" stroke-width="1.8" opacity="0.7"/>
-                                <rect x="74" y="56" width="18" height="16" rx="4" fill="none" stroke="url(#h3gMark)" stroke-width="1.8" opacity="0.7"/>
-                                <line x1="37" y1="56" x2="37" y2="72" stroke="url(#h3gMark)" stroke-width="1" opacity="0.4"/>
-                                <line x1="83" y1="56" x2="83" y2="72" stroke="url(#h3gMark)" stroke-width="1" opacity="0.4"/>
-                                <rect x="46" y="68" width="28" height="28" rx="14" fill="none" stroke="url(#h3gMark)" stroke-width="3" opacity="0.95"/>
-                                <circle cx="60" cy="50" r="6" fill="url(#h3gMark)" filter="url(#h3glow)"/>
-                                <path d="M 45,40 Q 60,27 75,40" fill="none" stroke="url(#h3gMark)" stroke-width="3" stroke-linecap="round" opacity="0.85" filter="url(#h3glow)"/>
-                                <path d="M 36,32 Q 60,14 84,32" fill="none" stroke="url(#h3gMark)" stroke-width="2.2" stroke-linecap="round" opacity="0.5"/>
-                                <path d="M 27,24 Q 60,1 93,24" fill="none" stroke="url(#h3gMark)" stroke-width="1.6" stroke-linecap="round" opacity="0.25"/>
-                                <line x1="8" y1="96" x2="112" y2="96" stroke="url(#h3gMark)" stroke-width="1.8" opacity="0.35"/>
-                                <path d="M12,96 L12,109 L24,109" fill="none" stroke="rgba(0,245,160,0.45)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M108,96 L108,109 L96,109" fill="none" stroke="rgba(0,245,160,0.45)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div style="font-size:9px;font-family:var(--fmono);color:var(--t2);letter-spacing:1.5px;margin-top:6px">GLISSEZ POUR TOURNER 🖱️</div>
-                </div>
-            </div>
-
-            <div class="g4 overview-kpis" style="margin-bottom:18px">
-                <div class="kcard g tilt-card" id="kpi-kitchen"><div class="tilt-card-inner">
-                    <div class="kcard-top"><span class="kcard-lbl">Cuisine</span><i class="fas fa-utensils kcard-icon g"></i></div>
-                    <div class="kcard-val"><span id="k-kitchen-temp">—</span><sup>°C</sup></div>
-                    <div class="kcard-sub" id="k-kitchen-hum">Humidité: —%</div>
-                </div></div>
-                <div class="kcard t tilt-card" id="kpi-salon"><div class="tilt-card-inner">
-                    <div class="kcard-top"><span class="kcard-lbl">Salon</span><i class="fas fa-couch kcard-icon t"></i></div>
-                    <div class="kcard-val"><span id="k-salon-temp">—</span><sup>°C</sup></div>
-                    <div class="kcard-sub" id="k-salon-hum">Humidité: —%</div>
-                </div></div>
-                <div class="kcard a tilt-card" id="kpi-port"><div class="tilt-card-inner">
-                    <div class="kcard-top"><span class="kcard-lbl">Porte</span><i class="fas fa-door-open kcard-icon a"></i></div>
-                    <div class="kcard-val" style="font-size:17px;margin-top:6px" id="k-door">—</div>
-                    <div class="kcard-sub" id="k-door-pres">Présence: —</div>
-                </div></div>
-                <div class="kcard b tilt-card" id="kpi-room"><div class="tilt-card-inner">
-                    <div class="kcard-top"><span class="kcard-lbl">Chambre</span><i class="fas fa-bed kcard-icon b"></i></div>
-                    <div class="kcard-val" style="font-size:17px;margin-top:6px" id="k-room-pres">—</div>
-                    <div class="kcard-sub" id="k-room-lum">Luminosité: — lux</div>
-                </div></div>
-            </div>
-
-            <div class="g2 overview-status" style="margin-bottom:18px">
-                <div class="panel">
-                    <div class="ph"><div class="pt"><i class="fas fa-door-open"></i> État de la porte</div></div>
-                    <div style="display:flex;align-items:center;gap:14px">
-                        <div class="door-badge closed" id="door-badge"><i class="fas fa-door-closed"></i> FERMÉE</div>
-                        <span style="font-size:11px;color:var(--t1)" id="door-pres-label">Présence port: —</span>
-                    </div>
-                </div>
-                <div class="panel">
-                    <div class="ph"><div class="pt"><i class="fas fa-wind"></i> Détection Gaz</div></div>
-                    <div style="display:flex;gap:12px;flex-wrap:wrap">
-                        <div class="door-badge closed" id="gas-kitchen"><i class="fas fa-utensils"></i> Cuisine: OK</div>
-                        <div class="door-badge closed" id="gas-salon"><i class="fas fa-couch"></i> Salon: OK</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel overview-temp">
-                <div class="ph">
-                    <div class="pt"><i class="fas fa-chart-line"></i> Températures – 24h</div>
-                    <div style="display:flex;gap:6px" id="temp-tabs">
-                        <button class="btn sm active" data-node="all">Tous</button>
-                        <button class="btn sm" data-node="kitchen">Cuisine</button>
-                        <button class="btn sm" data-node="salon">Salon</button>
-                    </div>
-                </div>
-                <div class="cbox h220"><canvas id="chartTemp"></canvas></div>
-            </div>
-            <div class="g2 overview-secondary">
-                <div class="panel">
-                    <div class="ph"><div class="pt"><i class="fas fa-tint"></i> Humidité – 24h</div></div>
-                    <div class="cbox h180"><canvas id="chartHum"></canvas></div>
-                </div>
-                <div class="panel">
-                    <div class="ph"><div class="pt"><i class="fas fa-walking"></i> Présence – 24h (Cuisine)</div></div>
-                    <div class="cbox h180"><canvas id="chartPresence"></canvas></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══ NODES ═══ -->
-        <section id="nodes" class="sec">
-            <div class="sh"><h2>📡 État des nœuds</h2></div>
-            <div class="gauto" id="nodes-container"><div class="empty"><i class="fas fa-spinner fa-spin"></i></div></div>
-        </section>
-
-        <!-- ═══ CONSUMPTION ═══ -->
-        <section id="consumption" class="sec">
-            <div class="sh"><h2>📊 Consommation journalière</h2></div>
-            <div class="g3" style="margin-bottom:18px">
-                <div class="cons-card water tilt-card" id="cons-water-card"><div class="tilt-card-inner">
-                    <div class="cons-ico"><i class="fas fa-faucet-drip"></i></div>
-                    <div class="cons-num" id="cons-water">—</div><div class="cons-unit">Litres aujourd'hui</div>
-                </div></div>
-                <div class="cons-card elec tilt-card" id="cons-elec-card"><div class="tilt-card-inner">
-                    <div class="cons-ico"><i class="fas fa-bolt"></i></div>
-                    <div class="cons-num" id="cons-elec">—</div><div class="cons-unit">kWh aujourd'hui</div>
-                </div></div>
-                <div class="cons-card gas tilt-card" id="cons-gas-card"><div class="tilt-card-inner">
-                    <div class="cons-ico"><i class="fas fa-fire"></i></div>
-                    <div class="cons-num" id="cons-gas">—</div><div class="cons-unit">m³ aujourd'hui</div>
-                </div></div>
-            </div>
-            <div class="panel"><div class="ph"><div class="pt"><i class="fas fa-chart-area"></i> Eau – historique (litres)</div></div><div class="cbox h220"><canvas id="chartWater"></canvas></div></div>
-            <div class="g2">
-                <div class="panel"><div class="ph"><div class="pt"><i class="fas fa-bolt"></i> Électricité – historique (kWh)</div></div><div class="cbox h180"><canvas id="chartElec"></canvas></div></div>
-                <div class="panel"><div class="ph"><div class="pt"><i class="fas fa-fire"></i> Gaz – historique (m³)</div></div><div class="cbox h180"><canvas id="chartGas"></canvas></div></div>
-            </div>
-        </section>
-
-        <!-- ═══ ALERTS ═══ -->
-        <section id="alerts" class="sec">
-            <div class="sh"><h2>🔔 Alertes</h2></div>
-            <div class="alert-list" id="alert-list"><div class="empty"><i class="fas fa-spinner fa-spin"></i></div></div>
-        </section>
-    </div>
-</div>
-</div><!-- .app -->
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<script>
-"use strict";
-const API_BASE = location.protocol === "file:" ? "https://batisense-production.up.railway.app" : location.origin;
-const LOGIN_URL = location.protocol === "file:" || location.pathname.endsWith(".html") ? "auth.html" : "/login";
-const LOCAL_ACCOUNT_KEY = "bs_local_account";
-const LOCAL_SESSION_KEY = "bs_local_session";
-const HISTORY_HOURS = 24;
-
-const NODES = {
-    kitchen:     { label:"Cuisine",     icon:"fa-utensils",  color:"var(--green)",  sensors:["temperature","humidity","gas_detected","presence"] },
-    salon:       { label:"Salon",       icon:"fa-couch",     color:"var(--teal)",   sensors:["temperature","humidity","gas_detected","presence"] },
-    port:        { label:"Porte",       icon:"fa-door-open", color:"var(--amber)",  sensors:["door_open","presence","structure_alert"] },
-    room:        { label:"Chambre",     icon:"fa-bed",       color:"var(--blue)",   sensors:["presence","luminosity","structure_alert"] },
-    water:       { label:"Eau",         icon:"fa-faucet",    color:"var(--teal)",   sensors:["daily_consumption"] },
-    electricity: { label:"Électricité", icon:"fa-plug",      color:"var(--violet)", sensors:["daily_consumption"] },
-    gas_node:    { label:"Gaz",         icon:"fa-fire",      color:"var(--amber)",  sensors:["daily_consumption"] },
-};
-const SENSOR_META = {
-    temperature:       { icon:"fa-thermometer-half", color:"var(--teal)",  label:"Temp.",    fmt:v=>`${v.toFixed(1)}°C` },
-    humidity:          { icon:"fa-tint",             color:"var(--blue)",  label:"Humidité", fmt:v=>`${Math.round(v)}%` },
-    gas_detected:      { icon:"fa-wind",             color:"var(--red)",   label:"Gaz",      fmt:v=>(v===1?"⚠ DÉTECTÉ":"Normal") },
-    presence:          { icon:"fa-walking",          color:"var(--amber)", label:"Présence", fmt:v=>(v===1?"Oui":"Non") },
-    door_open:         { icon:"fa-door-open",        color:"var(--amber)", label:"Porte",    fmt:v=>(v===1?"Ouverte":"Fermée") },
-    structure_alert:   { icon:"fa-exclamation-triangle",color:"var(--red)",label:"Structure",fmt:v=>(v===1?"⚠ ALERTE":"Normal") },
-    luminosity:        { icon:"fa-sun",              color:"var(--amber)", label:"Lumino.",  fmt:v=>`${Math.round(v)} lux` },
-    daily_consumption: { icon:"fa-tachometer-alt",   color:"var(--green)", label:"Consomm.", fmt:v=>v.toFixed(2) },
-};
-
-const state = { latest:{}, nodeSeen:{}, alertCount:0, averages:{avg_temperature:null,avg_humidity:null,sources:{}}, user:null };
-let CH = {};
-
-Chart.defaults.color = "#4a6080";
-Chart.defaults.borderColor = "rgba(255,255,255,0.05)";
-Chart.defaults.font.family = "'Inter','Syne',sans-serif";
-const GRID = { color:"rgba(255,255,255,0.04)" };
-const TOOLTIP = { backgroundColor:"#0b1120", borderColor:"rgba(255,255,255,.08)", borderWidth:1, padding:14, cornerRadius:10, titleFont:{weight:'700',family:"'Syne',sans-serif"}, bodyFont:{family:"'Inter',sans-serif"} };
-
-function lineOpts(yLabel) {
-    return {
-        responsive:true, maintainAspectRatio:false, animation:{duration:500,easing:'easeInOutQuart'},
-        interaction:{mode:"index",intersect:false},
-        plugins:{legend:{position:"top",labels:{boxWidth:10,padding:18,usePointStyle:true,font:{size:11}}},tooltip:TOOLTIP},
-        scales:{
-            x:{type:"time",time:{displayFormats:{minute:"HH:mm",hour:"HH:mm",day:"dd/MM"}},ticks:{maxTicksLimit:8,maxRotation:0,font:{size:10}},grid:GRID},
-            y:{title:{display:!!yLabel,text:yLabel,color:"#4a6080",font:{size:10}},grid:GRID,ticks:{maxTicksLimit:6,font:{size:10}}}
-        }
-    };
-}
-function initCharts() {
-    CH.temp = new Chart(document.getElementById("chartTemp"), {type:"line",data:{datasets:[]},options:lineOpts("°C")});
-    CH.hum  = new Chart(document.getElementById("chartHum"),  {type:"line",data:{datasets:[]},options:lineOpts("%")});
-    CH.presence = new Chart(document.getElementById("chartPresence"), {
-        type:"line",data:{datasets:[]},
-        options:{...lineOpts(""),
-            scales:{x:{type:"time",time:{displayFormats:{minute:"HH:mm",hour:"HH:mm"}},grid:GRID,ticks:{maxTicksLimit:8,font:{size:10}}},
-                    y:{ticks:{callback:v=>v===1?"Présent":"Absent",stepSize:1,font:{size:10}},min:0,max:1,grid:GRID}}
-        }
-    });
-    CH.water = new Chart(document.getElementById("chartWater"), {
-        type:"bar",data:{datasets:[]},
-        options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},plugins:{legend:{display:false},tooltip:TOOLTIP},
-            scales:{x:{type:"time",time:{displayFormats:{minute:"HH:mm",hour:"HH:mm",day:"dd/MM"}},grid:GRID,ticks:{maxTicksLimit:10,maxRotation:0,font:{size:10}}},
-                    y:{title:{display:true,text:"Litres",color:"#4a6080",font:{size:10}},grid:GRID,beginAtZero:true,ticks:{maxTicksLimit:6,font:{size:10}}}}
-        }
-    });
-    CH.elec = new Chart(document.getElementById("chartElec"), {type:"line",data:{datasets:[]},options:lineOpts("kWh")});
-    CH.gas  = new Chart(document.getElementById("chartGas"),  {type:"line",data:{datasets:[]},options:lineOpts("m³")});
-}
-
-function mkDS(label,color,data,stepped=false) {
-    return {label,data,borderColor:color,backgroundColor:color+"18",borderWidth:2.5,tension:stepped?0:.5,fill:true,pointRadius:0,pointHoverRadius:6,stepped,pointHoverBorderWidth:3,pointHoverBorderColor:color};
-}
-function mkBarDS(label,color,data) {
-    return {label,data,backgroundColor:color+"90",borderRadius:8,borderSkipped:false,hoverBackgroundColor:color};
-}
-function toXY(rows) { return rows ? rows.map(r=>({x:new Date(r.t).getTime(),y:r.v})) : []; }
-
-async function apiFetch(path) {
-    try {
-        const r = await fetch(API_BASE+path,{credentials:"include",signal:AbortSignal.timeout(6000)});
-        if(!r.ok) throw new Error(r.status);
-        return await r.json();
-    } catch { return null; }
-}
-function setApiDot(ok) {
-    document.getElementById("dot-api").className = "dot "+(ok?"ok":"err");
-    document.getElementById("lbl-api").textContent = ok ? "API connectée" : "API hors ligne";
-}
-
-async function loadUser() {
-    try {
-        const res = await fetch(`${API_BASE}/auth/me`,{credentials:"include"});
-        if(res.status===401){
-            const local = getLocalSessionUser();
-            if(local){
-                state.user = local;
-                renderAccount(local);
-                return true;
-            }
-            window.location.href=LOGIN_URL;
-            return false;
-        }
-        const data = await res.json();
-        const u = data.user;
-        state.user = u;
-        renderAccount(u);
-        return true;
-    } catch {
-        const local = getLocalSessionUser();
-        if(local){
-            state.user = local;
-            renderAccount(local);
-            return true;
-        }
-        window.location.href=LOGIN_URL;
-        return false;
-    }
-}
-function renderAccount(u) {
-    const first = u.first_name || "";
-    const last = u.last_name || "";
-    const full = `${first} ${last}`.trim() || "Utilisateur";
-    const initials = ((first[0] || "") + (last[0] || "") || "?").toUpperCase();
-    document.getElementById("user-name").textContent = full;
-    document.getElementById("user-avatar").textContent = initials;
-    document.getElementById("account-avatar").textContent = initials;
-    document.getElementById("account-fullname").textContent = full;
-    document.getElementById("account-name").textContent = full;
-    document.getElementById("account-email").textContent = u.email || "Non renseigné";
-    document.getElementById("wov-user-text").textContent = "Bienvenue, "+(first || full);
-    applyAccountAvatar(localStorage.getItem("bs_account_avatar"));
-}
-function applyAccountAvatar(src) {
-    const avatarEls = [document.getElementById("user-avatar"),document.getElementById("account-avatar")];
-    avatarEls.forEach(el=>{
-        if(!el) return;
-        if(src){
-            el.style.backgroundImage = `url("${src}")`;
-            el.textContent = "";
-        } else {
-            el.style.backgroundImage = "";
-            const u = state.user || {};
-            const first = u.first_name || "";
-            const last = u.last_name || "";
-            el.textContent = ((first[0] || "") + (last[0] || "") || "?").toUpperCase();
-        }
-    });
-}
-function handleAvatarUpload(e) {
-    const file = e.target.files?.[0];
-    if(!file) return;
-    if(!file.type.startsWith("image/")){
-        setAccountMessage("Veuillez choisir une image valide.","err");
-        return;
-    }
-    if(file.size > 1024 * 1024){
-        setAccountMessage("Image trop grande. Choisissez une image de moins de 1 Mo.","err");
-        return;
-    }
-    const reader = new FileReader();
-    reader.onload = ()=>{
-        localStorage.setItem("bs_account_avatar",reader.result);
-        applyAccountAvatar(reader.result);
-        setAccountMessage("Image du compte mise à jour sur ce navigateur.","ok");
-    };
-    reader.readAsDataURL(file);
-}
-function removeAccountAvatar() {
-    localStorage.removeItem("bs_account_avatar");
-    applyAccountAvatar(null);
-    document.getElementById("avatar-input").value = "";
-    setAccountMessage("Image du compte supprimée.","ok");
-}
-function toggleAccountPanel(force) {
-    const panel = document.getElementById("account-panel");
-    const btn = document.getElementById("account-toggle");
-    const open = force ?? !panel.classList.contains("open");
-    panel.classList.toggle("open",open);
-    btn.setAttribute("aria-expanded",String(open));
-}
-function setAccountMessage(text,type="") {
-    const msg = document.getElementById("account-msg");
-    msg.textContent = text;
-    msg.className = "account-msg" + (type ? " "+type : "");
-}
-async function submitPasswordChange(e) {
-    e.preventDefault();
-    const current = document.getElementById("current-password").value.trim();
-    const next = document.getElementById("new-password").value.trim();
-    const confirm = document.getElementById("confirm-password").value.trim();
-    if(!current || !next || !confirm){setAccountMessage("Veuillez remplir les trois champs.","err");return;}
-    if(next.length < 8){setAccountMessage("Le nouveau mot de passe doit contenir au moins 8 caractères.","err");return;}
-    if(next !== confirm){setAccountMessage("La confirmation ne correspond pas au nouveau mot de passe.","err");return;}
-    setAccountMessage("Mise à jour en cours...");
-    try {
-        const res = await fetch(`${API_BASE}/auth/change-password`,{
-            method:"POST",
-            credentials:"include",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({current_password:current,new_password:next})
-        });
-        if(res.ok){
-            e.target.reset();
-            setAccountMessage("Mot de passe mis à jour. Pensez à modifier PASSWORD dans pi_sender.py sur le Raspberry Pi.","ok");
-            return;
-        }
-        const data = await res.json().catch(()=>({}));
-        setAccountMessage(data.error || "Le serveur ne prend pas encore en charge ce changement depuis le dashboard.","err");
-    } catch {
-        setAccountMessage("Impossible de contacter le serveur pour changer le mot de passe.","err");
-    }
-}
-async function doLogout() {
-    await fetch(`${API_BASE}/auth/logout`,{method:"POST",credentials:"include"});
-    localStorage.removeItem(LOCAL_SESSION_KEY);
-    window.location.href=LOGIN_URL;
-}
-function getLocalSessionUser() {
-    try {
-        const email = localStorage.getItem(LOCAL_SESSION_KEY);
-        if(!email) return null;
-        const account = JSON.parse(localStorage.getItem(LOCAL_ACCOUNT_KEY) || "null");
-        if(!account || account.email !== email) return null;
+    def to_dict(self):
         return {
-            first_name: account.first_name || "",
-            last_name: account.last_name || "",
-            email: account.email || email,
-            street: account.street || "",
-            city: account.city || "",
-            zip_code: account.zip_code || ""
-        };
-    } catch {
-        return null;
-    }
-}
-
-async function loadInitial() {
-    const data = await apiFetch("/api/latest");
-    if(!data){setApiDot(false);return;}
-    setApiDot(true);
-    for(const [nid,sensors] of Object.entries(data)) {
-        if(!state.latest[nid]) state.latest[nid]={};
-        for(const [sensor,info] of Object.entries(sensors)) {
-            state.latest[nid][sensor]=info.value;
-            if(!state.nodeSeen[nid]||info.timestamp>state.nodeSeen[nid]) state.nodeSeen[nid]=info.timestamp;
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "email": self.email,
+            "street": self.street,
+            "city": self.city,
+            "zip_code": self.zip_code,
+            "created_at": self.created_at,
         }
+
+    @staticmethod
+    def get_by_id(user_id):
+        with sqlite3.connect(DB_PATH) as con:
+            row = con.execute(
+                "SELECT id,first_name,last_name,email,password,street,city,zip_code,created_at "
+                "FROM users WHERE id=?", (user_id,)
+            ).fetchone()
+        return User(row) if row else None
+
+    @staticmethod
+    def get_by_email(email):
+        with sqlite3.connect(DB_PATH) as con:
+            row = con.execute(
+                "SELECT id,first_name,last_name,email,password,street,city,zip_code,created_at "
+                "FROM users WHERE LOWER(email)=LOWER(?)", (email,)
+            ).fetchone()
+        return User(row) if row else None
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get_by_id(int(user_id))
+
+
+# ============================================================
+#  Database init — called at startup
+# ============================================================
+def init_db():
+    with sqlite3.connect(DB_PATH) as con:
+        con.execute("PRAGMA journal_mode=WAL")
+        con.execute("PRAGMA foreign_keys=ON")
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                first_name TEXT NOT NULL,
+                last_name  TEXT NOT NULL,
+                email      TEXT NOT NULL UNIQUE,
+                password   TEXT NOT NULL,
+                street     TEXT,
+                city       TEXT,
+                zip_code   TEXT,
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+        """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS api_tokens (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL,
+                token      TEXT NOT NULL UNIQUE,
+                label      TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS readings (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                node_id     TEXT NOT NULL,
+                sensor_type TEXT NOT NULL,
+                value       REAL NOT NULL,
+                timestamp   TEXT NOT NULL,
+                user_id     INTEGER
+            )
+        """)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS alerts (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                node_id     TEXT NOT NULL,
+                sensor_type TEXT NOT NULL,
+                value       REAL NOT NULL,
+                message     TEXT NOT NULL,
+                level       TEXT NOT NULL DEFAULT 'warning',
+                timestamp   TEXT NOT NULL,
+                acked       INTEGER NOT NULL DEFAULT 0,
+                user_id     INTEGER
+            )
+        """)
+        con.execute("CREATE INDEX IF NOT EXISTS idx_readings_user ON readings   (user_id, node_id, sensor_type, timestamp)")
+        con.execute("CREATE INDEX IF NOT EXISTS idx_alerts_user   ON alerts     (user_id, acked)")
+        con.execute("CREATE INDEX IF NOT EXISTS idx_tokens        ON api_tokens (token)")
+        con.commit()
+    print("Database ready at:", DB_PATH)
+
+
+def normalize_email(email):
+    return str(email or "").strip().lower()
+
+
+# ============================================================
+#  Token helper
+# ============================================================
+def get_user_by_token(token):
+    if not token:
+        return None
+    with sqlite3.connect(DB_PATH) as con:
+        row = con.execute(
+            "SELECT user_id FROM api_tokens WHERE token=?", (token,)
+        ).fetchone()
+    return User.get_by_id(row[0]) if row else None
+
+
+def require_token(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth  = request.headers.get("Authorization", "")
+        token = auth.replace("Bearer ", "").strip()
+        user  = get_user_by_token(token)
+        if not user:
+            return jsonify({"error": "Invalid or missing token"}), 401
+        request.token_user = user
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ============================================================
+#  Alert thresholds
+# ============================================================
+THRESHOLDS = {
+    "temperature":     {"min": 10, "max": 35,   "level": "warning"},
+    "humidity":        {"min": 20, "max": 80,   "level": "warning"},
+    "gas_detected":    {"eq": 1,                "level": "danger"},
+    "structure_alert": {"eq": 1,                "level": "danger"},
+    "door_open":       {"eq": 1,                "level": "info"},
+    "water_meter":     {"min": 0, "max": 99999, "level": "info"},   # accepts any positive reading
+}
+
+SENSOR_ALIASES = {
+    "electricity": {
+        "daily_consumption", "consumption", "consommation",
+        "energy", "kwh", "power", "watt", "watts", "current", "amp", "amps", "ampere", "ampereh"
+    },
+    "water": {
+        "daily_consumption", "consumption", "consommation", "flow", "volume", "liters", "litres"
+    },
+    "gas_node": {
+        "daily_consumption", "consumption", "consommation", "gas", "volume"
+    },
+}
+
+
+def normalize_sensor_type(node_id, sensor_type):
+    sensor = str(sensor_type or "").strip().lower()
+    if sensor in {"value", "reading", "reading_value", "consumption", "consommation"}:
+        return "daily_consumption"
+    aliases = SENSOR_ALIASES.get(str(node_id or "").strip().lower(), set())
+    if sensor in aliases:
+        return "daily_consumption"
+    return sensor
+
+
+def check_and_raise_alert(db, user_id, node_id, sensor_type, value, timestamp):
+    rule = THRESHOLDS.get(sensor_type)
+    if not rule:
+        return
+    triggered = (
+        ("eq"  in rule and value == rule["eq"])  or
+        ("max" in rule and value >  rule["max"]) or
+        ("min" in rule and value <  rule["min"])
+    )
+    if not triggered:
+        return
+    if db.execute(
+        "SELECT id FROM alerts WHERE user_id=? AND node_id=? AND sensor_type=? AND acked=0",
+        (user_id, node_id, sensor_type)
+    ).fetchone():
+        return
+    labels = {
+        "gas_detected":    f"Gaz detecte dans {node_id}",
+        "structure_alert": f"Alerte structure dans {node_id}",
+        "door_open":       f"Porte ouverte ({node_id})",
+        "temperature":     f"Temperature hors plage: {value}C ({node_id})",
+        "humidity":        f"Humidite hors plage: {value}% ({node_id})",
     }
-}
-async function loadAverages() {
-    const data = await apiFetch("/api/averages");
-    if(!data) return;
-    state.averages = data;
-    renderAverages();
-}
-async function loadHistory() {
-    const [kt,st,kh,sh,kp,w,e,g] = await Promise.all([
-        apiFetch(`/api/history?node_id=kitchen&sensor_type=temperature&hours=${HISTORY_HOURS}`),
-        apiFetch(`/api/history?node_id=salon&sensor_type=temperature&hours=${HISTORY_HOURS}`),
-        apiFetch(`/api/history?node_id=kitchen&sensor_type=humidity&hours=${HISTORY_HOURS}`),
-        apiFetch(`/api/history?node_id=salon&sensor_type=humidity&hours=${HISTORY_HOURS}`),
-        apiFetch(`/api/history?node_id=kitchen&sensor_type=presence&hours=${HISTORY_HOURS}`),
-        apiFetch(`/api/history?node_id=water&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
-        apiFetch(`/api/history?node_id=electricity&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
-        apiFetch(`/api/history?node_id=gas_node&sensor_type=daily_consumption&hours=${HISTORY_HOURS}`),
-    ]);
-    updateTempChart(kt,st);
-    if(CH.hum){CH.hum.data.datasets=[mkDS("Cuisine","var(--green)",toXY(kh)),mkDS("Salon","var(--teal)",toXY(sh))];CH.hum.update("none");}
-    if(CH.presence){CH.presence.data.datasets=[mkDS("Cuisine","var(--amber)",toXY(kp),true)];CH.presence.update("none");}
-    if(CH.water){CH.water.data.datasets=[mkBarDS("Eau","var(--teal)",toXY(w))];CH.water.update("none");}
-    if(CH.elec){CH.elec.data.datasets=[mkDS("Élec.","var(--violet)",toXY(e))];CH.elec.update("none");}
-    if(CH.gas){CH.gas.data.datasets=[mkDS("Gaz","var(--amber)",toXY(g))];CH.gas.update("none");}
-}
+    message = labels.get(sensor_type, f"{sensor_type}={value} sur {node_id}")
+    level   = rule.get("level", "warning")
+    cur = db.execute(
+        "INSERT INTO alerts (node_id,sensor_type,value,message,level,timestamp,user_id) VALUES (?,?,?,?,?,?,?)",
+        (node_id, sensor_type, value, message, level, timestamp, user_id)
+    )
+    db.commit()
+    sse_push_to_user(user_id, "alert", {
+        "id": cur.lastrowid, "node_id": node_id, "sensor_type": sensor_type,
+        "value": value, "message": message, "level": level, "timestamp": timestamp
+    })
 
-let _tempFilter = "all";
-function updateTempChart(kRows,sRows) {
-    if(!CH.temp) return;
-    const ds = [];
-    if(_tempFilter==="all"||_tempFilter==="kitchen") ds.push(mkDS("Cuisine","var(--green)",toXY(kRows)));
-    if(_tempFilter==="all"||_tempFilter==="salon") ds.push(mkDS("Salon","var(--teal)",toXY(sRows)));
-    CH.temp.data.datasets = ds; CH.temp.update("none");
-}
-function appendChartPoint(chartKey,label,color,point) {
-    const chart = CH[chartKey]; if(!chart) return;
-    let ds = chart.data.datasets.find(d=>d.label===label);
-    if(!ds){ds=mkDS(label,color,[]);chart.data.datasets.push(ds);}
-    ds.data.push(point);
-    if(ds.data.length>500) ds.data.shift();
-    chart.update("none");
-}
 
-/* ══ SSE ══ */
-let _sse=null,_sseRetryTimer=null;
-function connectSSE() {
-    if(_sse){_sse.close();_sse=null;}
-    setSseDot("connecting");
-    _sse = new EventSource(API_BASE+"/api/stream",{withCredentials:true});
-    _sse.onopen = ()=>{setSseDot("ok");clearTimeout(_sseRetryTimer);};
-    _sse.addEventListener("sensor",e=>onSensorEvent(JSON.parse(e.data)));
-    _sse.addEventListener("alert",e=>onAlertEvent(JSON.parse(e.data)));
-    _sse.onerror = ()=>{setSseDot("err");_sse.close();_sse=null;_sseRetryTimer=setTimeout(connectSSE,5000);};
-}
-function setSseDot(s) {
-    const dot=document.getElementById("dot-sse"),lbl=document.getElementById("lbl-sse");
-    if(s==="ok"){dot.className="dot ok";lbl.textContent="Temps réel";}
-    else if(s==="err"){dot.className="dot err";lbl.textContent="SSE déconnecté";}
-    else{dot.className="dot";lbl.textContent="Connexion…";}
-}
+# ============================================================
+#  SSE — per user
+# ============================================================
+_subscribers = {}
+_sub_lock = threading.Lock()
+_SSE_QUEUE_MAX = 1000
 
-function onSensorEvent(d) {
-    const {node_id:nid,sensor_type,value,timestamp}=d;
-    if(!state.latest[nid]) state.latest[nid]={};
-    state.latest[nid][sensor_type]=value; state.nodeSeen[nid]=timestamp;
-    flashLiveDot(nid,timestamp); updateCardForNode(nid,sensor_type,value); updateNodeCard(nid);
-    const pt={x:new Date(timestamp).getTime(),y:value};
-    if(nid==="kitchen"&&sensor_type==="temperature"&&(_tempFilter==="all"||_tempFilter==="kitchen")) appendChartPoint("temp","Cuisine","var(--green)",pt);
-    if(nid==="salon"&&sensor_type==="temperature"&&(_tempFilter==="all"||_tempFilter==="salon")) appendChartPoint("temp","Salon","var(--teal)",pt);
-    if((nid==="kitchen"||nid==="salon")&&sensor_type==="humidity"){const l=nid==="kitchen"?"Cuisine":"Salon",c=nid==="kitchen"?"var(--green)":"var(--teal)";appendChartPoint("hum",l,c,pt);}
-    if(nid==="kitchen"&&sensor_type==="presence") appendChartPoint("presence","Cuisine","var(--amber)",pt);
-    if(nid==="water"&&sensor_type==="daily_consumption"){appendChartPoint("water","Eau","var(--teal)",pt);flashEl("cons-water-card");document.getElementById("cons-water").textContent=Math.round(value);}
-    if(nid==="electricity"&&sensor_type==="daily_consumption"){appendChartPoint("elec","Élec.","var(--violet)",pt);flashEl("cons-elec-card");document.getElementById("cons-elec").textContent=value.toFixed(2);}
-    if(nid==="gas_node"&&sensor_type==="daily_consumption"){appendChartPoint("gas","Gaz","var(--amber)",pt);flashEl("cons-gas-card");document.getElementById("cons-gas").textContent=value.toFixed(3);}
-    if((nid==="kitchen"||nid==="salon")&&(sensor_type==="temperature"||sensor_type==="humidity")) recalcAverages();
-}
-function onAlertEvent(d) {
-    state.alertCount++; updateAlertBadge();
-    const list=document.getElementById("alert-list");
-    const el=document.createElement("div");
-    el.className=`al ${d.level}`;
-    el.innerHTML=`<i class="fas ${d.level==='danger'?'fa-exclamation-circle':d.level==='warning'?'fa-exclamation-triangle':'fa-info-circle'} al-icon"></i><div class="al-body"><div class="al-title">${escapeHtml(d.node_id)} — ${escapeHtml(d.sensor_type)}</div><div class="al-msg">${escapeHtml(d.message)}</div><div class="al-ts">${d.timestamp}</div></div><button class="btn-ack" onclick="this.closest('.al').remove();state.alertCount=Math.max(0,state.alertCount-1);updateAlertBadge();">Acquitter</button>`;
-    const empty=list.querySelector(".empty"); if(empty) empty.remove();
-    list.prepend(el);
-}
-function recalcAverages() {
-    const kt=state.latest.kitchen?.temperature, st=state.latest.salon?.temperature;
-    const kh=state.latest.kitchen?.humidity, sh=state.latest.salon?.humidity;
-    function avg(a,b){const vs=[a,b].filter(v=>v!=null);return vs.length?Math.round((vs.reduce((x,y)=>x+y,0)/vs.length)*10)/10:null;}
-    state.averages={avg_temperature:avg(kt,st),avg_humidity:avg(kh,sh),sources:{kitchen_temperature:kt,salon_temperature:st,kitchen_humidity:kh,salon_humidity:sh}};
-    renderAverages();
-}
-function renderAverages() {
-    const a=state.averages;
-    setText("avg-temp",a.avg_temperature!==null?a.avg_temperature.toFixed(1):"—");
-    setText("avg-hum",a.avg_humidity!==null?Math.round(a.avg_humidity):"—");
-    const td=[],hd=[];
-    if(a.sources.kitchen_temperature!=null) td.push(`Cuisine ${a.sources.kitchen_temperature.toFixed(1)}°C`);
-    if(a.sources.salon_temperature!=null) td.push(`Salon ${a.sources.salon_temperature.toFixed(1)}°C`);
-    if(td.length) setText("avg-temp-detail",td.join(" · "));
-    if(a.sources.kitchen_humidity!=null) hd.push(`Cuisine ${Math.round(a.sources.kitchen_humidity)}%`);
-    if(a.sources.salon_humidity!=null) hd.push(`Salon ${Math.round(a.sources.salon_humidity)}%`);
-    if(hd.length) setText("avg-hum-detail",hd.join(" · "));
-    if(a.avg_temperature!==null) flashEl("avg-temp-card");
-    if(a.avg_humidity!==null) flashEl("avg-hum-card");
-}
-function updateCardForNode(nid,sensor,value) {
-    if(nid==="kitchen"){
-        if(sensor==="temperature"){setText("k-kitchen-temp",value.toFixed(1));flashEl("kpi-kitchen");}
-        if(sensor==="humidity") setText("k-kitchen-hum",`Humidité: ${Math.round(value)}%`);
-        if(sensor==="gas_detected") updateGasBadge("gas-kitchen","Cuisine","fa-utensils",value);
-    }
-    if(nid==="salon"){
-        if(sensor==="temperature"){setText("k-salon-temp",value.toFixed(1));flashEl("kpi-salon");}
-        if(sensor==="humidity") setText("k-salon-hum",`Humidité: ${Math.round(value)}%`);
-        if(sensor==="gas_detected") updateGasBadge("gas-salon","Salon","fa-couch",value);
-    }
-    if(nid==="port"){
-        flashEl("kpi-port");
-        if(sensor==="door_open"){
-            const open=value===1;
-            const badge=document.getElementById("door-badge");
-            badge.className="door-badge "+(open?"open":"closed");
-            badge.innerHTML=`<i class="fas fa-door-${open?"open":"closed"}"></i> ${open?"OUVERTE":"FERMÉE"}`;
-            setText("k-door",open?"OUVERTE":"FERMÉE");
-            document.getElementById("k-door").style.color=open?"var(--red)":"var(--green)";
-        }
-        if(sensor==="presence"){setText("k-door-pres",`Présence: ${value===1?"Oui":"Non"}`);setText("door-pres-label",`Présence port: ${value===1?"Oui":"Non"}`);}
-    }
-    if(nid==="room"){
-        flashEl("kpi-room");
-        if(sensor==="presence") setText("k-room-pres",value===1?"Présent":"Absent");
-        if(sensor==="luminosity") setText("k-room-lum",`Luminosité: ${Math.round(value)} lux`);
-    }
-}
-function updateGasBadge(id,label,iconCls,value) {
-    const el=document.getElementById(id); if(!el) return;
-    const alert=value===1;
-    el.className="door-badge "+(alert?"open":"closed");
-    el.innerHTML=`<i class="fas ${iconCls}"></i> ${label}: ${alert?"<strong>GAZ!</strong>":"OK"}`;
-}
-function flashLiveDot(nid,ts) {
-    const dot=document.getElementById("live-dot");
-    dot.classList.remove("flash"); void dot.offsetWidth; dot.classList.add("flash");
-    setTimeout(()=>dot.classList.remove("flash"),500);
-    document.getElementById("last-update").textContent=new Date(ts).toLocaleTimeString("fr-FR");
-    document.getElementById("last-node").textContent=NODES[nid]?.label||nid;
-}
-function flashEl(id){const el=document.getElementById(id);if(el){el.classList.remove("updated");void el.offsetWidth;el.classList.add("updated");}}
-function setText(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
 
-function toggleTheme() {
-    const isDark = document.documentElement.getAttribute("data-theme")!=="light";
-    applyTheme(isDark?"light":"dark");
-}
-function loadTheme() {
-    const t = localStorage.getItem("bs_theme")||"dark";
-    applyTheme(t);
-}
-function applyTheme(t) {
-    document.documentElement.setAttribute("data-theme",t);
-    localStorage.setItem("bs_theme",t);
-    const btn=document.getElementById("theme-btn");
-    if(btn){
-        const light=t==="light";
-        btn.classList.toggle("light",light);
-        btn.setAttribute("aria-pressed",String(light));
-        btn.setAttribute("title",light?"Passer au mode sombre":"Passer au mode clair");
-    }
-}
-function exportCSV(){window.open(API_BASE+"/api/export/csv","_blank");}
-function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+def sse_push_to_user(user_id, event, data):
+    msg = f"event: {event}\ndata: {json.dumps(data)}\n\n"
+    with _sub_lock:
+        for q in _subscribers.get(user_id, []):
+            try:
+                q.put_nowait(msg)
+            except queue.Full:
+                try:
+                    q.get_nowait()
+                    q.put_nowait(msg)
+                except queue.Empty:
+                    pass
 
-function renderNodeCards() {
-    const c=document.getElementById("nodes-container");
-    c.innerHTML=Object.entries(NODES).map(([nid,meta])=>{
-        const d=state.latest[nid]||{}, lastSeen=state.nodeSeen[nid];
-        const online=lastSeen?(Date.now()-new Date(lastSeen).getTime())<15000:false;
-        const ts=lastSeen?new Date(lastSeen).toLocaleTimeString("fr-FR"):"jamais";
-        const sensorsHtml=meta.sensors.map(s=>{
-            const m=SENSOR_META[s]||{icon:"fa-question",color:"var(--t1)",label:s,fmt:v=>v};
-            const raw=d[s], txt=raw!=null?m.fmt(raw):"—", isAlert=(s==="gas_detected"||s==="structure_alert")&&raw===1;
-            return `<div class="ns" data-sensor="${s}"><i class="fas ${m.icon} ns-icon" style="color:${isAlert?"var(--red)":m.color}"></i><div class="ns-body"><div class="ns-val" style="${isAlert?"color:var(--red)":""}">${txt}</div><div class="ns-lbl">${m.label}</div></div></div>`;
-        }).join("");
-        return `<div class="ncard" id="nc-${nid}"><div class="nc-head"><div class="nc-name" style="color:${meta.color}"><i class="fas ${meta.icon}"></i>${meta.label}</div><span class="nc-status ${online?"online":"offline"}">${online?"En ligne":"Hors ligne"}</span></div><div class="nc-sensors">${sensorsHtml}</div><div class="nc-ts">🕐 ${ts}</div></div>`;
-    }).join("");
-}
-function updateNodeCard(nid) {
-    const cardEl=document.getElementById(`nc-${nid}`); if(!cardEl) return;
-    const meta=NODES[nid], d=state.latest[nid]||{}, lastSeen=state.nodeSeen[nid];
-    const online=lastSeen?(Date.now()-new Date(lastSeen).getTime())<15000:false;
-    const pill=cardEl.querySelector(".nc-status");
-    if(pill){pill.className="nc-status "+(online?"online":"offline");pill.textContent=online?"En ligne":"Hors ligne";}
-    meta.sensors.forEach(s=>{
-        const cell=cardEl.querySelector(`[data-sensor="${s}"]`); if(!cell) return;
-        const m=SENSOR_META[s], raw=d[s], txt=raw!=null?m.fmt(raw):"—", isAlert=(s==="gas_detected"||s==="structure_alert")&&raw===1;
-        const valEl=cell.querySelector(".ns-val"); if(valEl){valEl.textContent=txt;valEl.style.color=isAlert?"var(--red)":"";}
-        const iconEl=cell.querySelector(".ns-icon"); if(iconEl) iconEl.style.color=isAlert?"var(--red)":m.color;
-    });
-    const tsEl=cardEl.querySelector(".nc-ts"); if(tsEl&&lastSeen) tsEl.textContent=`🕐 ${new Date(lastSeen).toLocaleTimeString("fr-FR")}`;
-    flashEl(`nc-${nid}`);
-}
-async function loadAlerts() {
-    const data=await apiFetch("/api/alerts");
-    const list=document.getElementById("alert-list");
-    if(!data){list.innerHTML=`<div class="empty"><i class="fas fa-times-circle"></i></div>`;return;}
-    state.alertCount=data.length; updateAlertBadge();
-    if(data.length===0){list.innerHTML=`<div class="empty"><i class="fas fa-check-circle"></i><p>Aucune alerte active</p></div>`;return;}
-    list.innerHTML=data.map(a=>`<div class="al ${a.level}" id="al-${a.id}"><i class="fas ${a.level==='danger'?'fa-exclamation-circle':a.level==='warning'?'fa-exclamation-triangle':'fa-info-circle'} al-icon"></i><div class="al-body"><div class="al-title">${escapeHtml(a.node_id)} — ${escapeHtml(a.sensor_type)}</div><div class="al-msg">${escapeHtml(a.message)}</div><div class="al-ts">${a.timestamp}</div></div><button class="btn-ack" onclick="ackAlert(${a.id})">Acquitter</button></div>`).join("");
-}
-async function ackAlert(id) {
-    await fetch(`${API_BASE}/api/alerts/${id}/ack`,{method:"POST",credentials:"include"});
-    const el=document.getElementById(`al-${id}`);
-    if(el){el.style.opacity="0";setTimeout(()=>el.remove(),350);}
-    state.alertCount=Math.max(0,state.alertCount-1); updateAlertBadge();
-}
-function updateAlertBadge() {
-    const b=document.getElementById("alert-badge");
-    b.style.display=state.alertCount>0?"inline":"none";
-    b.textContent=state.alertCount;
-}
 
-/* ══ Navigation ══ */
-const SEC_TITLES={overview:"Vue d'ensemble",nodes:"Nœuds capteurs",consumption:"Consommation",alerts:"Alertes"};
-function setActiveNav(id,updateHash=false){
-    const target=document.getElementById(id) || document.getElementById("overview");
-    id=target.id;
-    const nav=document.querySelector(`.nav-btn[data-sec="${id}"]`);
-    if(!target || !nav) return;
-    document.querySelectorAll(".sec").forEach(sec=>sec.classList.toggle("active",sec.id===id));
-    document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
-    nav.classList.add("active");
-    document.getElementById("page-title").textContent=SEC_TITLES[id]||id;
-    if(updateHash && location.hash!==`#${id}`) history.pushState(null,"",`#${id}`);
-    window.scrollTo({top:0,behavior:"smooth"});
-    setTimeout(()=>Object.values(CH).forEach(c=>c?.resize?.()),140);
-}
-document.querySelector(".s-nav").addEventListener("click",e=>{
-    const nav=e.target.closest(".nav-btn[data-sec]");
-    if(!nav) return;
-    e.preventDefault();
-    setActiveNav(nav.dataset.sec,true);
-},true);
-window.addEventListener("hashchange",()=>setActiveNav(location.hash.replace("#","") || "overview"));
-window.addEventListener("popstate",()=>setActiveNav(location.hash.replace("#","") || "overview"));
-const initialSection=location.hash.replace("#","");
-setActiveNav(initialSection || "overview");
-document.getElementById("temp-tabs").addEventListener("click",async e=>{
-    const b=e.target.closest(".btn"); if(!b||!b.dataset.node) return;
-    _tempFilter=b.dataset.node;
-    document.querySelectorAll("#temp-tabs .btn").forEach(x=>x.classList.toggle("active",x===b));
-    const [kt,st]=await Promise.all([
-        apiFetch(`/api/history?node_id=kitchen&sensor_type=temperature&hours=${HISTORY_HOURS}`),
-        apiFetch(`/api/history?node_id=salon&sensor_type=temperature&hours=${HISTORY_HOURS}`),
-    ]);
-    updateTempChart(kt,st);
-});
+# ============================================================
+#  AUTH ROUTES
+# ============================================================
+@app.route("/auth/register", methods=["POST"])
+def register():
+    data = request.get_json(silent=True) or {}
+    for field in ["first_name", "last_name", "email", "password", "street", "city", "zip_code"]:
+        if not str(data.get(field, "")).strip():
+            return jsonify({"error": f"Le champ '{field}' est obligatoire."}), 400
+    email = normalize_email(data["email"])
+    if len(data["password"]) < 8:
+        return jsonify({"error": "Le mot de passe doit contenir au moins 8 caracteres."}), 400
+    if User.get_by_email(email):
+        return jsonify({"error": "Un compte avec cet e-mail existe deja."}), 409
+    hashed = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
+    with sqlite3.connect(DB_PATH) as con:
+        cur = con.execute(
+            "INSERT INTO users (first_name,last_name,email,password,street,city,zip_code) VALUES (?,?,?,?,?,?,?)",
+            (data["first_name"].strip(), data["last_name"].strip(), email, hashed,
+             data["street"].strip(), data["city"].strip(), data["zip_code"].strip())
+        )
+        new_id = cur.lastrowid
+        con.commit()
+    user = User.get_by_id(new_id)
+    login_user(user, remember=True)
+    return jsonify({"message": "Compte cree.", "user": user.to_dict()}), 201
 
-/* ══ 3D House drag ══ */
-(function(){
-    const el=document.getElementById("house3d"); if(!el) return;
-    let dragging=false, startX=0, startY=0, rotY=-6, rotX=4;
-    el.addEventListener("mousedown",e=>{dragging=true;startX=e.clientX;startY=e.clientY;el.style.animation="none";el.style.transition="none";});
-    window.addEventListener("mousemove",e=>{
-        if(!dragging) return;
-        rotY+=(e.clientX-startX)*.45; rotX-=(e.clientY-startY)*.45;
-        rotX=Math.max(-35,Math.min(35,rotX));
-        el.style.transform=`rotateY(${rotY}deg) rotateX(${rotX}deg)`;
-        startX=e.clientX; startY=e.clientY;
-    });
-    window.addEventListener("mouseup",()=>{dragging=false;el.style.animation="";el.style.transition="transform .6s cubic-bezier(.34,1.56,.64,1)";setTimeout(()=>{el.style.transition="transform .1s ease-out";},600);});
-    el.addEventListener("touchstart",e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY;el.style.animation="none";el.style.transition="none";},{passive:true});
-    el.addEventListener("touchmove",e=>{
-        rotY+=(e.touches[0].clientX-startX)*.45; rotX-=(e.touches[0].clientY-startY)*.45;
-        rotX=Math.max(-35,Math.min(35,rotX));
-        el.style.transform=`rotateY(${rotY}deg) rotateX(${rotX}deg)`;
-        startX=e.touches[0].clientX; startY=e.touches[0].clientY;
-    },{passive:true});
-    el.addEventListener("touchend",()=>{el.style.animation="";el.style.transition="transform .6s cubic-bezier(.34,1.56,.64,1)";setTimeout(()=>{el.style.transition="transform .1s ease-out";},600);});
-})();
 
-/* ══ 3D Tilt effect on cards ══ */
-(function(){
-    document.querySelectorAll(".tilt-card").forEach(card=>{
-        card.addEventListener("mousemove",e=>{
-            const rect=card.getBoundingClientRect();
-            const x=e.clientX-rect.left, y=e.clientY-rect.top;
-            const centerX=rect.width/2, centerY=rect.height/2;
-            const rotateX=((y-centerY)/centerY)*-8;
-            const rotateY=((x-centerX)/centerX)*8;
-            const inner=card.querySelector(".tilt-card-inner");
-            if(inner) inner.style.transform=`perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02,1.02,1.02)`;
-        });
-        card.addEventListener("mouseleave",()=>{
-            const inner=card.querySelector(".tilt-card-inner");
-            if(inner){inner.style.transform="perspective(800px) rotateX(0) rotateY(0) scale3d(1,1,1)";inner.style.transition="transform .5s cubic-bezier(.34,1.56,.64,1)";setTimeout(()=>{inner.style.transition="transform .15s ease-out";},500);}
-        });
-    });
-})();
+@app.route("/auth/login", methods=["POST"])
+def login():
+    data     = request.get_json(silent=True) or {}
+    email    = normalize_email(data.get("email", ""))
+    password = str(data.get("password", ""))
+    user     = User.get_by_email(email)
+    if not user or not bcrypt.check_password_hash(user.password, password):
+        return jsonify({"error": "E-mail ou mot de passe incorrect."}), 401
+    login_user(user, remember=True)
+    return jsonify({"message": "Connexion reussie.", "user": user.to_dict()}), 200
 
-/* ══ Ripple effect ══ */
-document.addEventListener("click",e=>{
-    const btn=e.target.closest(".btn,.btn-ack,.nav-btn");
-    if(!btn) return;
-    const ripple=document.createElement("span");
-    ripple.className="ripple";
-    const rect=btn.getBoundingClientRect();
-    const size=Math.max(rect.width,rect.height);
-    ripple.style.width=ripple.style.height=size+"px";
-    ripple.style.left=(e.clientX-rect.left-size/2)+"px";
-    ripple.style.top=(e.clientY-rect.top-size/2)+"px";
-    btn.appendChild(ripple);
-    ripple.addEventListener("animationend",()=>ripple.remove());
-});
 
-/* ══ Init ══ */
-function initAccountMenu() {
-    const toggle = document.getElementById("account-toggle");
-    const panel = document.getElementById("account-panel");
-    const form = document.getElementById("password-form");
-    const avatarInput = document.getElementById("avatar-input");
-    const avatarRemove = document.getElementById("avatar-remove");
-    toggle.addEventListener("click",e=>{
-        e.stopPropagation();
-        toggleAccountPanel();
-    });
-    panel.addEventListener("click",e=>e.stopPropagation());
-    document.addEventListener("click",()=>toggleAccountPanel(false));
-    document.addEventListener("keydown",e=>{
-        if(e.key==="Escape") toggleAccountPanel(false);
-    });
-    form.addEventListener("submit",submitPasswordChange);
-    avatarInput.addEventListener("change",handleAvatarUpload);
-    avatarRemove.addEventListener("click",removeAccountAvatar);
-}
-document.addEventListener("DOMContentLoaded",async()=>{
-    loadTheme();
-    initAccountMenu();
-    initCharts();
-    const loggedIn=await loadUser();
-    if(!loggedIn) return;
-    setTimeout(async()=>{
-        document.getElementById("welcome-overlay").classList.add("hide");
-        document.getElementById("app").style.opacity="1";
-        await loadInitial();
-        await loadAverages();
-        await loadHistory();
-        renderNodeCards();
-        await loadAlerts();
-        connectSSE();
-        setTimeout(()=>{document.getElementById("welcome-overlay").style.display="none";},700);
-    },2200);
-});
-</script>
-</body>
-</html>
+@app.route("/auth/logout", methods=["POST"])
+@login_required
+def logout():
+    logout_user()
+    return jsonify({"message": "Deconnexion reussie."}), 200
+
+
+@app.route("/auth/change-password", methods=["POST"])
+@login_required
+def change_password():
+    data = request.get_json(silent=True) or {}
+    current_password = str(data.get("current_password", ""))
+    new_password = str(data.get("new_password", ""))
+
+    if not current_password or not new_password:
+        return jsonify({"error": "Mot de passe actuel et nouveau mot de passe requis."}), 400
+    if len(new_password) < 8:
+        return jsonify({"error": "Le nouveau mot de passe doit contenir au moins 8 caracteres."}), 400
+    if not bcrypt.check_password_hash(current_user.password, current_password):
+        return jsonify({"error": "Mot de passe actuel incorrect."}), 401
+
+    hashed = bcrypt.generate_password_hash(new_password).decode("utf-8")
+    with sqlite3.connect(DB_PATH) as con:
+        con.execute(
+            "UPDATE users SET password=? WHERE id=?",
+            (hashed, current_user.id)
+        )
+        con.commit()
+    return jsonify({"message": "Mot de passe mis a jour."}), 200
+
+
+@app.route("/auth/me")
+@login_required
+def me():
+    return jsonify({"user": current_user.to_dict()})
+
+
+@app.route('/batisense-logo.svg')
+def serve_logo():
+    return send_from_directory('.', 'batisense-logo.svg')
+
+@app.route('/batisense-icon.svg')
+def serve_icon():
+    return send_from_directory('.', 'batisense-icon.svg')
+
+
+# ============================================================
+#  TOKEN MANAGEMENT
+# ============================================================
+@app.route("/auth/tokens", methods=["GET"])
+@login_required
+def list_tokens():
+    with sqlite3.connect(DB_PATH) as con:
+        rows = con.execute(
+            "SELECT id, token, label, created_at FROM api_tokens WHERE user_id=? ORDER BY created_at DESC",
+            (current_user.id,)
+        ).fetchall()
+    return jsonify([{"id": r[0], "token": r[1], "label": r[2], "created_at": r[3]} for r in rows])
+
+
+@app.route("/auth/tokens", methods=["POST"])
+@login_required
+def create_token():
+    data  = request.get_json(silent=True) or {}
+    label = data.get("label", "Raspberry Pi")
+    token = secrets.token_hex(32)
+    with sqlite3.connect(DB_PATH) as con:
+        con.execute(
+            "INSERT INTO api_tokens (user_id, token, label) VALUES (?,?,?)",
+            (current_user.id, token, label)
+        )
+        con.commit()
+    return jsonify({"token": token, "label": label}), 201
+
+
+@app.route("/auth/tokens/<int:token_id>", methods=["DELETE"])
+@login_required
+def delete_token(token_id):
+    with sqlite3.connect(DB_PATH) as con:
+        con.execute(
+            "DELETE FROM api_tokens WHERE id=? AND user_id=?",
+            (token_id, current_user.id)
+        )
+        con.commit()
+    return jsonify({"ok": True})
+
+
+# ============================================================
+#  Pi LOGIN — Pi calls this once at startup
+# ============================================================
+@app.route("/api/pi/login", methods=["POST"])
+def pi_login():
+    data     = request.get_json(silent=True) or {}
+    email    = normalize_email(data.get("email", ""))
+    password = str(data.get("password", ""))
+    label    = str(data.get("label", "Raspberry Pi"))
+    user     = User.get_by_email(email)
+    if not user or not bcrypt.check_password_hash(user.password, password):
+        return jsonify({"error": "E-mail ou mot de passe incorrect."}), 401
+    with sqlite3.connect(DB_PATH) as con:
+        existing = con.execute(
+            "SELECT token FROM api_tokens WHERE user_id=? AND label=?",
+            (user.id, label)
+        ).fetchone()
+        if existing:
+            return jsonify({"token": existing[0], "user_id": user.id, "reused": True})
+        token = secrets.token_hex(32)
+        con.execute(
+            "INSERT INTO api_tokens (user_id, token, label) VALUES (?,?,?)",
+            (user.id, token, label)
+        )
+        con.commit()
+    return jsonify({"token": token, "user_id": user.id, "reused": False}), 201
+
+
+# ============================================================
+#  Pi DATA — Pi sends sensor readings
+# ============================================================
+@app.route("/api/pi/data", methods=["POST"])
+@require_token
+def pi_receive_data():
+    user      = request.token_user
+    payload   = request.get_json(force=True, silent=True)
+    if not payload:
+        return jsonify({"error": "bad JSON"}), 400
+    node_id   = payload.get("node_id")
+    timestamp = payload.get("timestamp") or datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+    if not node_id:
+        return jsonify({"error": "missing node_id"}), 400
+    skip    = {"node_id", "timestamp"}
+    sensors = {k: v for k, v in payload.items() if k not in skip and isinstance(v, (int, float))}
+    if not sensors:
+        return jsonify({"error": "no sensor values"}), 400
+    db = sqlite3.connect(DB_PATH)
+    try:
+        for sensor_type, value in sensors.items():
+            sensor_type = normalize_sensor_type(node_id, sensor_type)
+            db.execute(
+                "INSERT INTO readings (node_id,sensor_type,value,timestamp,user_id) VALUES (?,?,?,?,?)",
+                (node_id, sensor_type, float(value), timestamp, user.id)
+            )
+            sse_push_to_user(user.id, "sensor", {
+                "node_id": node_id, "sensor_type": sensor_type,
+                "value": value, "timestamp": timestamp
+            })
+            check_and_raise_alert(db, user.id, node_id, sensor_type, value, timestamp)
+        db.commit()
+    finally:
+        db.close()
+    return jsonify({"ok": True, "node_id": node_id, "user": user.first_name, "sensors": list(sensors.keys())}), 201
+
+
+# ============================================================
+#  PAGE ROUTES
+# ============================================================
+@app.route("/")
+def index():
+    if current_user.is_authenticated:
+        return redirect("/dashboard")
+    return redirect("/login")
+
+
+@app.route("/login")
+def login_page():
+    if current_user.is_authenticated:
+        return redirect("/dashboard")
+    return send_file("auth.html")
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return send_file("index.html")
+
+
+# ============================================================
+#  DASHBOARD API ROUTES
+# ============================================================
+@app.route("/api/latest")
+@login_required
+def get_latest():
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+    rows = db.execute("""
+        SELECT node_id, sensor_type, value, timestamp FROM readings r
+        WHERE user_id=? AND id=(
+            SELECT r2.id FROM readings r2
+            WHERE r2.user_id=r.user_id AND r2.node_id=r.node_id AND r2.sensor_type=r.sensor_type
+            ORDER BY r2.timestamp DESC, r2.id DESC
+            LIMIT 1
+        )
+        ORDER BY node_id, sensor_type
+    """, (current_user.id,)).fetchall()
+    db.close()
+    result = {}
+    for row in rows:
+        nid = row["node_id"]
+        if nid not in result:
+            result[nid] = {}
+        result[nid][row["sensor_type"]] = {"value": row["value"], "timestamp": row["timestamp"]}
+    return jsonify(result)
+
+
+@app.route("/api/averages")
+@login_required
+def get_averages():
+    db = sqlite3.connect(DB_PATH)
+    def lv(node, sensor):
+        r = db.execute(
+            "SELECT value FROM readings WHERE user_id=? AND node_id=? AND sensor_type=? ORDER BY timestamp DESC, id DESC LIMIT 1",
+            (current_user.id, node, sensor)
+        ).fetchone()
+        return r[0] if r else None
+    kt, st = lv("kitchen", "temperature"), lv("salon", "temperature")
+    kh, sh = lv("kitchen", "humidity"),    lv("salon", "humidity")
+    db.close()
+    def avg(a, b):
+        vs = [x for x in [a, b] if x is not None]
+        return round(sum(vs) / len(vs), 1) if vs else None
+    return jsonify({
+        "avg_temperature": avg(kt, st), "avg_humidity": avg(kh, sh),
+        "sources": {"kitchen_temperature": kt, "salon_temperature": st,
+                    "kitchen_humidity": kh, "salon_humidity": sh}
+    })
+
+
+@app.route("/api/history")
+@login_required
+def get_history():
+    node_id     = request.args.get("node_id")
+    sensor_type = request.args.get("sensor_type")
+    hours       = int(request.args.get("hours", 24))
+    if not node_id or not sensor_type:
+        return jsonify({"error": "node_id and sensor_type required"}), 400
+    since = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%S")
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+    rows = db.execute(
+        "SELECT timestamp as t, value as v FROM readings "
+        "WHERE user_id=? AND node_id=? AND sensor_type=? AND timestamp>=? ORDER BY timestamp ASC, id ASC",
+        (current_user.id, node_id, sensor_type, since)
+    ).fetchall()
+    db.close()
+    return jsonify([{"t": r["t"], "v": r["v"]} for r in rows])
+
+
+@app.route("/api/alerts")
+@login_required
+def get_alerts():
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+    rows = db.execute(
+        "SELECT * FROM alerts WHERE user_id=? AND acked=0 ORDER BY timestamp DESC LIMIT 100",
+        (current_user.id,)
+    ).fetchall()
+    db.close()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/alerts/<int:alert_id>/ack", methods=["POST"])
+@login_required
+def ack_alert(alert_id):
+    with sqlite3.connect(DB_PATH) as con:
+        con.execute("UPDATE alerts SET acked=1 WHERE id=? AND user_id=?", (alert_id, current_user.id))
+        con.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/export/csv")
+@login_required
+def export_csv():
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+    rows = db.execute(
+        "SELECT node_id,sensor_type,value,timestamp FROM readings "
+        "WHERE user_id=? ORDER BY timestamp DESC, id DESC LIMIT 50000",
+        (current_user.id,)
+    ).fetchall()
+    db.close()
+    buf = io.StringIO()
+    w   = csv.writer(buf)
+    w.writerow(["node_id", "sensor_type", "value", "timestamp"])
+    for r in rows:
+        w.writerow([r["node_id"], r["sensor_type"], r["value"], r["timestamp"]])
+    return Response(buf.getvalue(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment; filename=batisense_export.csv"})
+
+
+@app.route("/api/stream")
+@login_required
+def sse_stream():
+    uid = current_user.id
+    q   = queue.Queue(maxsize=_SSE_QUEUE_MAX)
+    with _sub_lock:
+        _subscribers.setdefault(uid, []).append(q)
+
+    def generate():
+        last_ping = time.time()
+        try:
+            yield "event: ping\ndata: {}\n\n"
+            while True:
+                try:
+                    yield q.get(timeout=15)
+                    last_ping = time.time()
+                    while True:
+                        yield q.get_nowait()
+                except queue.Empty:
+                    if time.time() - last_ping >= 15:
+                        yield "event: ping\ndata: {}\n\n"
+                        last_ping = time.time()
+        except GeneratorExit:
+            pass
+        finally:
+            with _sub_lock:
+                if uid in _subscribers and q in _subscribers[uid]:
+                    _subscribers[uid].remove(q)
+                    if not _subscribers[uid]:
+                        del _subscribers[uid]
+
+    return Response(stream_with_context(generate()), mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+
+
+@app.route("/api/health")
+def health():
+    return jsonify({"status": "ok", "subscribers": sum(len(v) for v in _subscribers.values())})
+
+
+# ============================================================
+#  WATER METER — dedicated read endpoint (public for quick check)
+# ============================================================
+@app.route("/api/water_meter/latest")
+@login_required
+def water_meter_latest():
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+    row = db.execute(
+        "SELECT value, timestamp FROM readings "
+        "WHERE user_id=? AND node_id='water_meter' AND sensor_type='water_meter' "
+        "ORDER BY timestamp DESC, id DESC LIMIT 1",
+        (current_user.id,)
+    ).fetchone()
+    db.close()
+    if not row:
+        return jsonify({"node": "water_meter", "value": None, "unit": "m³", "timestamp": None})
+    return jsonify({
+        "node":      "water_meter",
+        "value":     row["value"],
+        "unit":      "m³",
+        "timestamp": row["timestamp"]
+    })
+
+
+# ============================================================
+#  BOOT — init DB then start server
+# ============================================================
+init_db()
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    print("=" * 52)
+    print("  BatiSense Pro")
+    print(f"  http://0.0.0.0:{port}")
+    print("=" * 52)
+    app.run(host="0.0.0.0", port=port, threaded=True, debug=False)
