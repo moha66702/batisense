@@ -196,6 +196,29 @@ THRESHOLDS = {
     "water_meter":     {"min": 0, "max": 99999, "level": "info"},   # accepts any positive reading
 }
 
+SENSOR_ALIASES = {
+    "electricity": {
+        "daily_consumption", "consumption", "consommation",
+        "energy", "kwh", "power", "watt", "watts", "current", "amp", "amps", "ampere", "ampereh"
+    },
+    "water": {
+        "daily_consumption", "consumption", "consommation", "flow", "volume", "liters", "litres"
+    },
+    "gas_node": {
+        "daily_consumption", "consumption", "consommation", "gas", "volume"
+    },
+}
+
+
+def normalize_sensor_type(node_id, sensor_type):
+    sensor = str(sensor_type or "").strip().lower()
+    if sensor in {"value", "reading", "reading_value", "consumption", "consommation"}:
+        return "daily_consumption"
+    aliases = SENSOR_ALIASES.get(str(node_id or "").strip().lower(), set())
+    if sensor in aliases:
+        return "daily_consumption"
+    return sensor
+
 
 def check_and_raise_alert(db, user_id, node_id, sensor_type, value, timestamp):
     rule = THRESHOLDS.get(sensor_type)
@@ -431,6 +454,7 @@ def pi_receive_data():
     db = sqlite3.connect(DB_PATH)
     try:
         for sensor_type, value in sensors.items():
+            sensor_type = normalize_sensor_type(node_id, sensor_type)
             db.execute(
                 "INSERT INTO readings (node_id,sensor_type,value,timestamp,user_id) VALUES (?,?,?,?,?)",
                 (node_id, sensor_type, float(value), timestamp, user.id)
